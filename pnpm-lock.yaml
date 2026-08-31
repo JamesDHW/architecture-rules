@@ -207,9 +207,18 @@ importers:
 
   .:
     dependencies:
+      oxlint:
+        specifier: 1.80.0
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: ^7.0.2001
+        version: 7.0.2001
       picomatch:
         specifier: ^4.0.7
         version: 4.0.7
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
     devDependencies:
       '@types/node':
         specifier: ^24.13.3
@@ -217,15 +226,6 @@ importers:
       eslint:
         specifier: ^10.9.1
         version: 10.9.1
-      oxlint:
-        specifier: 1.80.0
-        version: 1.80.0(oxlint-tsgolint@7.0.2001)
-      oxlint-tsgolint:
-        specifier: ^7.0.2001
-        version: 7.0.2001
-      typescript:
-        specifier: 7.0.2
-        version: 7.0.2
       vitest:
         specifier: ^4.1.11
         version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))

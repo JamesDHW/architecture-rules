@@ -149,4 +149,17 @@ describe("createConfig", () => {
       },
     ]);
   });
+
+  it("accepts an absolute plugin specifier for CLI runs", () => {
+    const config = createConfig({
+      pluginSpecifier: "/tmp/architecture-rules/plugin.js",
+    });
+
+    expect(config.jsPlugins).toEqual([
+      {
+        name: "architecture",
+        specifier: "/tmp/architecture-rules/plugin.js",
+      },
+    ]);
+  });
 });

@@ -23,6 +23,8 @@ type ConfigOptions = {
     readonly reason: string;
     readonly rules: Partial<Record<ArchitectureRuleId, RuleOverride>>;
   }[];
+
+  readonly pluginSpecifier?: string;
 };
 
 const getSeverity = (
@@ -151,7 +153,7 @@ export const createConfig = (options: ConfigOptions = {}) => {
     jsPlugins: [
       {
         name: "architecture",
-        specifier: "architecture-rules/plugin",
+        specifier: options.pluginSpecifier ?? "architecture-rules/plugin",
       },
     ],
 

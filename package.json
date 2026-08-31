@@ -9,6 +9,10 @@
     "tsconfig.base.json",
     "README.md"
   ],
+  "bin": {
+    "architecture-rules": "./dist/cli.js",
+    "architecture-check": "./dist/cli.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -25,8 +29,7 @@
     "generate": "node dist/generateTsconfig.js",
     "build": "pnpm run build:typescript && pnpm run generate",
     "test": "vitest run",
-    "check": "pnpm run build && pnpm test",
-    "prepare": "pnpm run build"
+    "check": "pnpm run build && pnpm test"
   },
   "keywords": [],
   "author": "",
@@ -39,14 +42,14 @@
     }
   },
   "dependencies": {
-    "picomatch": "^4.0.7"
+    "oxlint": "1.80.0",
+    "oxlint-tsgolint": "^7.0.2001",
+    "picomatch": "^4.0.7",
+    "typescript": "7.0.2"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",
     "eslint": "^10.9.1",
-    "oxlint": "1.80.0",
-    "oxlint-tsgolint": "^7.0.2001",
-    "typescript": "7.0.2",
     "vitest": "^4.1.11"
   },
   "peerDependencies": {

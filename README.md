@@ -6,29 +6,61 @@ One `defineRule` registry is the source of truth. Oxlint configuration, the cust
 
 This package is private. Install it from Git (or a local path) rather than npm.
 
-## Install
+`dist/` is committed on purpose. pnpm will not run `prepare` for git-hosted packages unless they are in `allowBuilds`, so a GitHub/`dlx` install must already contain the built CLI.
 
-Peer tools the consuming project must also install:
+## One-shot check
 
-- `oxlint@1.80.0`
-- `oxlint-tsgolint`
-- `typescript`
-
-Local path, while iterating:
+After the repository is on GitHub, from any project:
 
 ```bash
-pnpm add -D ../architecture-rules oxlint@1.80.0 oxlint-tsgolint typescript
+pnpm dlx github:JamesDHW/architecture-rules
 ```
 
-From GitHub, once the repository is published:
+or:
 
 ```bash
-pnpm add -D github:USER/architecture-rules#v0.1.0 oxlint@1.80.0 oxlint-tsgolint typescript
+npx github:JamesDHW/architecture-rules
 ```
 
-During experimentation a branch reference such as `#main` is fine. Pin a tag or commit for real work.
+That runs Oxlint with this package's default profile, then `tsc --noEmit` with the architecture TypeScript flags if the target has a `tsconfig.json`.
 
-## Oxlint
+```bash
+pnpm dlx github:JamesDHW/architecture-rules -- --fix
+pnpm dlx github:JamesDHW/architecture-rules -- ../other-app
+```
+
+Pin a tag once you start using it for real work:
+
+```bash
+pnpm dlx github:JamesDHW/architecture-rules#v0.1.0
+```
+
+## Permanent install
+
+In the consuming repo:
+
+```bash
+pnpm add -D github:JamesDHW/architecture-rules
+```
+
+Pin a tag or commit when the profile should stay still:
+
+```bash
+pnpm add -D github:JamesDHW/architecture-rules#v0.1.0
+```
+
+Then either run the bundled command:
+
+```json
+{
+  "scripts": {
+    "architecture:check": "architecture-check",
+    "architecture:fix": "architecture-check --fix"
+  }
+}
+```
+
+or keep a local Oxlint config so you can disable individual personal rule IDs:
 
 ```ts
 // oxlint.config.ts
@@ -36,8 +68,6 @@ import { createConfig } from "architecture-rules";
 
 export default createConfig();
 ```
-
-The default profile enables every Oxlint-backed personal rule. Disable or weaken them by **personal rule ID**, not by the underlying Oxlint rule name:
 
 ```ts
 import { createConfig } from "architecture-rules";
@@ -60,9 +90,7 @@ export default createConfig({
 
 Scoped overrides require a `reason` so the next human or agent can tell the deviation is intentional.
 
-TypeScript compiler rules are not switched here. Override those in the consuming project's `tsconfig`.
-
-## TypeScript
+TypeScript compiler rules are not switched via `createConfig()`. Either run `architecture-check` (which passes the flags to `tsc`) or extend the shared base config:
 
 ```json
 {
@@ -77,17 +105,8 @@ TypeScript compiler rules are not switched here. Override those in the consuming
 }
 ```
 
-The shared base config contains universal type-system flags only.
+Local path, while iterating on this package:
 
-## Scripts
-
-```json
-{
-  "scripts": {
-    "architecture:check": "oxlint && tsc --noEmit",
-    "architecture:fix": "oxlint --fix"
-  }
-}
+```bash
+pnpm add -D ../architecture-rules
 ```
-
-Type-aware Oxlint rules require `oxlint-tsgolint` in the consuming project.

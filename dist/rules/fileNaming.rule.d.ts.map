@@ -1,0 +1,1 @@
+{"version":3,"file":"fileNaming.rule.d.ts","sourceRoot":"","sources":["../../src/rules/fileNaming.rule.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,QAAQ,CAAC;AAqNnC,eAAO,MAAM,cAAc;;;;;;;;gDAnLX,aAAa,EAAE,cAAc;0CAEzC,cAAc,EACd,eAAe,EACf,cAAc,EACd,eAAe;8CAEL,aAAa,EAAE,eAAe;;;;;CA+L1C,CAAC"}
