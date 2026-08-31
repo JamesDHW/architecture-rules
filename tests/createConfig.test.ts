@@ -1,0 +1,152 @@
+import { describe, expect, it } from "vitest";
+
+import { createConfig } from "../src/core/createConfig.js";
+import { rules } from "../src/rules/index.js";
+
+const oxlintBackedRules = rules.filter(
+  (rule) =>
+    rule.enforcement.type === "oxlint" ||
+    rule.enforcement.type === "custom-oxlint",
+);
+
+const typescriptRules = rules.filter(
+  (rule) => rule.enforcement.type === "typescript",
+);
+
+describe("createConfig", () => {
+  it("includes every Oxlint-backed personal rule", () => {
+    const { rules: configuredRules } = createConfig();
+
+    for (const rule of oxlintBackedRules) {
+      if (rule.enforcement.type === "oxlint") {
+        expect(configuredRules).toHaveProperty(rule.enforcement.rule);
+        continue;
+      }
+
+      expect(configuredRules).toHaveProperty(`architecture/${rule.id}`);
+    }
+  });
+
+  it("includes every custom rule as architecture/<id>", () => {
+    const { rules: configuredRules } = createConfig();
+
+    expect(configuredRules).toMatchObject({
+      "architecture/file-naming": [
+        "error",
+        {
+          allow: {
+            entrypoints: ["**/index.ts", "**/index.tsx"],
+            tests: [
+              "**/*.test.ts",
+              "**/*.test.tsx",
+              "**/*.spec.ts",
+              "**/*.spec.tsx",
+            ],
+            framework: ["**/page.tsx", "**/layout.tsx"],
+          },
+        },
+      ],
+    });
+  });
+
+  it("excludes TypeScript-only rules from Oxlint", () => {
+    const { rules: configuredRules } = createConfig();
+
+    for (const rule of typescriptRules) {
+      expect(configuredRules).not.toHaveProperty(rule.id);
+
+      for (const compilerOption of Object.keys(
+        rule.enforcement.compilerOptions,
+      )) {
+        expect(configuredRules).not.toHaveProperty(compilerOption);
+      }
+    }
+  });
+
+  it("translates personal IDs into actual Oxlint IDs", () => {
+    const { rules: configuredRules } = createConfig();
+
+    expect(configuredRules).toMatchObject({
+      "typescript/strict-boolean-expressions": [
+        "error",
+        {
+          allowString: false,
+          allowNumber: false,
+          allowNullableObject: false,
+        },
+      ],
+    });
+    expect(configuredRules).not.toHaveProperty("explicit-conditions");
+    expect(configuredRules).not.toHaveProperty("file-naming");
+  });
+
+  it("applies global disables by personal rule ID", () => {
+    const { rules: configuredRules } = createConfig({
+      rules: {
+        "file-naming": "off",
+      },
+    });
+
+    expect(configuredRules?.["architecture/file-naming"]).toBe("off");
+    expect(configuredRules?.["typescript/strict-boolean-expressions"]).toEqual([
+      "error",
+      {
+        allowString: false,
+        allowNumber: false,
+        allowNullableObject: false,
+      },
+    ]);
+  });
+
+  it("keeps default options when a global severity override is applied", () => {
+    const { rules: configuredRules } = createConfig({
+      rules: {
+        "explicit-conditions": "warn",
+      },
+    });
+
+    expect(configuredRules?.["typescript/strict-boolean-expressions"]).toEqual([
+      "warn",
+      {
+        allowString: false,
+        allowNumber: false,
+        allowNullableObject: false,
+      },
+    ]);
+  });
+
+  it("applies glob overrides by personal rule ID and strips reason", () => {
+    const config = createConfig({
+      overrides: [
+        {
+          files: ["src/generated/**"],
+          reason: "Generated files follow the upstream generator's conventions.",
+          rules: {
+            "file-naming": "off",
+          },
+        },
+      ],
+    });
+
+    expect(config.overrides).toEqual([
+      {
+        files: ["src/generated/**"],
+        rules: {
+          "architecture/file-naming": "off",
+        },
+      },
+    ]);
+  });
+
+  it("enables type-aware linting and the architecture JS plugin", () => {
+    const config = createConfig();
+
+    expect(config.options?.typeAware).toBe(true);
+    expect(config.jsPlugins).toEqual([
+      {
+        name: "architecture",
+        specifier: "architecture-rules/plugin",
+      },
+    ]);
+  });
+});

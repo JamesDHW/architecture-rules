@@ -1,0 +1,55 @@
+{
+  "name": "architecture-rules",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Reusable architecture and code-quality rules for TypeScript and React projects.",
+  "type": "module",
+  "files": [
+    "dist",
+    "tsconfig.base.json",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./plugin": {
+      "types": "./dist/plugin.d.ts",
+      "default": "./dist/plugin.js"
+    },
+    "./tsconfig.base.json": "./tsconfig.base.json"
+  },
+  "scripts": {
+    "build:typescript": "tsc -p tsconfig.build.json",
+    "generate": "node dist/generateTsconfig.js",
+    "build": "pnpm run build:typescript && pnpm run generate",
+    "test": "vitest run",
+    "check": "pnpm run build && pnpm test",
+    "prepare": "pnpm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.22.0",
+      "onFail": "download"
+    }
+  },
+  "dependencies": {
+    "picomatch": "^4.0.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "eslint": "^10.9.1",
+    "oxlint": "1.80.0",
+    "oxlint-tsgolint": "^7.0.2001",
+    "typescript": "7.0.2",
+    "vitest": "^4.1.11"
+  },
+  "peerDependencies": {
+    "oxlint": "1.80.0"
+  }
+}
