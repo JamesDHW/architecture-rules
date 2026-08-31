@@ -30,23 +30,7 @@ describe("createConfig", () => {
   it("includes every custom rule as architecture/<id>", () => {
     const { rules: configuredRules } = createConfig();
 
-    expect(configuredRules).toMatchObject({
-      "architecture/file-naming": [
-        "error",
-        {
-          allow: {
-            entrypoints: ["**/index.ts", "**/index.tsx"],
-            tests: [
-              "**/*.test.ts",
-              "**/*.test.tsx",
-              "**/*.spec.ts",
-              "**/*.spec.tsx",
-            ],
-            framework: ["**/page.tsx", "**/layout.tsx"],
-          },
-        },
-      ],
-    });
+    expect(configuredRules?.["architecture/file-naming"]).toBe("error");
   });
 
   it("excludes TypeScript-only rules from Oxlint", () => {
@@ -146,6 +130,30 @@ describe("createConfig", () => {
       {
         name: "architecture",
         specifier: "architecture-rules/plugin",
+      },
+    ]);
+  });
+
+  it("passes client file-naming options through personal rule IDs", () => {
+    const { rules: configuredRules } = createConfig({
+      rules: {
+        "file-naming": [
+          "error",
+          {
+            suffixes: {
+              ".tsx": "pascal",
+            },
+          },
+        ],
+      },
+    });
+
+    expect(configuredRules?.["architecture/file-naming"]).toEqual([
+      "error",
+      {
+        suffixes: {
+          ".tsx": "pascal",
+        },
       },
     ]);
   });

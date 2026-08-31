@@ -9,7 +9,7 @@ import type {
 type MutableOxlintConfiguration = Severity | [Severity, ...unknown[]];
 
 type RuleOverride =
-  | Severity
+  | OxlintRuleConfiguration
   | {
       readonly severity: Severity;
       readonly reason: string;
@@ -25,20 +25,6 @@ type ConfigOptions = {
   }[];
 
   readonly pluginSpecifier?: string;
-};
-
-const getSeverity = (
-  override: RuleOverride | undefined,
-): Severity | undefined => {
-  if (override === undefined) {
-    return undefined;
-  }
-
-  if (typeof override === "string") {
-    return override;
-  }
-
-  return override.severity;
 };
 
 const getOxlintRuleName = (
@@ -80,6 +66,21 @@ const withSeverity = (
   return [severity, ...configuration.slice(1)];
 };
 
+const toOverrideConfiguration = (
+  configuration: OxlintRuleConfiguration,
+  override: RuleOverride,
+): MutableOxlintConfiguration => {
+  if (typeof override === "string") {
+    return withSeverity(configuration, override);
+  }
+
+  if ("severity" in override) {
+    return withSeverity(configuration, override.severity);
+  }
+
+  return [override[0], ...override.slice(1)];
+};
+
 const toOxlintEntry = (
   rule: (typeof rules)[number],
   override: RuleOverride | undefined,
@@ -93,12 +94,14 @@ const toOxlintEntry = (
     return undefined;
   }
 
-  const severity = getSeverity(override);
-  if (severity === undefined) {
+  if (override === undefined) {
     return [oxlintRuleName, toMutableConfiguration(rule.enforcement.configuration)];
   }
 
-  return [oxlintRuleName, withSeverity(rule.enforcement.configuration, severity)];
+  return [
+    oxlintRuleName,
+    toOverrideConfiguration(rule.enforcement.configuration, override),
+  ];
 };
 
 const findRule = (architectureRuleId: string) => {

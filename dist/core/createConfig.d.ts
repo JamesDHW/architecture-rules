@@ -1,7 +1,7 @@
 import { type ArchitectureRuleId } from "../rules/index.js";
-import type { Severity } from "./defineRule.js";
+import type { OxlintRuleConfiguration, Severity } from "./defineRule.js";
 type MutableOxlintConfiguration = Severity | [Severity, ...unknown[]];
-type RuleOverride = Severity | {
+type RuleOverride = OxlintRuleConfiguration | {
     readonly severity: Severity;
     readonly reason: string;
 };

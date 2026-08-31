@@ -17,13 +17,7 @@ export declare const rules: readonly [{
     readonly description: string;
     readonly enforcement: {
         readonly type: "custom-oxlint";
-        readonly configuration: readonly ["error", {
-            readonly allow: {
-                readonly entrypoints: readonly ["**/index.ts", "**/index.tsx"];
-                readonly tests: readonly ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"];
-                readonly framework: readonly ["**/page.tsx", "**/layout.tsx"];
-            };
-        }];
+        readonly configuration: "error";
         readonly implementation: import("eslint").Rule.RuleModule;
     };
 }, {

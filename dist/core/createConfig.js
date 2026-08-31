@@ -1,14 +1,5 @@
 import { defineConfig } from "oxlint";
 import { rules } from "../rules/index.js";
-const getSeverity = (override) => {
-    if (override === undefined) {
-        return undefined;
-    }
-    if (typeof override === "string") {
-        return override;
-    }
-    return override.severity;
-};
 const getOxlintRuleName = (rule) => {
     if (rule.enforcement.type === "oxlint") {
         return rule.enforcement.rule;
@@ -33,6 +24,15 @@ const withSeverity = (configuration, severity) => {
     }
     return [severity, ...configuration.slice(1)];
 };
+const toOverrideConfiguration = (configuration, override) => {
+    if (typeof override === "string") {
+        return withSeverity(configuration, override);
+    }
+    if ("severity" in override) {
+        return withSeverity(configuration, override.severity);
+    }
+    return [override[0], ...override.slice(1)];
+};
 const toOxlintEntry = (rule, override) => {
     const oxlintRuleName = getOxlintRuleName(rule);
     if (oxlintRuleName === undefined) {
@@ -41,11 +41,13 @@ const toOxlintEntry = (rule, override) => {
     if (rule.enforcement.type !== "oxlint" && rule.enforcement.type !== "custom-oxlint") {
         return undefined;
     }
-    const severity = getSeverity(override);
-    if (severity === undefined) {
+    if (override === undefined) {
         return [oxlintRuleName, toMutableConfiguration(rule.enforcement.configuration)];
     }
-    return [oxlintRuleName, withSeverity(rule.enforcement.configuration, severity)];
+    return [
+        oxlintRuleName,
+        toOverrideConfiguration(rule.enforcement.configuration, override),
+    ];
 };
 const findRule = (architectureRuleId) => {
     return rules.find((candidate) => candidate.id === architectureRuleId);
