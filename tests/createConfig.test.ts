@@ -29,8 +29,13 @@ describe("createConfig", () => {
 
   it("includes every custom rule as architecture/<id>", () => {
     const { rules: configuredRules } = createConfig();
+    const customRules = rules.filter(
+      (rule) => rule.enforcement.type === "custom-oxlint",
+    );
 
-    expect(configuredRules?.["architecture/file-naming"]).toBe("error");
+    for (const rule of customRules) {
+      expect(configuredRules).toHaveProperty(`architecture/${rule.id}`);
+    }
   });
 
   it("excludes TypeScript-only rules from Oxlint", () => {
@@ -62,6 +67,27 @@ describe("createConfig", () => {
     });
     expect(configuredRules).not.toHaveProperty("explicit-conditions");
     expect(configuredRules).not.toHaveProperty("file-naming");
+    expect(configuredRules).not.toHaveProperty("no-enums");
+    expect(configuredRules).not.toHaveProperty("guard-clauses");
+    expect(configuredRules).not.toHaveProperty("named-jsx-handlers");
+    expect(configuredRules).not.toHaveProperty("no-boolean-cast");
+    expect(configuredRules).not.toHaveProperty("prefer-logical-over-ternary");
+    expect(configuredRules).not.toHaveProperty("named-predicates");
+    expect(configuredRules).not.toHaveProperty("prefer-switch");
+  });
+
+  it("uses warn for deep relative imports", () => {
+    const { rules: configuredRules } = createConfig();
+
+    expect(configuredRules?.["architecture/no-deep-relative-imports"]).toBe(
+      "warn",
+    );
+  });
+
+  it("uses warn for one path one result", () => {
+    const { rules: configuredRules } = createConfig();
+
+    expect(configuredRules?.["architecture/one-path-one-result"]).toBe("warn");
   });
 
   it("applies global disables by personal rule ID", () => {
