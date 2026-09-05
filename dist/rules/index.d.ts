@@ -469,6 +469,24 @@ export declare const rules: readonly [{
         readonly implementation: import("eslint").Rule.RuleModule;
     };
 }, {
+    readonly id: "named-divisibility";
+    readonly title: "Name divisibility checks";
+    readonly description: string;
+    readonly enforcement: {
+        readonly type: "custom-oxlint";
+        readonly configuration: "error";
+        readonly implementation: import("eslint").Rule.RuleModule;
+    };
+}, {
+    readonly id: "no-else";
+    readonly title: "Do not use else";
+    readonly description: string;
+    readonly enforcement: {
+        readonly type: "custom-oxlint";
+        readonly configuration: "error";
+        readonly implementation: import("eslint").Rule.RuleModule;
+    };
+}, {
     readonly id: "no-collapsible-if";
     readonly title: "Do not nest a sole if inside another if";
     readonly description: string;
@@ -480,6 +498,24 @@ export declare const rules: readonly [{
 }, {
     readonly id: "no-boolean-if-else";
     readonly title: "Pass booleans directly instead of branching";
+    readonly description: string;
+    readonly enforcement: {
+        readonly type: "custom-oxlint";
+        readonly configuration: "error";
+        readonly implementation: import("eslint").Rule.RuleModule;
+    };
+}, {
+    readonly id: "no-boolean-assignment-branches";
+    readonly title: "Do not assign boolean literals in branches";
+    readonly description: string;
+    readonly enforcement: {
+        readonly type: "custom-oxlint";
+        readonly configuration: "error";
+        readonly implementation: import("eslint").Rule.RuleModule;
+    };
+}, {
+    readonly id: "prefer-single-boolean-return";
+    readonly title: "Return a boolean expression instead of a true/false tail";
     readonly description: string;
     readonly enforcement: {
         readonly type: "custom-oxlint";

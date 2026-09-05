@@ -1,9 +1,14 @@
+import { simpleTernariesRule } from "./simpleTernaries.rule.js";
 import { uncheckedIndexedAccessRule } from "./uncheckedIndexedAccess.rule.js";
 import { constantsModuleRule } from "./constantsModule.rule.js";
 import { exactOptionalPropertyTypesRule } from "./exactOptionalPropertyTypes.rule.js";
 import { explicitConditionsRule } from "./explicitConditions.rule.js";
 import { fileNamingRule } from "./fileNaming.rule.js";
 import { forceConsistentCasingInFileNamesRule } from "./forceConsistentCasingInFileNames.rule.js";
+import {
+  maxFileLinesRule,
+  maxFileLinesWarnRule,
+} from "./maxFileLines.rule.js";
 import { namedJsxHandlersRule } from "./namedJsxHandlers.rule.js";
 import { namedPredicatesRule } from "./namedPredicates.rule.js";
 import {
@@ -13,10 +18,9 @@ import {
   exhaustiveDepsRule,
   explicitExportedReturnTypesRule,
   explicitJsxPropsRule,
-  genericNameDenylistRule,
   guardClausesRule,
+  genericNameDenylistRule,
   jsxKeyRule,
-  maxFileLinesRule,
   moduleScopeComponentsRule,
   namedExportsRule,
   noBooleanCastRule,
@@ -45,12 +49,14 @@ import {
   preferLogicalOverTernaryRule,
   reduceSimpleFoldsRule,
   rulesOfHooksRule,
-  simpleTernariesRule,
   switchExhaustivenessRule,
   typeAliasesRule,
 } from "./nativeOxlint.rules.js";
+import { namedDivisibilityRule } from "./namedDivisibility.rule.js";
+import { noBooleanAssignmentBranchesRule } from "./noBooleanAssignmentBranches.rule.js";
 import { noBooleanIfElseRule } from "./noBooleanIfElse.rule.js";
 import { noCollapsibleIfRule } from "./noCollapsibleIf.rule.js";
+import { noElseRule } from "./noElse.rule.js";
 import { noBindingAliasRule } from "./noBindingAlias.rule.js";
 import { noDeepRelativeImportsRule } from "./noDeepRelativeImports.rule.js";
 import { noEnumsRule } from "./noEnums.rule.js";
@@ -59,12 +65,14 @@ import { noImplicitOverrideRule } from "./noImplicitOverride.rule.js";
 import { noImplicitReturnsRule } from "./noImplicitReturns.rule.js";
 import { noTypeAssertionsRule } from "./noTypeAssertions.rule.js";
 import { onePathOneResultRule } from "./onePathOneResult.rule.js";
+import { preferSingleBooleanReturnRule } from "./preferSingleBooleanReturn.rule.js";
 import { preferSwitchRule } from "./preferSwitch.rule.js";
 import { readonlyTypePropertiesRule } from "./readonlyTypeProperties.rule.js";
 import { strictTypeScriptRule } from "./strictTypeScript.rule.js";
 
 export const rules = [
   explicitConditionsRule,
+  simpleTernariesRule,
   fileNamingRule,
   strictTypeScriptRule,
   uncheckedIndexedAccessRule,
@@ -73,8 +81,6 @@ export const rules = [
   noFallthroughCasesInSwitchRule,
   noImplicitOverrideRule,
   forceConsistentCasingInFileNamesRule,
-  guardClausesRule,
-  simpleTernariesRule,
   explicitExportedReturnTypesRule,
   preferArrowFunctionsRule,
   preferArrowCallbackRule,
@@ -92,7 +98,9 @@ export const rules = [
   noCycleRule,
   explicitJsxPropsRule,
   moduleScopeComponentsRule,
+  maxFileLinesWarnRule,
   maxFileLinesRule,
+  guardClausesRule,
   genericNameDenylistRule,
   noExplicitAnyRule,
   noNonNullAssertionRule,
@@ -115,8 +123,12 @@ export const rules = [
   preferLogicalOverTernaryRule,
   noUselessAssignmentRule,
   namedPredicatesRule,
+  namedDivisibilityRule,
+  noElseRule,
   noCollapsibleIfRule,
   noBooleanIfElseRule,
+  noBooleanAssignmentBranchesRule,
+  preferSingleBooleanReturnRule,
   onePathOneResultRule,
   preferSwitchRule,
   noEnumsRule,

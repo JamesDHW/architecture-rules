@@ -14,6 +14,14 @@ const typescriptRules = rules.filter(
 );
 
 describe("createConfig", () => {
+  it("uses the custom ternary rule and avoids redundant guard diagnostics", () => {
+    const config = createConfig();
+    expect(config.rules?.["architecture/simple-ternaries"]).toBe("error");
+    expect(config.rules).not.toHaveProperty("unicorn/no-nested-ternary");
+    expect(config.rules?.["no-else-return"]).toEqual(["off", { allowElseIf: false }]);
+    expect(config.rules?.["architecture/no-else"]).toBe("error");
+  });
+
   it("includes every Oxlint-backed personal rule", () => {
     const { rules: configuredRules } = createConfig();
 
@@ -73,6 +81,10 @@ describe("createConfig", () => {
     expect(configuredRules).not.toHaveProperty("no-boolean-cast");
     expect(configuredRules).not.toHaveProperty("prefer-logical-over-ternary");
     expect(configuredRules).not.toHaveProperty("named-predicates");
+    expect(configuredRules).not.toHaveProperty("named-divisibility");
+    expect(configuredRules).not.toHaveProperty("no-else");
+    expect(configuredRules).not.toHaveProperty("no-boolean-assignment-branches");
+    expect(configuredRules).not.toHaveProperty("prefer-single-boolean-return");
     expect(configuredRules).not.toHaveProperty("prefer-switch");
   });
 
@@ -88,6 +100,19 @@ describe("createConfig", () => {
     const { rules: configuredRules } = createConfig();
 
     expect(configuredRules?.["architecture/one-path-one-result"]).toBe("warn");
+  });
+
+  it("warns at 150 file lines and errors at 200", () => {
+    const { rules: configuredRules } = createConfig();
+
+    expect(configuredRules?.["architecture/max-file-lines-warn"]).toEqual([
+      "warn",
+      { max: 150, skipBlankLines: true, skipComments: true },
+    ]);
+    expect(configuredRules?.["max-lines"]).toEqual([
+      "error",
+      { max: 200, skipBlankLines: true, skipComments: true },
+    ]);
   });
 
   it("applies global disables by personal rule ID", () => {

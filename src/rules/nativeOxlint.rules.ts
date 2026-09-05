@@ -14,7 +14,8 @@ export const guardClausesRule = defineNativeOxlintRule({
   id: "guard-clauses",
   title: "Use guard clauses for terminal cases",
   description: `
-Avoid else after a return, throw, break, or continue. Exit the conditional
+Legacy independently configurable check, disabled by default because no-else
+already rejects every else branch. Avoid else after a return. Exit the conditional
 flow as soon as you can. Most else blocks after a terminal statement are
 superfluous.
 
@@ -23,20 +24,7 @@ nested. Reserving conditional blocks for special cases emphasises the
 nominal path and makes it easier to evolve.
   `.trim(),
   rule: "no-else-return",
-  configuration: ["error", { allowElseIf: false }],
-});
-
-export const simpleTernariesRule = defineNativeOxlintRule({
-  id: "simple-ternaries",
-  title: "Keep ternaries simple and side-effect-free",
-  description: `
-Use a ternary only for a single, concise binary choice. Do not nest ternaries.
-
-A simple ternary makes a small value choice easy to see. Nested ternaries hide
-control flow inside an expression.
-  `.trim(),
-  rule: "unicorn/no-nested-ternary",
-  configuration: "error",
+  configuration: ["off", { allowElseIf: false }],
 });
 
 export const explicitExportedReturnTypesRule = defineNativeOxlintRule({
@@ -272,20 +260,6 @@ Nested component declarations recreate component identity during rendering.
   `.trim(),
   rule: "react/no-unstable-nested-components",
   configuration: "error",
-});
-
-export const maxFileLinesRule = defineNativeOxlintRule({
-  id: "max-file-lines",
-  title: "Limit source files to 200 lines",
-  description: `
-Report an error when a source file exceeds 200 lines. Split the file by
-cohesive responsibility rather than moving arbitrary ranges of code.
-
-A bounded file can be understood without navigating a large collection of
-unrelated concepts.
-  `.trim(),
-  rule: "max-lines",
-  configuration: ["error", { max: 200, skipBlankLines: true, skipComments: true }],
 });
 
 export const genericNameDenylistRule = defineNativeOxlintRule({

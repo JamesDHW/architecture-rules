@@ -18,6 +18,19 @@ if (isEligibleForDiscount) {
       code: "if (hasAccess(token)) {\n  return homepageResponse();\n}\n",
     },
     {
+      name: "preferred leap year",
+      code: `
+const isDivisibleBy = (value: number, divisor: number): boolean =>
+  value % divisor === 0;
+
+const isLeapYear = (year: number): boolean => {
+  if (isDivisibleBy(year, 400)) return true;
+  if (isDivisibleBy(year, 100)) return false;
+  return isDivisibleBy(year, 4);
+};
+`.trim(),
+    },
+    {
       name: "comparison is not a logical operation",
       code: "if (basket.amount > 1000000) {\n  addDiscount();\n}\n",
     },
