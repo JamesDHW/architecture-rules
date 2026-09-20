@@ -1,5 +1,5 @@
 import { constantsModuleRule } from "../src/rules/constantsModule.rule.js";
-import { runCustomRule } from "./runCustomRule.js";
+import { runCustomRule } from "./utils/runCustomRule.js";
 
 runCustomRule(constantsModuleRule, {
   valid: [

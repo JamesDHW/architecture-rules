@@ -1,5 +1,5 @@
 import { noDeepRelativeImportsRule } from "../src/rules/noDeepRelativeImports.rule.js";
-import { runCustomRule } from "./runCustomRule.js";
+import { runCustomRule } from "./utils/runCustomRule.js";
 
 runCustomRule(noDeepRelativeImportsRule, {
   valid: [

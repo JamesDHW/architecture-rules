@@ -74,7 +74,7 @@ const implementation = {
             description: DESCRIPTION,
         },
         messages: {
-            booleanTail: "Return the boolean expression instead of returning true and false from opposite paths. See rule prefer-single-boolean-return.",
+            booleanTail: "Return the boolean expression (negated for the reverse case). For non-boolean inputs, first express the intended comparison explicitly. See rule prefer-single-boolean-return.",
         },
     },
     create(context) {
@@ -87,6 +87,9 @@ const implementation = {
                     return;
                 }
                 reportIfOppositeBooleanReturns(context, node, getSoleReturnedBoolean(asLoose(node.consequent)), getSoleReturnedBoolean(asLoose(node.alternate)));
+            },
+            SwitchCase(node) {
+                checkStatements(context, asLooseList(node.consequent));
             },
             Program(node) {
                 checkStatements(context, asLooseList(node.body));

@@ -1,1 +1,1 @@
-{"version":3,"file":"preferSingleBooleanReturn.rule.d.ts","sourceRoot":"","sources":["../../src/rules/preferSingleBooleanReturn.rule.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,QAAQ,CAAC;AA0JnC,eAAO,MAAM,6BAA6B;;;;;;;;;CASxC,CAAC"}
+{"version":3,"file":"preferSingleBooleanReturn.rule.d.ts","sourceRoot":"","sources":["../../src/rules/preferSingleBooleanReturn.rule.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,QAAQ,CAAC;AA6JnC,eAAO,MAAM,6BAA6B;;;;;;;;;CASxC,CAAC"}

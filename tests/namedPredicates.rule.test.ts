@@ -1,5 +1,5 @@
 import { namedPredicatesRule } from "../src/rules/namedPredicates.rule.js";
-import { runCustomRule } from "./runCustomRule.js";
+import { runCustomRule } from "./utils/runCustomRule.js";
 
 runCustomRule(namedPredicatesRule, {
   valid: [
@@ -56,7 +56,7 @@ if (user.premium === true || basket.amount > 1000000 || user.orders.length > 20)
     },
     {
       name: "anonymous || in ternary",
-      code: "const label = isDraft || isArchived ? \"hidden\" : \"visible\";\n",
+      code: 'const label = isDraft || isArchived ? "hidden" : "visible";\n',
       errors: [{ messageId: "namedPredicate" }],
     },
   ],

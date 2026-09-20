@@ -1,1 +1,1 @@
-{"version":3,"file":"noBindingAlias.rule.d.ts","sourceRoot":"","sources":["../../src/rules/noBindingAlias.rule.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,QAAQ,CAAC;AAiEnC,eAAO,MAAM,kBAAkB;;;;;;;;;CAS7B,CAAC"}
+{"version":3,"file":"noBindingAlias.rule.d.ts","sourceRoot":"","sources":["../../src/rules/noBindingAlias.rule.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,QAAQ,CAAC;AAwFnC,eAAO,MAAM,kBAAkB;;;;;;;;;CAS7B,CAAC"}

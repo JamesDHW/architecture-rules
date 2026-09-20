@@ -1,8 +1,24 @@
 import { noElseRule } from "../src/rules/noElse.rule.js";
-import { runCustomRule } from "./runCustomRule.js";
+import { runCustomRule } from "./utils/runCustomRule.js";
 
 runCustomRule(noElseRule, {
   valid: [
+    {
+      name: "exclusive effects extracted before shared work",
+      code: `
+const notifyProjectMembers = (project: Project): void => {
+  sendProjectStatusNotification(project);
+  recordNotificationDelivery(project.id);
+};
+const sendProjectStatusNotification = (project: Project): void => {
+  if (project.isArchived) {
+    sendArchiveNotification(project);
+    return;
+  }
+  sendActiveNotification(project);
+};
+`.trim(),
+    },
     {
       name: "preferred leap year",
       code: `
@@ -32,6 +48,20 @@ return homepageResponse();
     },
   ],
   invalid: [
+    {
+      name: "nonterminal exclusive effects before shared work",
+      code: `
+const notifyProjectMembers = (project: Project): void => {
+  if (project.isArchived) {
+    sendArchiveNotification(project);
+  } else {
+    sendActiveNotification(project);
+  }
+  recordNotificationDelivery(project.id);
+};
+`.trim(),
+      errors: [{ messageId: "noElse" }],
+    },
     {
       name: "else after if",
       code: `

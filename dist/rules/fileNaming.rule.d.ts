@@ -7,6 +7,7 @@ export type FileNamingOptions = {
 };
 export declare const fileNamingRule: {
     readonly id: "file-naming";
+    readonly options: import("../core/defineRule.js").RuleOptions<[FileNamingOptions?]>;
     readonly title: "Name files after one primary concept";
     readonly description: string;
     readonly enforcement: {

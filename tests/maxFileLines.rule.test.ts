@@ -1,5 +1,5 @@
 import { maxFileLinesWarnRule } from "../src/rules/maxFileLines.rule.js";
-import { runCustomRule } from "./runCustomRule.js";
+import { runCustomRule } from "./utils/runCustomRule.js";
 
 runCustomRule(maxFileLinesWarnRule, {
   valid: [

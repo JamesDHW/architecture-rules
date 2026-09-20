@@ -1,12 +1,24 @@
 import { preferSwitchRule } from "../src/rules/preferSwitch.rule.js";
-import { runCustomRule } from "./runCustomRule.js";
+import { runCustomRule } from "./utils/runCustomRule.js";
 
 runCustomRule(preferSwitchRule, {
   valid: [
-    { name: "independent effects may change the discriminant", code: 'if (project.status === "draft") publish(project); if (project.status === "active") notify(project);' },
-    { name: "loose equality is not switch equality", code: 'if (status == 0) return pending; if (status == 1) return ready;' },
-    { name: "computed property access may perform work", code: 'if (project[getKey()] === "draft") return pending; if (project[getKey()] === "active") return ready;' },
-    { name: "intervening work must not be moved", code: 'if (status === "draft") return pending; refresh(); if (status === "active") return ready;' },
+    {
+      name: "independent effects may change the discriminant",
+      code: 'if (project.status === "draft") publish(project); if (project.status === "active") notify(project);',
+    },
+    {
+      name: "loose equality is not switch equality",
+      code: "if (status == 0) return pending; if (status == 1) return ready;",
+    },
+    {
+      name: "computed property access may perform work",
+      code: 'if (project[getKey()] === "draft") return pending; if (project[getKey()] === "active") return ready;',
+    },
+    {
+      name: "intervening work must not be moved",
+      code: 'if (status === "draft") return pending; refresh(); if (status === "active") return ready;',
+    },
 
     {
       name: "single equality if",
@@ -72,9 +84,13 @@ return food;
   ],
 });
 
-runCustomRule(preferSwitchRule, {
-  valid: [
-    'const ProjectPage = () => { if (project.status === "loading") return <Loading />; if (project.status === "failure") return <Failure />; return <Project />; };',
-  ],
-  invalid: [],
-}, "tsx");
+runCustomRule(
+  preferSwitchRule,
+  {
+    valid: [
+      'const ProjectPage = () => { if (project.status === "loading") return <Loading />; if (project.status === "failure") return <Failure />; return <Project />; };',
+    ],
+    invalid: [],
+  },
+  "tsx",
+);

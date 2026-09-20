@@ -1,1 +1,1 @@
-{"version":3,"file":"noBooleanAssignmentBranches.rule.d.ts","sourceRoot":"","sources":["../../src/rules/noBooleanAssignmentBranches.rule.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,QAAQ,CAAC;AAiHnC,eAAO,MAAM,+BAA+B;;;;;;;;;CAS1C,CAAC"}
+{"version":3,"file":"noBooleanAssignmentBranches.rule.d.ts","sourceRoot":"","sources":["../../src/rules/noBooleanAssignmentBranches.rule.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,QAAQ,CAAC;AA0DnC,eAAO,MAAM,+BAA+B;;;;;;;;;CAK1C,CAAC"}

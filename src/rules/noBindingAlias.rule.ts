@@ -8,9 +8,27 @@ name, and do not rename imports with as. Use the original name, or create a
 genuinely new value through a named transformation. Renaming while destructuring
 an object property remains allowed.
 
-Multiple names for the same binding force readers to track identity without
-adding information.
+Good: if (shouldEnable) { startSynchronization(); }
+Bad: const isEnabled = shouldEnable;
+Bad: isEnabled = shouldEnable;
+Good: const normalizedProjectName = projectName.trim();
+
+Multiple synonymous names for the same binding force readers to track identity
+without adding information. This detects direct aliases, not English synonymy
+between names of genuinely different computations.
+
+The global undefined value is not an alias source: initializing with undefined
+or assigning undefined to clear optional state is outside this rule. A local
+binding named undefined is still subject to the alias check. This exclusion
+classifies aliasing only; it does not endorse mutable state or recommend resets.
+Whether mutation is appropriate belongs to the separate immutability policy.
 `.trim();
+
+type Identifier = Parameters<Rule.RuleContext["sourceCode"]["isGlobalReference"]>[0];
+
+const isGlobalUndefined = (node: Identifier, context: Rule.RuleContext): boolean => {
+  return node.name === "undefined" && context.sourceCode.isGlobalReference(node);
+};
 
 const implementation: Rule.RuleModule = {
   meta: {
@@ -36,7 +54,7 @@ const implementation: Rule.RuleModule = {
           return;
         }
 
-        if (node.init.type !== "Identifier") {
+        if (node.init.type !== "Identifier" || isGlobalUndefined(node.init, context)) {
           return;
         }
 
@@ -44,6 +62,11 @@ const implementation: Rule.RuleModule = {
           node,
           messageId: "bindingAlias",
         });
+      },
+      AssignmentExpression(node) {
+        if (node.operator !== "=" || node.left.type !== "Identifier" || node.right.type !== "Identifier") return;
+        if (isGlobalUndefined(node.right, context)) return;
+        context.report({ node, messageId: "bindingAlias" });
       },
       ImportSpecifier(node) {
         if (node.imported.type !== "Identifier") {

@@ -305,7 +305,7 @@ const submitOrder = async (
 
 ## Use `async`/`await` for sequential asynchronous flow
 
-Express sequential asynchronous work with `async`/`await`, not `.then`, `.catch`, or `.finally` chains. Use explicit Promise combinators such as `Promise.all` when intentional concurrency is the operation being expressed.
+Express sequential asynchronous work with `async`/`await`, not `.then`, `.catch`, or `.finally`. Ban those methods even after an `await` or `yield`. Use explicit Promise combinators such as `Promise.all` when intentional concurrency is the operation being expressed.
 
 ```ts
 const loadProject = async (

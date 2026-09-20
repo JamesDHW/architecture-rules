@@ -1,57 +1,22 @@
 import { onePathOneResultRule } from "../src/rules/onePathOneResult.rule.js";
-import { runCustomRule } from "./runCustomRule.js";
+import { runCustomRule } from "./utils/runCustomRule.js";
 
 runCustomRule(onePathOneResultRule, {
   valid: [
-    {
-      name: "combined predicates",
-      code: `
-if (a || b) {
-  pouet();
-}
-if (c) {
-  plop();
-}
-`.trim(),
-    },
-    {
-      name: "different results",
-      code: `
-if (token.hasExpired()) {
-  return loginPageResponse();
-}
-if (!hasAccess(token)) {
-  return accessDeniedResponse();
-}
-`.trim(),
-    },
+    "const notify = () => { if (isOwner) { notifyProject(); } if (isAdministrator) { notifyProject(); } };",
+    "const notify = () => { if (isOwner) { notifyProject(); } checkpoint(); if (isAdministrator) { notifyProject(); } };",
+    "const getLabel = () => { if (isMissing) return 'Missing'; if (isArchived) return 'Archived'; };",
+    "const getLabel = () => { if (isMissing) return 'Not available'; if (isArchived) return 'Not  available'; };",
+    "const getLabel = () => { if (isMissing) return unavailable; checkpoint(); if (isArchived) return unavailable; };",
+    "const getLabel = () => { if (isMissing) { checkpoint(); return unavailable; } if (isArchived) return unavailable; };",
+    "const getLabel = () => { const isUnavailable = isMissing || isArchived; if (isUnavailable) return unavailable; };",
+    "const getLabel = () => { if (isMissing) { return unavailable; } else { return unavailable; } };",
   ],
   invalid: [
-    {
-      name: "sibling ifs with the same call",
-      code: `
-if (a) {
-  pouet();
-}
-if (c) {
-  plop();
-}
-if (b) {
-  pouet();
-}
-`.trim(),
-      errors: [{ messageId: "sameResult" }],
-    },
-    {
-      name: "if else with identical bodies",
-      code: `
-if (a) {
-  pouet();
-} else {
-  pouet();
-}
-`.trim(),
-      errors: [{ messageId: "sameResult" }],
-    },
-  ],
+    "const getLabel = () => { if (isMissing) return unavailable; if (isArchived) return unavailable; };",
+    "const getLabel = () => { if (isMissing) { return unavailable; } if (isArchived) return unavailable; };",
+    "const getLabel = () => { if (isMissing) return formatLabel( project ); if (isArchived) return formatLabel(project); };",
+    "const notify = () => { if (isMissing) return; if (isArchived) return; };",
+    "const getLabel = () => { switch (status) { case 'ready': if (isMissing) return unavailable; if (isArchived) return unavailable; return available; } };",
+  ].map((code) => ({ code, errors: [{ messageId: "sameResult" }] })),
 });

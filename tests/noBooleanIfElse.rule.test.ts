@@ -1,5 +1,5 @@
 import { noBooleanIfElseRule } from "../src/rules/noBooleanIfElse.rule.js";
-import { runCustomRule } from "./runCustomRule.js";
+import { runCustomRule } from "./utils/runCustomRule.js";
 
 runCustomRule(noBooleanIfElseRule, {
   valid: [

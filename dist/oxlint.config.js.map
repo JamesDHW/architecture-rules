@@ -1,1 +1,0 @@
-{"version":3,"file":"oxlint.config.js","sourceRoot":"","sources":["../src/oxlint.config.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,aAAa,EAAE,MAAM,UAAU,CAAC;AAEzC,OAAO,EAAE,YAAY,EAAE,MAAM,wBAAwB,CAAC;AAEtD,eAAe,YAAY,CAAC;IAC1B,eAAe,EAAE,aAAa,CAAC,IAAI,GAAG,CAAC,aAAa,EAAE,OAAO,IAAI,CAAC,GAAG,CAAC,CAAC;CACxE,CAAC,CAAC"}

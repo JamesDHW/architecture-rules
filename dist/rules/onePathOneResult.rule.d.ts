@@ -1,7 +1,7 @@
 import type { Rule } from "eslint";
 export declare const onePathOneResultRule: {
     readonly id: "one-path-one-result";
-    readonly title: "One path should produce one result";
+    readonly title: "Combine adjacent guards with the same terminal outcome";
     readonly description: string;
     readonly enforcement: {
         readonly type: "custom-oxlint";

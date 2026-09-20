@@ -1,5 +1,5 @@
 import { readonlyTypePropertiesRule } from "../src/rules/readonlyTypeProperties.rule.js";
-import { runCustomRule } from "./runCustomRule.js";
+import { runCustomRule } from "./utils/runCustomRule.js";
 
 runCustomRule(readonlyTypePropertiesRule, {
   valid: [

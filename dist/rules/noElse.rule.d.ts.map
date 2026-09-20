@@ -1,1 +1,1 @@
-{"version":3,"file":"noElse.rule.d.ts","sourceRoot":"","sources":["../../src/rules/noElse.rule.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,QAAQ,CAAC;AAwCnC,eAAO,MAAM,UAAU;;;;;;;;;CASrB,CAAC"}
+{"version":3,"file":"noElse.rule.d.ts","sourceRoot":"","sources":["../../src/rules/noElse.rule.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,QAAQ,CAAC;AA0EnC,eAAO,MAAM,UAAU;;;;;;;;;CASrB,CAAC"}

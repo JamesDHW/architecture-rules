@@ -1,5 +1,5 @@
 import { noTypeAssertionsRule } from "../src/rules/noTypeAssertions.rule.js";
-import { runCustomRule } from "./runCustomRule.js";
+import { runCustomRule } from "./utils/runCustomRule.js";
 
 runCustomRule(noTypeAssertionsRule, {
   valid: [

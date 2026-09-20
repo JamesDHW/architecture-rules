@@ -157,6 +157,14 @@ defaulting; reserve it for boolean logic.
 
 Nullish coalescing states that only null or undefined is missing and preserves
 intentional values such as an empty string, zero, and false.
+
+Good: const displayName = suppliedName ?? "Anonymous";
+Bad: const displayName = isNullish(suppliedName) ? "Anonymous" : suppliedName;
+
+Explicit branches remain appropriate when null and undefined mean different
+things. Empty-string fallback is a named policy, not implicit truthiness.
+Native enforcement may not recognize project-specific guard calls; review
+those redundant helper-based ternaries against the same policy.
   `.trim(),
   rule: "typescript/prefer-nullish-coalescing",
   configuration: "error",
@@ -179,14 +187,15 @@ export const asyncAwaitRule = defineNativeOxlintRule({
   title: "Use async/await for sequential asynchronous flow",
   description: `
 Express sequential asynchronous work with async/await, not .then, .catch, or
-.finally chains. Use explicit Promise combinators such as Promise.all when
-intentional concurrency is the operation being expressed.
+.finally. Ban those methods even after an await or yield. Use explicit Promise
+combinators such as Promise.all when intentional concurrency is the operation
+being expressed.
 
 async/await presents asynchronous control flow in the same readable sequence as
 synchronous code.
   `.trim(),
   rule: "promise/prefer-await-to-then",
-  configuration: "error",
+  configuration: ["error", { strict: true }],
 });
 
 export const namedExportsRule = defineNativeOxlintRule({
@@ -359,9 +368,21 @@ export const switchExhaustivenessRule = defineNativeOxlintRule({
   id: "switch-exhaustiveness",
   title: "Handle discriminated unions exhaustively",
   description: `
-Every branch over a discriminated union must prove at compile time that all
-variants are handled. Use a never check; do not use a generic default that
-accepts unhandled variants.
+Complete dispatches over a discriminated union must prove at compile time
+that all variants are handled. A targeted narrowing if that intentionally
+handles only one variant remains allowed; it is not a complete dispatch.
+
+For a closed-domain default, use return request satisfies never or return a
+helper call whose parameter is never. Do not use a generic error fallback
+that accepts newly added variants. Open string/number domains may have a
+meaningful fallback; validate untrusted values before closed-domain dispatch.
+
+Good: default: return request satisfies never;
+Bad: default: return new UnsupportedRequestError();
+
+Native enforcement verifies missing union cases even when a default exists.
+It does not require an explicit never default or prove a helper's parameter
+contract; those parts remain review obligations checked with TypeScript.
 
 Exhaustiveness turns additions to a state model into useful compiler errors at
 every affected decision point.
