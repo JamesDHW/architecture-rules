@@ -4,18 +4,10 @@ export declare const guardClausesRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
-    };
-};
-export declare const simpleTernariesRule: {
-    readonly id: "simple-ternaries";
-    readonly title: string;
-    readonly description: string;
-    readonly enforcement: {
-        readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "no-else-return";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly allowElseIf?: boolean;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const explicitExportedReturnTypesRule: {
@@ -24,8 +16,15 @@ export declare const explicitExportedReturnTypesRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "typescript/explicit-module-boundary-types";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly allowArgumentsExplicitlyTypedAsAny?: boolean;
+            readonly allowDirectConstAssertionInArrowFunctions?: boolean;
+            readonly allowHigherOrderFunctions?: boolean;
+            readonly allowOverloadFunctions?: boolean;
+            readonly allowTypedFunctionExpressions?: boolean;
+            readonly allowedNames?: readonly string[];
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const preferArrowFunctionsRule: {
@@ -34,8 +33,14 @@ export declare const preferArrowFunctionsRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "func-style";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, "declaration" | "expression"] | readonly [import("../core/defineRule.js").Severity, "declaration" | "expression", {
+            readonly allowArrowFunctions?: boolean;
+            readonly allowTypeAnnotation?: boolean;
+            readonly overrides?: {
+                readonly namedExports?: "declaration" | "expression" | "ignore";
+            };
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const preferArrowCallbackRule: {
@@ -44,8 +49,11 @@ export declare const preferArrowCallbackRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "prefer-arrow-callback";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly allowNamedFunctions?: boolean;
+            readonly allowUnboundThis?: boolean;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const preferConstRule: {
@@ -54,8 +62,11 @@ export declare const preferConstRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "prefer-const";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly destructuring?: "all" | "any";
+            readonly ignoreReadBeforeAssign?: boolean;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const noVarRule: {
@@ -64,8 +75,8 @@ export declare const noVarRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "no-var";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const noParamReassignRule: {
@@ -74,8 +85,12 @@ export declare const noParamReassignRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "no-param-reassign";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly ignorePropertyModificationsFor?: readonly string[];
+            readonly ignorePropertyModificationsForRegex?: readonly string[];
+            readonly props?: boolean;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const reduceSimpleFoldsRule: {
@@ -84,8 +99,10 @@ export declare const reduceSimpleFoldsRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "unicorn/no-array-reduce";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly allowSimpleOperations?: boolean;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const noForEachRule: {
@@ -94,8 +111,8 @@ export declare const noForEachRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "unicorn/no-array-for-each";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const preferAtRule: {
@@ -104,8 +121,11 @@ export declare const preferAtRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "unicorn/prefer-at";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly checkAllIndexAccess?: boolean;
+            readonly getLastElementFunctions?: readonly string[];
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const nullishDefaultsRule: {
@@ -114,8 +134,20 @@ export declare const nullishDefaultsRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "typescript/prefer-nullish-coalescing";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly ignoreBooleanCoercion?: boolean;
+            readonly ignoreConditionalTests?: boolean;
+            readonly ignoreIfStatements?: boolean;
+            readonly ignoreMixedLogicalExpressions?: boolean;
+            readonly ignorePrimitives?: boolean | {
+                readonly bigint?: boolean;
+                readonly boolean?: boolean;
+                readonly number?: boolean;
+                readonly string?: boolean;
+            };
+            readonly ignoreTernaryTests?: boolean;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const eqeqeqRule: {
@@ -124,8 +156,10 @@ export declare const eqeqeqRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "eqeqeq";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, "always" | "smart"] | readonly [import("../core/defineRule.js").Severity, "always" | "smart", {
+            readonly null?: "always" | "ignore" | "never";
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const asyncAwaitRule: {
@@ -134,8 +168,10 @@ export declare const asyncAwaitRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "promise/prefer-await-to-then";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly strict?: boolean;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const namedExportsRule: {
@@ -144,8 +180,8 @@ export declare const namedExportsRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "import/no-default-export";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const typeAliasesRule: {
@@ -154,8 +190,8 @@ export declare const typeAliasesRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "typescript/consistent-type-definitions";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, "interface" | "type"] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const noCycleRule: {
@@ -164,8 +200,13 @@ export declare const noCycleRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "import/no-cycle";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly allowUnsafeDynamicCyclicDependency?: boolean;
+            readonly ignoreExternal?: boolean;
+            readonly ignoreTypes?: boolean;
+            readonly maxDepth?: number;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const explicitJsxPropsRule: {
@@ -174,8 +215,13 @@ export declare const explicitJsxPropsRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "react/jsx-props-no-spreading";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly custom?: "enforce" | "ignore";
+            readonly exceptions?: readonly string[];
+            readonly explicitSpread?: "enforce" | "ignore";
+            readonly html?: "enforce" | "ignore";
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const moduleScopeComponentsRule: {
@@ -184,18 +230,12 @@ export declare const moduleScopeComponentsRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
-    };
-};
-export declare const maxFileLinesRule: {
-    readonly id: "max-file-lines";
-    readonly title: string;
-    readonly description: string;
-    readonly enforcement: {
-        readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "react/no-unstable-nested-components";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly allowAsProps?: boolean;
+            readonly customValidators?: readonly string[];
+            readonly propNamePattern?: string;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const genericNameDenylistRule: {
@@ -204,8 +244,8 @@ export declare const genericNameDenylistRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "id-denylist";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, ...string[]] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const noExplicitAnyRule: {
@@ -214,8 +254,11 @@ export declare const noExplicitAnyRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "typescript/no-explicit-any";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly fixToUnknown?: boolean;
+            readonly ignoreRestArgs?: boolean;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const noNonNullAssertionRule: {
@@ -224,8 +267,8 @@ export declare const noNonNullAssertionRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "typescript/no-non-null-assertion";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const noTsCommentsRule: {
@@ -234,8 +277,22 @@ export declare const noTsCommentsRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "typescript/ban-ts-comment";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly minimumDescriptionLength?: number;
+            readonly "ts-check"?: "allow-with-description" | boolean | {
+                readonly descriptionFormat?: string;
+            };
+            readonly "ts-expect-error"?: "allow-with-description" | boolean | {
+                readonly descriptionFormat?: string;
+            };
+            readonly "ts-ignore"?: "allow-with-description" | boolean | {
+                readonly descriptionFormat?: string;
+            };
+            readonly "ts-nocheck"?: "allow-with-description" | boolean | {
+                readonly descriptionFormat?: string;
+            };
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const noUnsafeAssignmentRule: {
@@ -244,8 +301,8 @@ export declare const noUnsafeAssignmentRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "typescript/no-unsafe-assignment";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const noUnsafeCallRule: {
@@ -254,8 +311,8 @@ export declare const noUnsafeCallRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "typescript/no-unsafe-call";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const noUnsafeMemberAccessRule: {
@@ -264,8 +321,10 @@ export declare const noUnsafeMemberAccessRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "typescript/no-unsafe-member-access";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly allowOptionalChaining?: boolean;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const noUnsafeReturnRule: {
@@ -274,8 +333,8 @@ export declare const noUnsafeReturnRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "typescript/no-unsafe-return";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const noUnsafeArgumentRule: {
@@ -284,8 +343,8 @@ export declare const noUnsafeArgumentRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "typescript/no-unsafe-argument";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const noUnsafeTypeAssertionRule: {
@@ -294,8 +353,8 @@ export declare const noUnsafeTypeAssertionRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "typescript/no-unsafe-type-assertion";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const switchExhaustivenessRule: {
@@ -304,8 +363,13 @@ export declare const switchExhaustivenessRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "typescript/switch-exhaustiveness-check";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly allowDefaultCaseForExhaustiveSwitch?: boolean;
+            readonly considerDefaultExhaustiveForUnions?: boolean;
+            readonly defaultCaseCommentPattern?: string;
+            readonly requireDefaultForNonUnion?: boolean;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const noFloatingPromisesRule: {
@@ -314,8 +378,36 @@ export declare const noFloatingPromisesRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "typescript/no-floating-promises";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly allowForKnownSafeCalls?: readonly (string | {
+                readonly from: "file";
+                readonly name: string | readonly string[];
+                readonly path?: string;
+            } | {
+                readonly from: "lib";
+                readonly name: string | readonly string[];
+            } | {
+                readonly from: "package";
+                readonly name: string | readonly string[];
+                readonly package: string;
+            })[];
+            readonly allowForKnownSafePromises?: readonly (string | {
+                readonly from: "file";
+                readonly name: string | readonly string[];
+                readonly path?: string;
+            } | {
+                readonly from: "lib";
+                readonly name: string | readonly string[];
+            } | {
+                readonly from: "package";
+                readonly name: string | readonly string[];
+                readonly package: string;
+            })[];
+            readonly checkThenables?: boolean;
+            readonly ignoreIIFE?: boolean;
+            readonly ignoreVoid?: boolean;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const noMisusedPromisesRule: {
@@ -324,8 +416,19 @@ export declare const noMisusedPromisesRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "typescript/no-misused-promises";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly checksConditionals?: boolean;
+            readonly checksSpreads?: boolean;
+            readonly checksVoidReturn?: boolean | {
+                readonly arguments?: boolean;
+                readonly attributes?: boolean;
+                readonly inheritedMethods?: boolean;
+                readonly properties?: boolean;
+                readonly returns?: boolean;
+                readonly variables?: boolean;
+            };
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const awaitThenableRule: {
@@ -334,8 +437,8 @@ export declare const awaitThenableRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "typescript/await-thenable";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const rulesOfHooksRule: {
@@ -344,8 +447,8 @@ export declare const rulesOfHooksRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "react/rules-of-hooks";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const exhaustiveDepsRule: {
@@ -354,8 +457,10 @@ export declare const exhaustiveDepsRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "react/exhaustive-deps";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly additionalHooks?: string;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const jsxKeyRule: {
@@ -364,8 +469,12 @@ export declare const jsxKeyRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "react/jsx-key";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly checkFragmentShorthand?: boolean;
+            readonly checkKeyMustBeforeSpread?: boolean;
+            readonly warnOnDuplicates?: boolean;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const noBooleanCastRule: {
@@ -374,8 +483,14 @@ export declare const noBooleanCastRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "no-implicit-coercion";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly allow?: readonly string[];
+            readonly boolean?: boolean;
+            readonly disallowTemplateShorthand?: boolean;
+            readonly number?: boolean;
+            readonly string?: boolean;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const noUnneededTernaryRule: {
@@ -384,8 +499,10 @@ export declare const noUnneededTernaryRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "no-unneeded-ternary";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, {
+            readonly defaultAssignment?: boolean;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const preferLogicalOverTernaryRule: {
@@ -394,8 +511,8 @@ export declare const preferLogicalOverTernaryRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "unicorn/prefer-logical-operator-over-ternary";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 export declare const noUselessAssignmentRule: {
@@ -404,8 +521,8 @@ export declare const noUselessAssignmentRule: {
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
-        readonly rule: string;
-        readonly configuration: import("../core/defineRule.js").OxlintRuleConfiguration;
+        readonly rule: "no-useless-assignment";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
 //# sourceMappingURL=nativeOxlint.rules.d.ts.map

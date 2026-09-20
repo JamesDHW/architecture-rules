@@ -1,5 +1,5 @@
 import { noBooleanAssignmentBranchesRule } from "../src/rules/noBooleanAssignmentBranches.rule.js";
-import { runCustomRule } from "./runCustomRule.js";
+import { runCustomRule } from "./utils/runCustomRule.js";
 
 runCustomRule(noBooleanAssignmentBranchesRule, {
   valid: [
@@ -21,16 +21,35 @@ const isLeapYear = (year: number): boolean => {
       code: "enabled = shouldEnable;\n",
     },
     {
-      name: "branch does more than assign a boolean",
-      code: `
-if (shouldEnable) {
-  enabled = true;
-  startSync();
-}
-`.trim(),
+      name: "use the original predicate",
+      code: "if (shouldEnable) { startSynchronization(); }",
+    },
+    {
+      name: "boolean data passed to a setter",
+      code: "if (shouldEnable) { setIsEnabled(true); }",
+    },
+    {
+      name: "deferred callback assignment is not an immediate branch flag",
+      code: "if (shouldEnable) { register(() => { isEnabled = true; }); }",
     },
   ],
   invalid: [
+    {
+      code: "if (shouldEnable) { isEnabled = true; startSynchronization(); }",
+      errors: [{ messageId: "booleanAssignment" }],
+    },
+    {
+      code: "switch (status) { case 'ready': isEnabled = true; startSynchronization(); }",
+      errors: [{ messageId: "booleanAssignment" }],
+    },
+    {
+      code: "const result = shouldEnable ? (isEnabled = true) : undefined;",
+      errors: [{ messageId: "booleanAssignment" }],
+    },
+    {
+      code: "if (shouldEnable) { (() => { isEnabled = true; })(); }",
+      errors: [{ messageId: "booleanAssignment" }],
+    },
     {
       name: "if assigns true",
       code: `

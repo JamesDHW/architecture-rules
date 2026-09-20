@@ -31,7 +31,8 @@ export type Enforcement =
   | OxlintEnforcement
   | CustomOxlintEnforcement
   | TypeScriptEnforcement
-  | AdvisoryEnforcement;
+  | AdvisoryEnforcement
+  | { readonly type: "architecture" };
 
 export type ArchitectureRule<Id extends string = string> = {
   readonly id: Id;
@@ -52,3 +53,16 @@ export const defineRule = <const RuleDefinition extends ArchitectureRule>(
 ): RuleDefinition => {
   return rule;
 };
+
+/** Custom option types and runtime schema travel with their canonical rule. */
+export type RuleOptions<Options extends readonly unknown[]> = {
+  readonly schema: NonNullable<NonNullable<Rule.RuleModule["meta"]>["schema"]>;
+  readonly validate?: (options: readonly unknown[]) => void;
+  /** Type-only witness; no value is emitted. */
+  readonly tuple?: Options;
+};
+
+export const defineRuleOptions = <Options extends readonly unknown[]>(
+  schema: RuleOptions<Options>["schema"],
+  validate?: (options: readonly unknown[]) => void,
+): RuleOptions<Options> => ({ schema, ...(validate === undefined ? {} : { validate }) });

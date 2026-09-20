@@ -1,73 +1,58 @@
 import { defineRule } from "../core/defineRule.js";
 const DESCRIPTION = `
-Do not assign true or false inside a branch to keep a boolean for later.
-Return the value now, or assign the boolean expression directly.
+Do not assign true or false to a binding inside a branch to keep a flag for
+later. Extra statements do not make that assignment acceptable. Return the
+boolean result now, or use the original predicate directly. A genuinely new
+boolean computation may be named, but do not create a synonymous binding.
 
-A result flag makes the flow rely on state that a later change can corrupt
-and hides that the function is computing one boolean.
+Good: if (shouldEnable) { startSynchronization(); }
+Bad: if (shouldEnable) { isEnabled = true; startSynchronization(); }
+Also bad under no-binding-alias: const isEnabled = shouldEnable;
+
+Boolean data passed to a state setter remains allowed: setIsEnabled(true)
+is not a binding assignment. Meaningful exception-first boolean returns also
+remain allowed. This rule checks direct binding assignments in if/switch/
+ternary branches, stopping at deferred function boundaries. It is not a full
+implementation of the separate immutability policy.
+
+A result flag adds mutable state that a later change can corrupt and hides
+that the operation is computing a decision.
 `.trim();
-const asLoose = (node) => node;
-const getSoleStatement = (statement) => {
-    if (statement.type !== "BlockStatement") {
-        return statement;
+const isInBranch = (node) => {
+    let child = node;
+    let parent = node.parent;
+    while (parent !== undefined && parent !== null) {
+        if (["FunctionExpression", "ArrowFunctionExpression", "FunctionDeclaration"].includes(parent.type)) {
+            if (parent.parent?.type !== "CallExpression" || parent.parent.callee !== parent)
+                return false;
+        }
+        if (parent.type === "SwitchCase" && parent.test !== child)
+            return true;
+        if (parent.type === "IfStatement" && parent.test !== child)
+            return true;
+        if (parent.type === "ConditionalExpression" && parent.test !== child)
+            return true;
+        child = parent;
+        parent = parent.parent;
     }
-    if (statement.body === undefined || statement.body.length !== 1) {
-        return undefined;
-    }
-    return statement.body[0];
-};
-const isBooleanLiteralAssignment = (statement) => {
-    const sole = getSoleStatement(statement);
-    if (sole === undefined || sole.type !== "ExpressionStatement") {
-        return false;
-    }
-    const expression = sole.expression;
-    if (expression === undefined || expression.type !== "AssignmentExpression") {
-        return false;
-    }
-    if (expression.operator !== "=") {
-        return false;
-    }
-    if (expression.left === undefined || expression.left.type !== "Identifier") {
-        return false;
-    }
-    if (expression.right === undefined || expression.right.type !== "Literal") {
-        return false;
-    }
-    return expression.right.value === true || expression.right.value === false;
+    return false;
 };
 const implementation = {
     meta: {
-        type: "suggestion",
-        docs: {
-            description: DESCRIPTION,
-        },
+        type: "suggestion", docs: { description: DESCRIPTION }, schema: [],
         messages: {
-            booleanAssignment: "Do not assign true or false in a branch. Return the value now, or assign the boolean expression. See rule no-boolean-assignment-branches.",
+            booleanAssignment: "Do not keep a boolean result by assigning a flag in a branch. Use or return the predicate directly, without a synonymous alias. See rule no-boolean-assignment-branches.",
         },
     },
     create(context) {
         return {
-            IfStatement(node) {
-                if (isBooleanLiteralAssignment(asLoose(node.consequent))) {
-                    context.report({
-                        node: node.consequent,
-                        messageId: "booleanAssignment",
-                    });
-                }
-                if (node.alternate === null || node.alternate === undefined) {
+            AssignmentExpression(node) {
+                if (node.operator !== "=" || node.left.type !== "Identifier")
                     return;
-                }
-                if (node.alternate.type === "IfStatement") {
+                if (node.right.type !== "Literal" || typeof node.right.value !== "boolean")
                     return;
-                }
-                if (!isBooleanLiteralAssignment(asLoose(node.alternate))) {
-                    return;
-                }
-                context.report({
-                    node: node.alternate,
-                    messageId: "booleanAssignment",
-                });
+                if (isInBranch(node))
+                    context.report({ node, messageId: "booleanAssignment" });
             },
         };
     },
@@ -76,10 +61,6 @@ export const noBooleanAssignmentBranchesRule = defineRule({
     id: "no-boolean-assignment-branches",
     title: "Do not assign boolean literals in branches",
     description: DESCRIPTION,
-    enforcement: {
-        type: "custom-oxlint",
-        configuration: "error",
-        implementation,
-    },
+    enforcement: { type: "custom-oxlint", configuration: "error", implementation },
 });
 //# sourceMappingURL=noBooleanAssignmentBranches.rule.js.map

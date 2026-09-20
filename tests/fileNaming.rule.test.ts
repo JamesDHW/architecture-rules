@@ -1,20 +1,5 @@
-import { RuleTester } from "oxlint/plugins-dev";
-import { describe, it } from "vitest";
-
 import { fileNamingRule } from "../src/rules/fileNaming.rule.js";
-
-if (fileNamingRule.enforcement.type !== "custom-oxlint") {
-  throw new Error("file-naming must be a custom Oxlint rule");
-}
-
-const { implementation } = fileNamingRule.enforcement;
-
-RuleTester.describe = describe;
-RuleTester.it = it;
-
-const ruleTester = new RuleTester({
-  languageOptions: { parserOptions: { lang: "ts" } },
-});
+import { runCustomRule } from "./utils/runCustomRule.js";
 
 const clientPolicy = {
   allow: {
@@ -27,9 +12,9 @@ const clientPolicy = {
     ".tsx": "pascal",
     ".ts": "pascalOrCamel",
   },
-} as const;
+};
 
-ruleTester.run("file-naming", implementation, {
+runCustomRule(fileNamingRule, {
   valid: [
     {
       name: "any filename when the client supplies no policy",

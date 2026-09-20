@@ -1,5 +1,5 @@
 import { namedJsxHandlersRule } from "../src/rules/namedJsxHandlers.rule.js";
-import { runCustomRule } from "./runCustomRule.js";
+import { runCustomRule } from "./utils/runCustomRule.js";
 
 runCustomRule(
   namedJsxHandlersRule,

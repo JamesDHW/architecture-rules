@@ -34,4 +34,10 @@ describe("parseArgs", () => {
       message: "Expected at most one path argument.",
     });
   });
+  it("accepts explicit config and explain", () => {
+    expect(parseArgs(["explain", "src/a.ts", "--config", "architecture.config.ts"])).toEqual({ kind: "run", target: ".", fix: false, config: "architecture.config.ts", explain: "src/a.ts" });
+    expect(parseArgs(["--config"]).kind).toBe("error");
+    expect(parseArgs(["explain", "src/a.ts", "--fix"]).kind).toBe("error");
+  });
+
 });

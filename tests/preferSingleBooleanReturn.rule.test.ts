@@ -1,9 +1,12 @@
 import { preferSingleBooleanReturnRule } from "../src/rules/preferSingleBooleanReturn.rule.js";
-import { runCustomRule } from "./runCustomRule.js";
+import { runCustomRule } from "./utils/runCustomRule.js";
 
 runCustomRule(preferSingleBooleanReturnRule, {
   valid: [
-    { name: "branch performs work before returning", code: 'if (isReady) { recordAccess(); return true; } return false;' },
+    {
+      name: "branch performs work before returning",
+      code: "if (isReady) { recordAccess(); return true; } return false;",
+    },
 
     {
       name: "preferred leap year",
@@ -34,7 +37,11 @@ return true;
     },
   ],
   invalid: [
-    { name: "boolean tail in switch case", code: 'const check = () => { switch (status) { case "ready": if (isMember) return true; return false; default: return canAccess(); } };', errors: [{ messageId: "booleanTail" }] },
+    {
+      name: "boolean tail in switch case",
+      code: 'const check = () => { switch (status) { case "ready": if (isMember) return true; return false; default: return canAccess(); } };',
+      errors: [{ messageId: "booleanTail" }],
+    },
 
     {
       name: "if true then return false",

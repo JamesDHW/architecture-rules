@@ -1,5 +1,5 @@
 import { noEnumsRule } from "../src/rules/noEnums.rule.js";
-import { runCustomRule } from "./runCustomRule.js";
+import { runCustomRule } from "./utils/runCustomRule.js";
 
 runCustomRule(noEnumsRule, {
   valid: [

@@ -1,18 +1,24 @@
 import { defineRule } from "../core/defineRule.js";
 const DESCRIPTION = `
-Predicates that categorise the same property of a value should be written as
-a switch rather than a sequence of if or else if. A switch focuses each case
-on the compared value instead of repeating the whole predicate.
+Use a switch for adjacent terminal decisions comparing the same value with
+strict equality. Each branch must directly return or throw, optionally after
+other statements. Independent effectful if statements are not alternatives:
+combining them can change execution count or the value tested later.
 
-Polymorphic dispatch is a further step when the variants own the behaviour;
-this rule only asks for switch over repeated equality tests.
+This syntax check does not prove a closed union or stable property reads.
+Value-only mappings may instead use an exhaustive readonly record. It does
+not enforce records or replace React render-state guard returns. Branches
+containing JSX are left to the component-state convention.
 `.trim();
 const asLoose = (node) => node;
 const asLooseList = (nodes) => {
     return nodes;
 };
 const isDiscriminant = (node) => {
-    return node.type === "Identifier" || node.type === "MemberExpression";
+    if (node.type === "Identifier")
+        return true;
+    return node.type === "MemberExpression" && node.computed === false &&
+        node.object !== undefined && isDiscriminant(node.object);
 };
 const isCaseValue = (node) => {
     return node.type === "Literal" || node.type === "Identifier";
@@ -21,17 +27,17 @@ const getEqualityDiscriminantKey = (test, sourceCode) => {
     if (test.type !== "BinaryExpression") {
         return undefined;
     }
-    if (test.operator !== "===" && test.operator !== "==") {
+    if (test.operator !== "===") {
         return undefined;
     }
     const { left, right } = test;
     if (left === undefined || right === undefined) {
         return undefined;
     }
-    if (left.type === "MemberExpression" && isCaseValue(right)) {
+    if (left.type === "MemberExpression" && isDiscriminant(left) && isCaseValue(right)) {
         return sourceCode.getText(left);
     }
-    if (right.type === "MemberExpression" && isCaseValue(left)) {
+    if (right.type === "MemberExpression" && isDiscriminant(right) && isCaseValue(left)) {
         return sourceCode.getText(right);
     }
     if (isDiscriminant(left) && isCaseValue(right)) {
@@ -57,6 +63,28 @@ const discriminantKeyForIf = (node, sourceCode) => {
     }
     return getEqualityDiscriminantKey(node.test, sourceCode);
 };
+const containsJsx = (node, context) => {
+    const fields = node;
+    const type = fields["type"];
+    if (type === "JSXElement" || type === "JSXFragment")
+        return true;
+    if (typeof type !== "string")
+        return false;
+    return (context.sourceCode.visitorKeys[type] ?? []).some((key) => {
+        const child = fields[key];
+        if (Array.isArray(child)) {
+            return child.some((entry) => entry !== null && typeof entry === "object" && containsJsx(entry, context));
+        }
+        return child !== null && typeof child === "object" && containsJsx(child, context);
+    });
+};
+const hasTerminalConsequent = (node) => {
+    const branch = node.consequent;
+    if (branch === undefined)
+        return false;
+    const last = branch.type === "BlockStatement" ? branch.body?.at(-1) : branch;
+    return last?.type === "ReturnStatement" || last?.type === "ThrowStatement";
+};
 const allShareDiscriminant = (nodes, sourceCode) => {
     const [head] = nodes;
     if (head === undefined || nodes.length < 2) {
@@ -75,12 +103,16 @@ const implementation = {
             description: DESCRIPTION,
         },
         messages: {
-            preferSwitch: "Replace repeated equality tests on the same value with a switch. See rule prefer-switch.",
+            preferSwitch: "Use a switch for these terminal decisions, or an exhaustive readonly record for a value mapping. Preserve evaluation order and property-read behavior. See rule prefer-switch.",
         },
     },
     create(context) {
         const reported = new Set();
         const reportChain = (nodes) => {
+            if (!nodes.every(hasTerminalConsequent))
+                return;
+            if (nodes.some((node) => containsJsx(node, context)))
+                return;
             if (!allShareDiscriminant(nodes, context.sourceCode)) {
                 return;
             }

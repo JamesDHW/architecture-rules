@@ -1,123 +1,29 @@
 #!/usr/bin/env node
 
-import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
-import { createRequire } from "node:module";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-
+import { existsSync, realpathSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { parseArgs } from "./cli/parseArgs.js";
-import { buildTsconfig } from "./generateTsconfig.js";
+import { isArchitecture } from "./core/defineArchitecture.js";
+import { checkArchitecture } from "./architecture/runner.js";
 
-const HELP = `Usage: architecture-check [--fix] [dir]
+const HELP = `Usage: architecture-check [--config path] [--fix] [project-dir]
+       architecture-check explain <file> [--config path]
 
-Run the architecture-rules Oxlint profile and TypeScript compiler flags
-against a project. Defaults to the current directory.
+Requires architecture.config.ts exporting defineArchitecture(...).
+Checks the entire project rooted at the configuration's directory.
 `;
-
-const require = createRequire(import.meta.url);
-
-const resolveBin = (pkg: string, binFromPackageRoot: string): string => {
-  const packageJsonPath = require.resolve(`${pkg}/package.json`);
-  return join(dirname(packageJsonPath), binFromPackageRoot);
-};
-
-const run = (
-  bin: string,
-  args: readonly string[],
-  cwd: string,
-): Promise<number> => {
-  return new Promise((resolveExit) => {
-    const child = spawn(process.execPath, [bin, ...args], {
-      cwd,
-      stdio: "inherit",
-    });
-
-    child.on("close", (code) => {
-      resolveExit(code ?? 1);
-    });
-  });
-};
-
-const toTscFlags = (
-  compilerOptions: Readonly<Record<string, unknown>>,
-): string[] => {
-  return Object.entries(compilerOptions).flatMap(([key, value]) => {
-    if (value === true) {
-      return [`--${key}`];
-    }
-
-    if (value === false) {
-      return [`--${key}`, "false"];
-    }
-
-    return [`--${key}`, String(value)];
-  });
-};
-
-const findTsconfig = (target: string): string | undefined => {
-  const tsconfigPath = join(target, "tsconfig.json");
-  if (!existsSync(tsconfigPath)) {
-    return undefined;
-  }
-
-  return tsconfigPath;
-};
-
 const main = async (): Promise<number> => {
-  const parsed = parseArgs(process.argv.slice(2));
-
-  if (parsed.kind === "help") {
-    process.stdout.write(HELP);
-    return 0;
-  }
-
-  if (parsed.kind === "error") {
-    process.stderr.write(`${parsed.message}\n\n${HELP}`);
-    return 1;
-  }
-
-  const target = resolve(parsed.target);
-  if (!existsSync(target)) {
-    process.stderr.write(`Path not found: ${target}\n`);
-    return 1;
-  }
-
-  const configPath = fileURLToPath(new URL("./oxlint.config.js", import.meta.url));
-  const oxlintArgs = [
-    "--config",
-    configPath,
-    "--type-aware",
-    ...(parsed.fix ? ["--fix"] : []),
-    ".",
-  ];
-
-  const oxlintCode = await run(
-    resolveBin("oxlint", "bin/oxlint"),
-    oxlintArgs,
-    target,
-  );
-
-  const tsconfigPath = findTsconfig(target);
-  if (tsconfigPath === undefined) {
-    process.stderr.write(
-      "No tsconfig.json found; skipped TypeScript compiler checks.\n",
-    );
-    return oxlintCode;
-  }
-
-  const { compilerOptions } = buildTsconfig();
-  const tscCode = await run(
-    resolveBin("typescript", "bin/tsc"),
-    ["--noEmit", "-p", tsconfigPath, ...toTscFlags(compilerOptions)],
-    target,
-  );
-
-  if (oxlintCode !== 0) {
-    return oxlintCode;
-  }
-
-  return tscCode;
+  const args = parseArgs(process.argv.slice(2));
+  if (args.kind === "help") { process.stdout.write(HELP); return 0; }
+  if (args.kind === "error") { process.stderr.write(`${args.message}\n${HELP}`); return 1; }
+  const configPath = resolve(args.config ?? resolve(args.target, "architecture.config.ts"));
+  if (!existsSync(configPath)) throw new Error(`Required architecture configuration not found: ${configPath}`);
+  const root = dirname(realpathSync(configPath));
+  // oxlint-disable-next-line architecture/allowed-imports -- Load the user-selected trusted architecture definition.
+  const loaded: { default?: unknown } = await import(pathToFileURL(configPath).href);
+  if (!isArchitecture(loaded.default)) throw new Error("Configuration must default-export defineArchitecture(...)");
+  return checkArchitecture(root, loaded.default, { fix: args.fix, ...(args.explain === undefined ? {} : { explain: args.explain }) });
 };
-
-process.exit(await main());
+try { process.exitCode = await main(); }
+catch (error) { process.stderr.write(`architecture-config: ${error instanceof Error ? error.message : String(error)}\n`); process.exitCode = 1; }

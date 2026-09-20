@@ -1,6 +1,6 @@
 import type { Rule } from "eslint";
 
-import { defineRule } from "../core/defineRule.js";
+import { defineRule, defineRuleOptions } from "../core/defineRule.js";
 import { defineNativeOxlintRule } from "./defineNativeOxlintRule.js";
 
 const DESCRIPTION = `
@@ -18,7 +18,7 @@ type LineRange = {
   readonly end: { readonly line: number; readonly column: number };
 };
 
-type MaxFileLinesOptions = {
+export type MaxFileLinesOptions = {
   readonly max: number;
   readonly skipBlankLines: boolean;
   readonly skipComments: boolean;
@@ -200,6 +200,7 @@ const warnImplementation: Rule.RuleModule = {
 
 export const maxFileLinesWarnRule = defineRule({
   id: "max-file-lines-warn",
+  options: defineRuleOptions<[Partial<MaxFileLinesOptions>?]>(warnImplementation.meta?.schema ?? []),
   title: "Warn when a source file exceeds 150 lines",
   description: DESCRIPTION,
   enforcement: {

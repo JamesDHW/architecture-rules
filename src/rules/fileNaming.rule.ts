@@ -3,7 +3,10 @@ import path from "node:path";
 import type { Rule } from "eslint";
 import picomatch from "picomatch";
 
-import { defineRule } from "../core/defineRule.js";
+import { namingError, namingSchema } from "../architecture/naming.js";
+import type { NamingPolicy } from "../architecture/types.js";
+
+import { defineRule, defineRuleOptions } from "../core/defineRule.js";
 
 export type FilenameCase = "pascal" | "camel" | "pascalOrCamel";
 
@@ -15,6 +18,10 @@ export type FileNamingOptions = {
 
 const DESCRIPTION = `
 Name files after one primary concept.
+
+Architecture file types select files by paths, never by spelling. Their naming
+policy validates every selected source file. A filename failure cannot make a
+file fall out of scope. Exact framework names exempt naming only.
 
 This package does not impose filename conventions on its own. The consuming
 project must supply banned basenames, suffix/case rules, and named allow
@@ -172,6 +179,7 @@ const implementation: Rule.RuleModule = {
       {
         type: "object",
         properties: {
+          architecture: namingSchema,
           allow: {
             type: "object",
             additionalProperties: {
@@ -200,6 +208,7 @@ const implementation: Rule.RuleModule = {
     ],
 
     messages: {
+      architectureName: "{{message}} See rule file-naming.",
       bannedFilename:
         "Filename '{{filename}}' is a generic dumping-ground name. " +
         "Name the file after one primary concept. See rule file-naming.",
@@ -212,6 +221,12 @@ const implementation: Rule.RuleModule = {
   create(context) {
     return {
       Program(node) {
+        const architecture = (context.options[0] as { readonly architecture?: NamingPolicy } | undefined)?.architecture;
+        if (architecture !== undefined) {
+          const message = namingError(context.filename, architecture);
+          if (message !== undefined) context.report({ node, messageId: "architectureName", data: { message } });
+          return;
+        }
         const options = getFileNamingOptions(context.options[0]);
         if (!hasConstraints(options)) {
           return;
@@ -264,6 +279,7 @@ const implementation: Rule.RuleModule = {
 
 export const fileNamingRule = defineRule({
   id: "file-naming",
+  options: defineRuleOptions<[FileNamingOptions?]>(implementation.meta?.schema ?? []),
 
   title: "Name files after one primary concept",
 

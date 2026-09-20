@@ -12,7 +12,8 @@ export const guardClausesRule = defineNativeOxlintRule({
     id: "guard-clauses",
     title: "Use guard clauses for terminal cases",
     description: `
-Avoid else after a return, throw, break, or continue. Exit the conditional
+Legacy independently configurable check, disabled by default because no-else
+already rejects every else branch. Avoid else after a return. Exit the conditional
 flow as soon as you can. Most else blocks after a terminal statement are
 superfluous.
 
@@ -21,19 +22,7 @@ nested. Reserving conditional blocks for special cases emphasises the
 nominal path and makes it easier to evolve.
   `.trim(),
     rule: "no-else-return",
-    configuration: ["error", { allowElseIf: false }],
-});
-export const simpleTernariesRule = defineNativeOxlintRule({
-    id: "simple-ternaries",
-    title: "Keep ternaries simple and side-effect-free",
-    description: `
-Use a ternary only for a single, concise binary choice. Do not nest ternaries.
-
-A simple ternary makes a small value choice easy to see. Nested ternaries hide
-control flow inside an expression.
-  `.trim(),
-    rule: "unicorn/no-nested-ternary",
-    configuration: "error",
+    configuration: ["off", { allowElseIf: false }],
 });
 export const explicitExportedReturnTypesRule = defineNativeOxlintRule({
     id: "explicit-exported-return-types",
@@ -156,6 +145,14 @@ defaulting; reserve it for boolean logic.
 
 Nullish coalescing states that only null or undefined is missing and preserves
 intentional values such as an empty string, zero, and false.
+
+Good: const displayName = suppliedName ?? "Anonymous";
+Bad: const displayName = isNullish(suppliedName) ? "Anonymous" : suppliedName;
+
+Explicit branches remain appropriate when null and undefined mean different
+things. Empty-string fallback is a named policy, not implicit truthiness.
+Native enforcement may not recognize project-specific guard calls; review
+those redundant helper-based ternaries against the same policy.
   `.trim(),
     rule: "typescript/prefer-nullish-coalescing",
     configuration: "error",
@@ -176,14 +173,15 @@ export const asyncAwaitRule = defineNativeOxlintRule({
     title: "Use async/await for sequential asynchronous flow",
     description: `
 Express sequential asynchronous work with async/await, not .then, .catch, or
-.finally chains. Use explicit Promise combinators such as Promise.all when
-intentional concurrency is the operation being expressed.
+.finally. Ban those methods even after an await or yield. Use explicit Promise
+combinators such as Promise.all when intentional concurrency is the operation
+being expressed.
 
 async/await presents asynchronous control flow in the same readable sequence as
 synchronous code.
   `.trim(),
     rule: "promise/prefer-await-to-then",
-    configuration: "error",
+    configuration: ["error", { strict: true }],
 });
 export const namedExportsRule = defineNativeOxlintRule({
     id: "named-exports",
@@ -252,19 +250,6 @@ Nested component declarations recreate component identity during rendering.
   `.trim(),
     rule: "react/no-unstable-nested-components",
     configuration: "error",
-});
-export const maxFileLinesRule = defineNativeOxlintRule({
-    id: "max-file-lines",
-    title: "Limit source files to 200 lines",
-    description: `
-Report an error when a source file exceeds 200 lines. Split the file by
-cohesive responsibility rather than moving arbitrary ranges of code.
-
-A bounded file can be understood without navigating a large collection of
-unrelated concepts.
-  `.trim(),
-    rule: "max-lines",
-    configuration: ["error", { max: 200, skipBlankLines: true, skipComments: true }],
 });
 export const genericNameDenylistRule = defineNativeOxlintRule({
     id: "generic-name-denylist",
@@ -353,9 +338,21 @@ export const switchExhaustivenessRule = defineNativeOxlintRule({
     id: "switch-exhaustiveness",
     title: "Handle discriminated unions exhaustively",
     description: `
-Every branch over a discriminated union must prove at compile time that all
-variants are handled. Use a never check; do not use a generic default that
-accepts unhandled variants.
+Complete dispatches over a discriminated union must prove at compile time
+that all variants are handled. A targeted narrowing if that intentionally
+handles only one variant remains allowed; it is not a complete dispatch.
+
+For a closed-domain default, use return request satisfies never or return a
+helper call whose parameter is never. Do not use a generic error fallback
+that accepts newly added variants. Open string/number domains may have a
+meaningful fallback; validate untrusted values before closed-domain dispatch.
+
+Good: default: return request satisfies never;
+Bad: default: return new UnsupportedRequestError();
+
+Native enforcement verifies missing union cases even when a default exists.
+It does not require an explicit never default or prove a helper's parameter
+contract; those parts remain review obligations checked with TypeScript.
 
 Exhaustiveness turns additions to a state model into useful compiler errors at
 every affected decision point.

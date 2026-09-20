@@ -1,3 +1,24 @@
+import { fileInventoryRule, fileClassificationRule, projectMembershipRule, compilerCheckingRule, reasonedSuppressionsRule } from "./architecture.rules.js";
+import { allowedImportsRule } from "./allowedImports.rule.js";
+import {
+  directBooleanConditionsRule,
+  explicitConditionalEffectsRule,
+  neutralCollectionResultsRule,
+  noDuplicateSwitchCasesRule,
+  noUnreachableStatementsRule,
+  scopedCaseDeclarationsRule,
+  subjectFirstComparisonsRule,
+  unnecessaryConditionsRule,
+} from "./branchingSafety.rules.js";
+import { noFinallyRule, noRawExceptionsRule, preserveCleanupFailuresRule } from "./exceptionControlFlow.rules.js";
+import { domainOwnedDispatchRule } from "./domainOwnedDispatch.rule.js";
+import { exhaustiveValueMappingsRule } from "./exhaustiveValueMappings.rule.js";
+import { emptyBranchesRule } from "./emptyBranches.rule.js";
+import { groupedLogicalOperatorsRule } from "./groupedLogicalOperators.rule.js";
+import { collectionLoopsRule, noLoopJumpsRule } from "./loopControl.rules.js";
+import { pureConditionsRule } from "./pureConditions.rule.js";
+import { terminalSwitchCasesRule } from "./terminalSwitchCases.rule.js";
+import { controlFlowBracesRule } from "./controlFlowBraces.rule.js";
 import { simpleTernariesRule } from "./simpleTernaries.rule.js";
 import { uncheckedIndexedAccessRule } from "./uncheckedIndexedAccess.rule.js";
 import { constantsModuleRule } from "./constantsModule.rule.js";
@@ -71,6 +92,28 @@ import { readonlyTypePropertiesRule } from "./readonlyTypeProperties.rule.js";
 import { strictTypeScriptRule } from "./strictTypeScript.rule.js";
 
 export const rules = [
+  fileInventoryRule, fileClassificationRule, projectMembershipRule, compilerCheckingRule, reasonedSuppressionsRule,
+  allowedImportsRule,
+  domainOwnedDispatchRule,
+  controlFlowBracesRule,
+  directBooleanConditionsRule,
+  explicitConditionalEffectsRule,
+  neutralCollectionResultsRule,
+  noDuplicateSwitchCasesRule,
+  noUnreachableStatementsRule,
+  scopedCaseDeclarationsRule,
+  subjectFirstComparisonsRule,
+  unnecessaryConditionsRule,
+  noFinallyRule,
+  noRawExceptionsRule,
+  preserveCleanupFailuresRule,
+  exhaustiveValueMappingsRule,
+  emptyBranchesRule,
+  groupedLogicalOperatorsRule,
+  collectionLoopsRule,
+  noLoopJumpsRule,
+  pureConditionsRule,
+  terminalSwitchCasesRule,
   explicitConditionsRule,
   simpleTernariesRule,
   fileNamingRule,
