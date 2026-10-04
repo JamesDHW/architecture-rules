@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { inventory, classify } from "./inventory.js";
 import { openProjects } from "./projects.js";
@@ -22,9 +22,10 @@ export const printIssues = (issues) => {
         process.stderr.write(`${issue.file}${issue.line === undefined ? "" : `:${issue.line}`}: ${issue.ruleId}: ${issue.message}\n`);
 };
 export const checkArchitecture = async (root, architecture, options = {}) => {
+    root = realpathSync(root);
     const opened = openProjects(root, architecture);
     try {
-        const tree = inventory(root, architecture, opened.sources, opened.includes);
+        const tree = inventory(root, architecture, opened.sources);
         const structural = [...opened.issues, ...tree.issues, ...checkSuppressions(tree.files, opened.projects)];
         if (options.explain !== undefined) {
             const path = safePath(root, options.explain);

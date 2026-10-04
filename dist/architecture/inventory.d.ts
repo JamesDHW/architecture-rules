@@ -16,8 +16,6 @@ export type Inventory = {
     readonly issues: readonly Issue[];
 };
 export declare const classify: (architecture: Architecture, path: string) => readonly string[];
-export declare const inventory: (root: string, architecture: Architecture, sources: ReadonlySet<string>, includes: readonly {
-    readonly configDir: string;
-    readonly patterns: readonly string[];
-}[]) => Inventory;
+/** TypeScript owns membership. Never rescan the root or reinterpret tsconfig globs. */
+export declare const inventory: (root: string, architecture: Architecture, sources: ReadonlySet<string>) => Inventory;
 //# sourceMappingURL=inventory.d.ts.map

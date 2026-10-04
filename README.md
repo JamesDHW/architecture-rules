@@ -1,7 +1,7 @@
 # architecture-rules
 
 An executable, project-owned TypeScript/React architecture contract, enforced by
-filesystem checks, TypeScript, and Oxlint. Requires **Node.js 24+** and pnpm.
+TypeScript program analysis and Oxlint. Requires **Node.js 24+** and pnpm.
 
 `defineRule(...)` is the canonical source of each rule's explanation, defaults,
 and enforcement. `defineArchitecture(...)` selects files and specializes those
@@ -18,7 +18,7 @@ pnpm add -D github:JamesDHW/architecture-rules
 
 Pin a commit or tag for reproducible architecture checks.
 
-Create **`architecture.config.ts`** at the project root:
+Create **`architecture.config.ts`** (or **`architecture.config.mts`**) at the project root:
 
 ```ts
 import { defineArchitecture } from "architecture-rules";
@@ -27,14 +27,6 @@ export default defineArchitecture({
   projects: {
     tsconfigs: ["tsconfig.json"],
     references: "follow",
-  },
-  files: {
-    otherFiles: [
-      "package.json", "pnpm-lock.yaml", "tsconfig.json",
-      "README.md", ".gitignore",
-    ],
-    toolingFiles: ["architecture.config.ts"],
-    generated: [{ files: ["dist/**"], reason: "Compiler output." }],
   },
   defaults: {
     naming: { case: "pascal" },
@@ -94,23 +86,31 @@ run the same required-config checker. `--fix` only applies supported lint fixes;
 it never changes architecture definitions, compiler configs, filenames, or
 manifests. Structural failures stop the run before fixes.
 
-## File accounting is closed by default
+## TypeScript owns the checking scope
 
 - The configuration's directory is the root, independent of the working directory.
-- TypeScript resolves `extends`, includes, files, and import-reachable sources.
-  Followed project references are checked too. `references: "explicit"` checks
+- The configured TypeScript programs determine membership using `files`, `include`,
+  `exclude`, `extends`, `allowJs`, imports and references. Architecture-rules does
+  **not** rescan the repository or reinterpret these options with another glob engine.
+- TypeScript's `exclude` limits initial discovery, not imports: an excluded file
+  imported by included source still belongs to the program and is checked.
+- Every local TS/JS source or declaration in those programs must match **exactly
+  one** file type. Files outside the programs are ignored, including other source,
+  docs, assets, lockfiles and configuration. There are no auxiliary-file allowlists.
+- JavaScript is governed when TypeScript includes it via `allowJs`; JSON/assets
+  are not syntax-linted. Import permissions still apply to dependencies of selected code.
+- Followed project references are checked too. `references: "explicit"` checks
   only the listed configurations; list every required leaf project yourself.
-- Every local program source must match **exactly one** file type.
-- A source outside every configured program is an error, even if an `otherFiles`
-  pattern matches it. JavaScript does not become invisible when `allowJs` is off.
-- Other files need explicit `otherFiles` permissions. `toolingFiles` allows exact
-  paths outside application programs, not source glob exemptions.
-- Generated exclusions require reasons and cannot hide source loaded into a
-  governed program. These are explicit trust boundaries.
-- Git metadata, `node_modules`, and `.pnpm-store` are infrastructure exclusions.
-  `.gitignore` does **not** determine architecture scope.
-- Managed symlinks are rejected. External library declarations are not application
-  files; workspace-local sources must still be governed.
+- Unselected generated output needs no architecture exclusion. Selected generated
+  declarations need a role and can have reasoned, role-specific lint overrides.
+- `.gitignore` does not determine scope. Selected managed symlinks and root escapes
+  are rejected. Dependency-install libraries and standard libs are not application code.
+
+Configuration files are not magically exempt: if your tsconfig selects one, give
+it a role or adjust the tsconfig. `architecture.config.ts` is tooling, not
+application code, so add it to the tsconfig's `exclude` when an `include` such as
+`**/*.ts` would select it. It is always loaded as ESM, even in a package without
+`"type": "module"`. The CLI discovers `.ts` first, then `.mts`, or accepts `--config`.
 
 File types have consumer-defined names. `files` and optional `exclude` patterns
 are root-relative positive globs. A file matching two types fails, even when
@@ -193,12 +193,14 @@ Self-type imports must also be permitted explicitly.
 - External permissions match source specifiers: a package does not implicitly
   permit all its subpaths. Installation approval remains outside this framework.
 - Built-ins normalize `node:` aliases.
-- Assets must already be allowed by inventory and match the importer's asset policy.
+- Asset imports must exist inside the root and match the importer's asset policy;
+  assets do not need a separate repository-file allowlist.
 - Re-exports and type-only imports are dependencies too.
 - Literal dynamic imports and recognizable CommonJS imports are checked.
   Nonliteral loading requires a narrow exception. Arbitrary runtime loaders,
   `eval`, and transitive function effects are not proved by this checker.
-- Imports into tooling, excluded, or unclassified executable source are rejected.
+- Imports to unclassified executable source are rejected. An `exclude` entry in
+  tsconfig does not grant an import-policy exemption.
 
 File types are not feature boundaries. A later module-boundary layer can restrict
 one domain feature from importing another feature's internals. V1 does not claim
@@ -229,6 +231,12 @@ Copy and adapt:
 They are visible starting points, not automatic dependency choices or hidden
 presets. Configure tests, styles, framework files, and any extra TS projects for
 your actual application. Naming a type `adapter` grants no implicit permission.
+
+**Scope migration:** remove the top-level `files` object (`otherFiles`,
+`toolingFiles`, `generated`). These options are now rejected rather than silently
+ignored. Point `projects.tsconfigs` at your real project configs; only source
+selected by TypeScript needs a role. This replaces the old whole-root inventory
+contract, including its requirement to classify source outside compiler projects.
 
 **Breaking change:** `createConfig` and the no-config CLI mode have been removed.
 Move global settings to `defaults.rules`; replace overlapping glob overrides

@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { Architecture } from "./types.js";
 import { inventory, classify, type Issue } from "./inventory.js";
@@ -24,9 +24,10 @@ export const printIssues = (issues: readonly Issue[]): void => {
 };
 
 export const checkArchitecture = async (root: string, architecture: Architecture, options: { readonly fix?: boolean; readonly explain?: string } = {}): Promise<number> => {
+  root = realpathSync(root);
   const opened = openProjects(root, architecture);
   try {
-    const tree = inventory(root, architecture, opened.sources, opened.includes);
+    const tree = inventory(root, architecture, opened.sources);
     const structural = [...opened.issues, ...tree.issues, ...checkSuppressions(tree.files, opened.projects)];
     if (options.explain !== undefined) {
       const path = safePath(root, options.explain);

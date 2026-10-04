@@ -81,15 +81,6 @@ export type ArchitectureInput<Name extends string> = {
         readonly tsconfigs: readonly string[];
         readonly references?: "follow" | "explicit";
     };
-    readonly files?: {
-        readonly otherFiles?: readonly string[];
-        /** Exact paths only, outside application programs; not a source glob exemption. */
-        readonly toolingFiles?: readonly string[];
-        readonly generated?: readonly {
-            readonly files: readonly string[];
-            readonly reason: string;
-        }[];
-    };
     readonly defaults?: Omit<Policy<NoInfer<Name>>, "rules"> & {
         readonly rules?: ProjectRules;
     };
@@ -114,7 +105,6 @@ export type EffectivePolicy = {
 };
 export type Architecture = {
     readonly projects: ArchitectureInput<string>["projects"];
-    readonly files: Required<NonNullable<ArchitectureInput<string>["files"]>>;
     readonly defaults: EffectivePolicy;
     readonly fileTypes: Readonly<Record<string, FileType & {
         readonly policy: EffectivePolicy;

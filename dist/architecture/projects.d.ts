@@ -9,10 +9,6 @@ export type Projects = {
     readonly sources: ReadonlySet<string>;
     readonly issues: readonly Issue[];
     readonly close: () => void;
-    readonly includes: readonly {
-        readonly configDir: string;
-        readonly patterns: readonly string[];
-    }[];
 };
 export declare const openProjects: (root: string, architecture: Architecture) => Projects;
 //# sourceMappingURL=projects.d.ts.map

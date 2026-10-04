@@ -31,7 +31,7 @@ const definitions = new WeakSet();
 export const isArchitecture = (value) => value !== null && typeof value === "object" && definitions.has(value);
 /** Validate and normalize trusted configuration; filesystem checks happen in the runner. */
 export const normalizeArchitecture = (value) => {
-    const config = fields(value, ["projects", "files", "defaults", "fileTypes"], "architecture");
+    const config = fields(value, ["projects", "defaults", "fileTypes"], "architecture");
     const projects = fields(config.projects, ["tsconfigs", "references"], "projects");
     const tsconfigs = patterns(projects.tsconfigs, "tsconfigs", true);
     if (tsconfigs.length === 0)
@@ -43,18 +43,6 @@ export const normalizeArchitecture = (value) => {
     const names = Object.keys(types);
     if (names.length === 0 || names.some((name) => !/^[A-Za-z][\w-]*$/.test(name) || ["__proto__", "constructor", "prototype"].includes(name)))
         throw new Error("fileTypes requires valid, non-reserved names");
-    const fileConfig = fields(config.files ?? {}, ["otherFiles", "toolingFiles", "generated"], "files");
-    const generated = fileConfig.generated ?? [];
-    if (!Array.isArray(generated))
-        throw new Error("generated must be an array");
-    const files = {
-        otherFiles: patterns(fileConfig.otherFiles ?? [], "otherFiles"),
-        toolingFiles: patterns(fileConfig.toolingFiles ?? [], "toolingFiles", true),
-        generated: generated.map((entry) => {
-            const group = fields(entry, ["files", "reason"], "generated group");
-            return { files: patterns(group.files, "generated.files"), reason: text(group.reason, "generated.reason") };
-        }),
-    };
     const base = fields(config.defaults ?? {}, ["naming", "imports", "rules"], "defaults");
     const defaults = {
         origins: { naming: base.naming === undefined ? "unconfigured" : "defaults", imports: base.imports === undefined ? "deny by default" : "defaults" },
@@ -77,7 +65,7 @@ export const normalizeArchitecture = (value) => {
         };
         fileTypes[name] = { description: text(type.description, `${name}.description`), files: include, exclude: patterns(type.exclude ?? [], `${name}.exclude`), policy };
     }
-    const architecture = freeze({ projects: { tsconfigs, references }, files, defaults, fileTypes });
+    const architecture = freeze({ projects: { tsconfigs, references }, defaults, fileTypes });
     definitions.add(architecture);
     return architecture;
 };

@@ -1,9 +1,9 @@
 import { API } from "typescript/unstable/sync";
 import { createRequire } from "node:module";
 import { existsSync, realpathSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
-import { infrastructure, inside, matches, safePath, sourceFile } from "./paths.js";
+import { infrastructure, inside, safePath, sourceFile } from "./paths.js";
 import { object } from "./schema.js";
 import { rules } from "../rules/index.js";
 const require = createRequire(import.meta.url);
@@ -30,9 +30,9 @@ export const compilerIssues = (architecture, project, options) => {
     return issues;
 };
 export const openProjects = (root, architecture) => {
-    // --showConfig uses the installed TS parser for JSONC, extends, include, and exclude.
+    root = realpathSync(root);
+    // --showConfig resolves compiler settings/references; only the program determines source membership.
     const configs = new Map();
-    const fullConfigs = new Map();
     const visit = (path) => {
         if (configs.has(path))
             return;
@@ -45,7 +45,6 @@ export const openProjects = (root, architecture) => {
         if (!object(config) || !object(config.compilerOptions))
             throw new Error(`Invalid resolved config: ${path}`);
         configs.set(path, config.compilerOptions);
-        fullConfigs.set(path, config);
         if (architecture.projects.references === "follow" && Array.isArray(config.references)) {
             for (const reference of config.references) {
                 if (!object(reference) || typeof reference.path !== "string")
@@ -67,26 +66,6 @@ export const openProjects = (root, architecture) => {
         const projects = snapshot.getProjects().filter((project) => configs.has(project.configFileName));
         if (projects.length !== configs.size)
             throw new Error("TypeScript did not open every configured project");
-        const excludedPatterns = (() => {
-            const patterns = [];
-            for (const [configPath, fullConfig] of fullConfigs) {
-                const exclude = fullConfig.exclude;
-                if (!Array.isArray(exclude))
-                    continue;
-                patterns.push({ configDir: dirname(configPath), patterns: exclude });
-            }
-            return patterns;
-        })();
-        const includePatterns = (() => {
-            const patterns = [];
-            for (const [configPath, fullConfig] of fullConfigs) {
-                const include = fullConfig.include;
-                if (!Array.isArray(include))
-                    continue;
-                patterns.push({ configDir: dirname(configPath), patterns: include });
-            }
-            return patterns;
-        })();
         const sources = new Set();
         const issues = [];
         for (const project of projects) {
@@ -100,13 +79,10 @@ export const openProjects = (root, architecture) => {
                     continue;
                 if (actual !== path)
                     issues.push({ ruleId: "project-membership", file: path, message: "Managed source loaded through a symlink has ambiguous identity; resolve the project to its real paths." });
-                const excluded = excludedPatterns.some(({ configDir, patterns }) => matches(relative(configDir, actual), patterns));
-                if (excluded)
-                    continue;
                 sources.add(actual);
             }
         }
-        return { api, snapshot, projects, sources, issues, close: () => { snapshot.dispose(); api.close(); }, includes: includePatterns };
+        return { api, snapshot, projects, sources, issues, close: () => { snapshot.dispose(); api.close(); } };
     }
     catch (error) {
         api.close();

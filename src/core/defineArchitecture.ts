@@ -31,7 +31,7 @@ export const isArchitecture = (value: unknown): value is Architecture => value !
 
 /** Validate and normalize trusted configuration; filesystem checks happen in the runner. */
 export const normalizeArchitecture = (value: unknown): Architecture => {
-  const config = fields(value, ["projects", "files", "defaults", "fileTypes"], "architecture");
+  const config = fields(value, ["projects", "defaults", "fileTypes"], "architecture");
   const projects = fields(config.projects, ["tsconfigs", "references"], "projects");
   const tsconfigs = patterns(projects.tsconfigs, "tsconfigs", true);
   if (tsconfigs.length === 0) throw new Error("At least one tsconfig is required");
@@ -40,17 +40,6 @@ export const normalizeArchitecture = (value: unknown): Architecture => {
   const types = fields(config.fileTypes, Object.keys((config.fileTypes ?? {}) as object), "fileTypes");
   const names = Object.keys(types);
   if (names.length === 0 || names.some((name) => !/^[A-Za-z][\w-]*$/.test(name) || ["__proto__", "constructor", "prototype"].includes(name))) throw new Error("fileTypes requires valid, non-reserved names");
-  const fileConfig = fields(config.files ?? {}, ["otherFiles", "toolingFiles", "generated"], "files");
-  const generated = fileConfig.generated ?? [];
-  if (!Array.isArray(generated)) throw new Error("generated must be an array");
-  const files: Architecture["files"] = {
-    otherFiles: patterns(fileConfig.otherFiles ?? [], "otherFiles"),
-    toolingFiles: patterns(fileConfig.toolingFiles ?? [], "toolingFiles", true),
-    generated: generated.map((entry) => {
-      const group = fields(entry, ["files", "reason"], "generated group");
-      return { files: patterns(group.files, "generated.files"), reason: text(group.reason, "generated.reason") };
-    }),
-  };
   const base = fields(config.defaults ?? {}, ["naming", "imports", "rules"], "defaults");
   const defaults: EffectivePolicy = {
     origins: { naming: base.naming === undefined ? "unconfigured" : "defaults", imports: base.imports === undefined ? "deny by default" : "defaults" },
@@ -72,7 +61,7 @@ export const normalizeArchitecture = (value: unknown): Architecture => {
     };
     fileTypes[name] = { description: text(type.description, `${name}.description`), files: include, exclude: patterns(type.exclude ?? [], `${name}.exclude`), policy };
   }
-  const architecture: Architecture = freeze({ projects: { tsconfigs, references }, files, defaults, fileTypes });
+  const architecture: Architecture = freeze({ projects: { tsconfigs, references }, defaults, fileTypes });
   definitions.add(architecture);
   return architecture;
 };

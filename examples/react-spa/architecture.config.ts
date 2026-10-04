@@ -3,11 +3,6 @@ import { defineArchitecture } from "architecture-rules";
 // Copy into the project root and adapt paths/packages; this is not a hidden preset.
 export default defineArchitecture({
   projects: { tsconfigs: ["tsconfig.app.json", "tsconfig.node.json"] },
-  files: {
-    otherFiles: ["package.json", "pnpm-lock.yaml", "tsconfig*.json", "README.md", ".gitignore", "index.html", "public/**"],
-    toolingFiles: ["architecture.config.ts"],
-    generated: [{ files: ["dist/**"], reason: "Bundler output." }],
-  },
   defaults: { naming: { case: "camel", suffixes: [".test", ".config"] } },
   fileTypes: {
     domain: { description: "Business decisions and readonly models.", files: ["src/features/*/domain/**/*.ts"], imports: { internal: ["domain", "contracts"] } },

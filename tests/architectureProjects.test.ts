@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, symlinkSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, symlinkSync, realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -11,14 +11,13 @@ import { checkImports } from "../src/architecture/imports.js";
 
 const roots: string[] = [];
 const fixture = (files: Record<string, string> = {}, compilerOptions: Record<string, unknown> = {}) => {
-  const root = mkdtempSync(join(tmpdir(), "architecture-fixture-")); roots.push(root);
+  const root = realpathSync(mkdtempSync(join(tmpdir(), "architecture-fixture-"))); roots.push(root);
   const content = { "tsconfig.json": JSON.stringify({ compilerOptions: { ...buildTsconfig().compilerOptions, target: "ES2022", module: "ESNext", moduleResolution: "Bundler", ...compilerOptions }, include: ["src/**/*.ts", "src/**/*.tsx"] }), "src/domain/model.ts": "export const value = 1;", ...files };
   for (const [file, text] of Object.entries(content)) { mkdirSync(dirname(join(root, file)), { recursive: true }); writeFileSync(join(root, file), text); }
   return root;
 };
 const architecture = () => defineArchitecture({
   projects: { tsconfigs: ["tsconfig.json"] },
-  files: { otherFiles: ["tsconfig.json", "README.md", "assets/**"] },
   fileTypes: {
     domain: { description: "Domain", files: ["src/domain/**"], imports: { internal: ["domain"] } },
     adapter: { description: "Adapter", files: ["src/adapters/**"], imports: { internal: ["domain"] } },
@@ -27,14 +26,14 @@ const architecture = () => defineArchitecture({
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); });
 
 describe("TypeScript project and inventory integration", () => {
-  it("uses actual TS membership and checks every other project file", () => {
+  it("ignores unrelated source, assets, configuration and auxiliary files", () => {
     const root = fixture({ "src/extra.js": "export const extra = true;", "outside/hidden.ts": "export {};", "surprise.txt": "hello", "README.md": "allowed", ".gitignore": "outside/" });
     const a = architecture(); const opened = openProjects(root, a);
     try {
       expect(opened.issues).toEqual([]);
       const result = inventory(root, a, opened.sources);
       expect(result.files.map((file) => file.relative)).toEqual(["src/domain/model.ts"]);
-      expect(result.issues.map((issue) => issue.file)).toEqual(expect.arrayContaining(["src/extra.js", "outside/hidden.ts", "surprise.txt", ".gitignore"]));
+      expect(result.issues).toEqual([]);
     } finally { opened.close(); }
   });
   it("imports bring source outside include patterns under governance", () => {
@@ -43,17 +42,66 @@ describe("TypeScript project and inventory integration", () => {
     try { expect(inventory(root, a, opened.sources).issues).toContainEqual(expect.objectContaining({ file: "outside.ts", ruleId: "file-classification" })); }
     finally { opened.close(); }
   });
-  it("cannot use miscellaneous allowlists to hide TypeScript", () => {
-    const root = fixture({ "hidden.ts": "export {};" });
-    const a = defineArchitecture({ projects: { tsconfigs: ["tsconfig.json"] }, files: { otherFiles: ["**/*"] }, fileTypes: { source: { description: "Source", files: ["src/**"] } } });
-    const opened = openProjects(root, a);
-    try { expect(inventory(root, a, opened.sources).issues).toContainEqual(expect.objectContaining({ file: "hidden.ts", ruleId: "project-membership" })); }
-    finally { opened.close(); }
-  });
-  it("rejects symlinks rather than permitting ambiguous identity", () => {
+  it("ignores symlinks outside the compiler program", () => {
     const root = fixture(); symlinkSync("src/domain/model.ts", join(root, "alias.ts"));
     const a = architecture(); const opened = openProjects(root, a);
-    try { expect(inventory(root, a, opened.sources).issues).toContainEqual(expect.objectContaining({ file: "alias.ts", ruleId: "file-inventory" })); }
+    try { expect(inventory(root, a, opened.sources).issues).toEqual([]); }
+    finally { opened.close(); }
+  });
+  it("rejects selected symlinks rather than permitting ambiguous identity", () => {
+    const root = fixture(); symlinkSync("model.ts", join(root, "src/domain/alias.ts"));
+    const a = architecture(); const opened = openProjects(root, a);
+    try { expect([...opened.issues, ...inventory(root, a, opened.sources).issues]).toContainEqual(expect.objectContaining({ ruleId: "project-membership" })); }
+    finally { opened.close(); }
+  });
+  it.each([false, true])("respects allowJs=%s with TypeScript directory includes", (allowJs) => {
+    const root = fixture({
+      "tsconfig.json": JSON.stringify({ compilerOptions: { ...buildTsconfig().compilerOptions, allowJs }, include: ["src"] }),
+      "src/domain/extra.js": "export const js = 1;",
+    });
+    const a = architecture(); const opened = openProjects(root, a);
+    try {
+      expect(opened.sources.has(join(root, "src/domain/extra.js"))).toBe(allowJs);
+      expect(inventory(root, a, opened.sources).issues).toEqual([]);
+    } finally { opened.close(); }
+  });
+  it("respects files-only configurations even if an explicit file is also excluded", () => {
+    const root = fixture({
+      "tsconfig.json": JSON.stringify({ compilerOptions: buildTsconfig().compilerOptions, files: ["src/domain/explicit.ts"], include: [], exclude: ["src/domain/explicit.ts"] }),
+      "src/domain/explicit.ts": "export {};",
+    });
+    const a = architecture(); const opened = openProjects(root, a);
+    try { expect(inventory(root, a, opened.sources).files.map(file => file.relative)).toEqual(["src/domain/explicit.ts"]); }
+    finally { opened.close(); }
+  });
+  it("resolves inherited include/exclude relative to the config declaring them", () => {
+    const root = fixture({
+      "tsconfig.json": JSON.stringify({ extends: "./config/base.json" }),
+      "config/base.json": JSON.stringify({ compilerOptions: buildTsconfig().compilerOptions, include: ["../src"], exclude: ["../src/excluded"] }),
+      "src/excluded/ignored.ts": "export {};",
+    });
+    const a = architecture(); const opened = openProjects(root, a);
+    try { expect(inventory(root, a, opened.sources).files.map(file => file.relative)).toEqual(["src/domain/model.ts"]); }
+    finally { opened.close(); }
+  });
+  it("does not apply one project's exclusions to another project's sources", () => {
+    const root = fixture({
+      "tsconfig.a.json": JSON.stringify({ compilerOptions: buildTsconfig().compilerOptions, include: ["src"], exclude: ["src/domain/shared.ts"] }),
+      "tsconfig.b.json": JSON.stringify({ compilerOptions: buildTsconfig().compilerOptions, files: ["src/domain/shared.ts"] }),
+      "src/domain/shared.ts": "export {};",
+    });
+    const a = defineArchitecture({ projects: { tsconfigs: ["tsconfig.a.json", "tsconfig.b.json"] }, fileTypes: { app: { description: "App", files: ["src/**"] } } });
+    const opened = openProjects(root, a);
+    try { expect(inventory(root, a, opened.sources).files.map(file => file.relative)).toContain("src/domain/shared.ts"); }
+    finally { opened.close(); }
+  });
+  it("does not silently exempt an architecture config selected by TypeScript", () => {
+    const root = fixture({
+      "tsconfig.json": JSON.stringify({ compilerOptions: buildTsconfig().compilerOptions, files: ["architecture.config.ts"] }),
+      "architecture.config.ts": "export {};",
+    });
+    const a = architecture(); const opened = openProjects(root, a);
+    try { expect(inventory(root, a, opened.sources).issues).toContainEqual(expect.objectContaining({ file: "architecture.config.ts", ruleId: "file-classification" })); }
     finally { opened.close(); }
   });
   it("reports weakened effective flags and strict subflags", () => {
@@ -115,12 +163,19 @@ export const other = value;` });
     try { expect(checkImports(root, inventory(root, a, opened.sources).files, opened.projects)[0]?.message).toContain("Built-in import is not permitted"); }
     finally { opened.close(); }
   });
-  it("rejects program sources hidden under generated exclusions", () => {
-    const root = fixture();
-    const a = defineArchitecture({ projects: { tsconfigs: ["tsconfig.json"] }, files: { otherFiles: ["tsconfig.json"], generated: [{ files: ["src/domain/**"], reason: "Invalid attempted exemption" }] }, fileTypes: { app: { description: "app", files: ["src/**"] } } });
-    const opened = openProjects(root, a);
-    try { expect(inventory(root, a, opened.sources).issues[0]?.message).toContain("cannot hide a source"); }
-    finally { opened.close(); }
+  it("keeps imports of excluded/generated source in scope, as TypeScript does", () => {
+    const root = fixture({
+      "tsconfig.json": JSON.stringify({ compilerOptions: { ...buildTsconfig().compilerOptions, module: "ESNext", moduleResolution: "Bundler" }, include: ["src"], exclude: ["src/generated/**"] }),
+      "src/domain/model.ts": "export { value } from '../generated/model';",
+      "src/generated/model.ts": "export const value = 1;",
+      "src/generated/unreferenced.ts": "export {};",
+    });
+    const a = architecture(); const opened = openProjects(root, a);
+    try {
+      expect(opened.sources.has(join(root, "src/generated/model.ts"))).toBe(true);
+      expect(opened.sources.has(join(root, "src/generated/unreferenced.ts"))).toBe(false);
+      expect(inventory(root, a, opened.sources).issues).toContainEqual(expect.objectContaining({ file: "src/generated/model.ts", ruleId: "file-classification" }));
+    } finally { opened.close(); }
   });
 
   it("ignores directive-like JSX text but validates actual JSX comments", () => {

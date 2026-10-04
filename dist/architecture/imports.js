@@ -20,7 +20,9 @@ export const checkImports = (root, files, projects) => {
                 issues.set(`${file.path}:${start}:${message}`, issue);
             };
             const checkTarget = (node, target) => {
-                const actual = realpathSync(target);
+                // Symbol declaration handles use canonical (lowercase on case-insensitive
+                // hosts) paths. Recover the program's filename before filesystem comparison.
+                const actual = realpathSync(project.program.getSourceFile(target)?.fileName ?? target);
                 const classified = byPath.get(actual);
                 if (!inside(root, actual)) {
                     report(node, `Import target escapes architecture root: ${target}`);

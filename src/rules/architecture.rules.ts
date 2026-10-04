@@ -1,8 +1,8 @@
 import { defineRule } from "../core/defineRule.js";
 
 export const fileInventoryRule = defineRule({
-  id: "file-inventory", title: "Account for every project file",
-  description: "Scan the architecture root independently of gitignore. Permit only governed source, explicit auxiliary/tooling paths, and reasoned generated exclusions. Managed symlinks are rejected to avoid ambiguous identity and root escapes. Git metadata and dependency-install directories are infrastructure, not application code.",
+  id: "file-inventory", title: "Account for compiler-selected source files",
+  description: "Inventory only source files in the configured TypeScript programs. Do not scan unrelated repository files or require allowlists for documentation, assets, configuration or build outputs. Selected source must exist on disk; selected managed symlinks and root escapes are rejected. Dependency-install libraries are not application source.",
   enforcement: { type: "architecture" },
 });
 export const fileClassificationRule = defineRule({
@@ -12,7 +12,7 @@ export const fileClassificationRule = defineRule({
 });
 export const projectMembershipRule = defineRule({
   id: "project-membership", title: "Govern all local TypeScript program sources",
-  description: "Resolve configured TypeScript programs and their local import-reachable sources. Code outside all configured programs must be assigned to a compiler project, not hidden by miscellaneous-file globs. Tooling exceptions are exact paths outside application programs. Generated exclusions cannot hide program source.",
+  description: "TypeScript owns scope through files, include, exclude, inherited configuration, allowJs, imports and configured project references. Do not reinterpret compiler globs or filter program sources afterward. Excluded files imported by selected source are still program members, exactly as in TypeScript. Files outside every configured program are not checked; configuration and generated declarations inside a program must be classified like other source.",
   enforcement: { type: "architecture" },
 });
 export const compilerCheckingRule = defineRule({

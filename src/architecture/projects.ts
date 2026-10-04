@@ -1,10 +1,10 @@
 import { API, type Project, type Snapshot } from "typescript/unstable/sync";
 import { createRequire } from "node:module";
 import { existsSync, realpathSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import type { Architecture } from "./types.js";
-import { infrastructure, inside, matches, safePath, sourceFile } from "./paths.js";
+import { infrastructure, inside, safePath, sourceFile } from "./paths.js";
 import type { Issue } from "./inventory.js";
 import { object } from "./schema.js";
 import { rules } from "../rules/index.js";
@@ -29,12 +29,12 @@ export const compilerIssues = (architecture: Architecture, project: string, opti
   return issues;
 };
 
-export type Projects = { readonly api: API; readonly snapshot: Snapshot; readonly projects: readonly Project[]; readonly sources: ReadonlySet<string>; readonly issues: readonly Issue[]; readonly close: () => void; readonly includes: readonly { readonly configDir: string; readonly patterns: readonly string[] }[] };
+export type Projects = { readonly api: API; readonly snapshot: Snapshot; readonly projects: readonly Project[]; readonly sources: ReadonlySet<string>; readonly issues: readonly Issue[]; readonly close: () => void };
 
 export const openProjects = (root: string, architecture: Architecture): Projects => {
-  // --showConfig uses the installed TS parser for JSONC, extends, include, and exclude.
+  root = realpathSync(root);
+  // --showConfig resolves compiler settings/references; only the program determines source membership.
   const configs = new Map<string, Record<string, unknown>>();
-  const fullConfigs = new Map<string, unknown>();
   const visit = (path: string): void => {
     if (configs.has(path)) return;
     if (!existsSync(path) || !inside(realpathSync(root), realpathSync(path))) throw new Error(`Missing or outside-root tsconfig: ${path}`);
@@ -43,7 +43,6 @@ export const openProjects = (root: string, architecture: Architecture): Projects
     const config: unknown = JSON.parse(result.stdout);
     if (!object(config) || !object(config.compilerOptions)) throw new Error(`Invalid resolved config: ${path}`);
     configs.set(path, config.compilerOptions);
-    fullConfigs.set(path, config);
     if (architecture.projects.references === "follow" && Array.isArray(config.references)) {
       for (const reference of config.references) {
         if (!object(reference) || typeof reference.path !== "string") throw new Error(`Invalid reference in ${path}`);
@@ -60,24 +59,6 @@ export const openProjects = (root: string, architecture: Architecture): Projects
     const snapshot = api.updateSnapshot({ openProjects: [...configs.keys()] });
     const projects = snapshot.getProjects().filter((project) => configs.has(project.configFileName));
     if (projects.length !== configs.size) throw new Error("TypeScript did not open every configured project");
-    const excludedPatterns = (() => {
-      const patterns: { readonly configDir: string; readonly patterns: readonly string[] }[] = [];
-      for (const [configPath, fullConfig] of fullConfigs) {
-        const exclude = (fullConfig as Record<string, unknown>).exclude;
-        if (!Array.isArray(exclude)) continue;
-        patterns.push({ configDir: dirname(configPath), patterns: exclude });
-      }
-      return patterns;
-    })();
-    const includePatterns = (() => {
-      const patterns: { readonly configDir: string; readonly patterns: readonly string[] }[] = [];
-      for (const [configPath, fullConfig] of fullConfigs) {
-        const include = (fullConfig as Record<string, unknown>).include;
-        if (!Array.isArray(include)) continue;
-        patterns.push({ configDir: dirname(configPath), patterns: include });
-      }
-      return patterns;
-    })();
     const sources = new Set<string>();
     const issues: Issue[] = [];
     for (const project of projects) {
@@ -88,11 +69,9 @@ export const openProjects = (root: string, architecture: Architecture): Projects
         const actual = realpathSync(path);
         if (infrastructure(actual)) continue;
         if (actual !== path) issues.push({ ruleId: "project-membership", file: path, message: "Managed source loaded through a symlink has ambiguous identity; resolve the project to its real paths." });
-        const excluded = excludedPatterns.some(({ configDir, patterns }) => matches(relative(configDir, actual), patterns));
-        if (excluded) continue;
         sources.add(actual);
       }
     }
-    return { api, snapshot, projects, sources, issues, close: () => { snapshot.dispose(); api.close(); }, includes: includePatterns };
+    return { api, snapshot, projects, sources, issues, close: () => { snapshot.dispose(); api.close(); } };
   } catch (error) { api.close(); throw error; }
 };

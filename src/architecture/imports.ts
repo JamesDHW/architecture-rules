@@ -23,7 +23,9 @@ export const checkImports = (root: string, files: readonly ClassifiedFile[], pro
         issues.set(`${file.path}:${start}:${message}`, issue);
       };
       const checkTarget = (node: Node, target: string): void => {
-        const actual = realpathSync(target);
+        // Symbol declaration handles use canonical (lowercase on case-insensitive
+        // hosts) paths. Recover the program's filename before filesystem comparison.
+        const actual = realpathSync(project.program.getSourceFile(target)?.fileName ?? target);
         const classified = byPath.get(actual);
         if (!inside(root, actual)) { report(node, `Import target escapes architecture root: ${target}`); return; }
         if (classified === undefined) { report(node, `Import target is not governed source: ${relativePath(root, actual)}`); return; }

@@ -8,6 +8,11 @@ export const valid = () => defineArchitecture({
   fileTypes: { domain: { description: "Domain", files: ["src/**"], imports: { internal: ["domain"] } } },
 });
 export const invalid = () => {
+  defineArchitecture({ projects,
+    // @ts-expect-error filesystem allowlists were removed; TypeScript owns scope
+    files: { otherFiles: ["**/*"] },
+    fileTypes: { app: { description: "app", files: ["src/**"] } },
+  });
   defineArchitecture({ projects, fileTypes: { domain: { description: "Domain", files: ["src/**"], imports: {
     // @ts-expect-error unknown file type must not widen inferred names
     internal: ["domian"],

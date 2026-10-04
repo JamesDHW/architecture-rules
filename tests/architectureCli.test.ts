@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readdirSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readdirSync, realpathSync, renameSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -11,16 +11,15 @@ import { buildTsconfig } from "../src/generateTsconfig.js";
 
 const roots: string[] = [];
 const rootFixture = (body = "export const value = 1;") => {
-  const root = mkdtempSync(join(tmpdir(), "architecture-cli-")); roots.push(root);
+  const root = realpathSync(mkdtempSync(join(tmpdir(), "architecture-cli-"))); roots.push(root);
   mkdirSync(join(root, "src"));
   writeFileSync(join(root, "src/abc.ts"), body);
   writeFileSync(join(root, "tsconfig.json"), JSON.stringify({ compilerOptions: { ...buildTsconfig().compilerOptions, module: "ESNext", moduleResolution: "Bundler", target: "ES2022" }, include: ["src/**/*.ts"] }));
   writeFileSync(join(root, "architecture.config.ts"), `import { defineArchitecture } from ${JSON.stringify(pathToFileURL(resolve("dist/index.js")).href)};
     export default defineArchitecture({
       projects: { tsconfigs: ["tsconfig.json"] },
-      files: { otherFiles: ["tsconfig.json"], toolingFiles: ["architecture.config.ts"] },
       defaults: { naming: { case: "pascal" } },
-      fileTypes: { app: { description: "App", files: ["src/**/*.ts"] } },
+      fileTypes: { app: { description: "App", files: ["src/abc.ts"] } },
     });`);
   return root;
 };
@@ -43,12 +42,21 @@ describe("packaged CLI", () => {
     expect(explained.matchingTypes[0].name).toBe("app");
     expect(explained.policy.naming).toEqual({ case: "pascal" });
   });
-  it("fails inventory before --fix can modify source", () => {
-    const root = rootFixture(); writeFileSync(join(root, "unexpected.js"), "export {};");
+  it("fails classification of selected source before --fix can modify it", () => {
+    const root = rootFixture(); writeFileSync(join(root, "src/unclassified.ts"), "export {};");
     const result = run(["--fix"], root);
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("project-membership");
+    expect(result.stderr).toContain("file-classification");
     expect(readdirSync(root).some((file) => file.startsWith(".architecture-run-"))).toBe(false);
+  });
+  it("ignores unrelated files and supports an mts architecture definition", () => {
+    const root = rootFixture();
+    renameSync(join(root, "architecture.config.ts"), join(root, "architecture.config.mts"));
+    writeFileSync(join(root, "unrelated.ts"), "invalid TypeScript that is outside include");
+    writeFileSync(join(root, "README.md"), "No allowlist needed");
+    const result = run(["explain", "src/abc.ts"], root);
+    expect(result.status, result.stderr).toBe(0);
+    expect(JSON.parse(result.stdout).issues).toEqual([]);
   });
   it("rejects broad suppression before invoking lint", () => {
     const root = rootFixture("/* oxlint-disable */\nexport const value = 1;");
@@ -57,7 +65,7 @@ describe("packaged CLI", () => {
     expect(result.stderr).toContain("reasoned-suppressions");
   });
   it("passes exact absolute selectors to native Oxlint, including glob metacharacters", () => {
-    const root = mkdtempSync(join(tmpdir(), "architecture[glob]-")); roots.push(root);
+    const root = realpathSync(mkdtempSync(join(tmpdir(), "architecture[glob]-"))); roots.push(root);
     mkdirSync(join(root, "src"));
     const path = join(root, "src", "[slug].ts");
     writeFileSync(path, "debugger;");
