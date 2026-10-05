@@ -102,7 +102,7 @@ manifests. Structural failures stop the run before fixes.
 - Followed project references are checked too. `references: "explicit"` checks
   only the listed configurations; list every required leaf project yourself.
 - Unselected generated output needs no architecture exclusion. Selected generated
-  declarations need a role and can have reasoned, role-specific lint overrides.
+  output needs a role marked `generated: { reason }` (see below).
 - `.gitignore` does not determine scope. Selected managed symlinks and root escapes
   are rejected. Dependency-install libraries and standard libs are not application code.
 
@@ -111,6 +111,23 @@ it a role or adjust the tsconfig. `architecture.config.ts` is tooling, not
 application code, so add it to the tsconfig's `exclude` when an `include` such as
 `**/*.ts` would select it. It is always loaded as ESM, even in a package without
 `"type": "module"`. The CLI discovers `.ts` first, then `.mts`, or accepts `--config`.
+
+### Generated files
+
+Give regenerated output its own file type and mark it `generated`:
+
+```ts
+routeTree: {
+  description: "TanStack Router route tree.",
+  files: ["src/routeTree.gen.ts"],
+  generated: { reason: "Written by the TanStack Router plugin on every build." },
+  imports: { internal: ["route"], external: ["@tanstack/react-router"] },
+},
+```
+
+A generated file type is still classified, named and import-checked, and its
+type errors are still reported. It is never linted, and its suppression comments
+(generators often write a file-wide disable) are not checked. It takes no `rules`.
 
 File types have consumer-defined names. `files` and optional `exclude` patterns
 are root-relative positive globs. A file matching two types fails, even when
@@ -234,7 +251,7 @@ your actual application. Naming a type `adapter` grants no implicit permission.
 
 **Scope migration:** remove the top-level `files` object (`otherFiles`,
 `toolingFiles`, `generated`). These options are now rejected rather than silently
-ignored. Point `projects.tsconfigs` at your real project configs; only source
+ignored; mark a generated file type with `generated: { reason }` instead. Point `projects.tsconfigs` at your real project configs; only source
 selected by TypeScript needs a role. This replaces the old whole-root inventory
 contract, including its requirement to classify source outside compiler projects.
 

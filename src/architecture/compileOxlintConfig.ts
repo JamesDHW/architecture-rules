@@ -1,11 +1,12 @@
 import { fileURLToPath } from "node:url";
 import type { OxlintConfig } from "oxlint";
-import { posix } from "./paths.js";
+import { configurationFile, posix } from "./paths.js";
 import { rules } from "../rules/index.js";
 import type { ClassifiedFile } from "./inventory.js";
 import type { ImportIssue } from "./imports.js";
 
-/** Compiles disjoint policies for the runner's child-directory config (pinned Oxlint path semantics). */
+/** Compiles disjoint policies for the runner's child-directory config (pinned Oxlint path semantics).
+ * Generated files never reach this point; the runner checks only their names and imports. */
 export const compileOxlintConfig = (files: readonly ClassifiedFile[], imports: readonly ImportIssue[]): OxlintConfig => ({
   categories: { correctness: "off" },
   plugins: ["eslint", "typescript", "unicorn", "oxc", "import", "react", "jsx-a11y", "promise"],
@@ -18,7 +19,8 @@ export const compileOxlintConfig = (files: readonly ClassifiedFile[], imports: r
       if (enforcement.type !== "oxlint" && enforcement.type !== "custom-oxlint") continue;
       const name = enforcement.type === "oxlint" ? enforcement.rule : `architecture/${rule.id}`;
       const setting = file.policy.rules[rule.id];
-      if (setting !== undefined) configured[name] = [setting.severity, ...setting.options];
+      if (setting === undefined) continue;
+      configured[name] = rule.id === "named-exports" && configurationFile(file.path) ? "off" : [setting.severity, ...setting.options];
     }
     configured["architecture/file-naming"] = file.policy.naming === undefined ? "off" : ["error", { architecture: file.policy.naming }];
     configured["architecture/allowed-imports"] = ["error", { issues: imports.filter((issue) => issue.file === file.relative).map(({ line, column, message }) => ({ line, column, message })) }];

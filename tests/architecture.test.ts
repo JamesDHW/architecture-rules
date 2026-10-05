@@ -40,6 +40,10 @@ describe("architecture configuration", () => {
     { ...base, defaults: { rules: { "no-binding-alias": { severity: "off", reason: "" } } } },
     { ...base, defaults: { rules: { "strict-typescript": "warn" } } },
     { ...base, fileTypes: { app: { ...base.fileTypes.app, rules: { "strict-typescript": "off" } } } },
+    { ...base, fileTypes: { app: { ...base.fileTypes.app, generated: { reason: " " } } } },
+    { ...base, fileTypes: { app: { ...base.fileTypes.app, generated: { reason: "Codegen", extra: true } } } },
+    { ...base, fileTypes: { app: { ...base.fileTypes.app, generated: { reason: "Codegen" }, rules: { "max-file-lines": "off" } } } },
+    { ...base, defaults: { generated: { reason: "Codegen" } } },
   ])("rejects invalid runtime input %#", (input) => expect(() => normalizeArchitecture(input)).toThrow());
   it("validates all existing default lint configurations against pinned schemas", () => {
     const defaults = defaultRules();
@@ -68,6 +72,20 @@ describe("architecture configuration", () => {
     });
     expect(verify("// comment\nimport './x.js';")).toHaveLength(1);
     expect(verify("// eslint-disable-next-line architecture/allowed-imports -- external boundary\nimport './x.js';")).toEqual([]);
+  });
+  it("records why a file type is generated", () => {
+    const a = defineArchitecture({ ...base, fileTypes: { app: { ...base.fileTypes.app, generated: { reason: "Written by the router plugin" } } } });
+    expect(a.fileTypes.app?.policy.generated).toEqual({ reason: "Written by the router plugin" });
+    expect(defineArchitecture(base).fileTypes.app?.policy.generated).toBeUndefined();
+  });
+  it("lets configuration files use a default export", () => {
+    const policy = defineArchitecture(base).fileTypes.app!.policy;
+    const config = compileOxlintConfig([
+      { path: "/project/vite.config.ts", relative: "vite.config.ts", type: "app", policy },
+      { path: "/project/src/config.ts", relative: "src/config.ts", type: "app", policy },
+    ], []);
+    expect(config.overrides?.[0]?.rules?.["import/no-default-export"]).toBe("off");
+    expect(config.overrides?.[1]?.rules?.["import/no-default-export"]).toEqual(["error"]);
   });
   it("compiles only one effective policy per selected file", () => {
     const a = defineArchitecture({ ...base, defaults: { naming: { case: "pascal" } } });

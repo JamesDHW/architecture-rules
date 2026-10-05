@@ -188,7 +188,9 @@ export const namedExportsRule = defineNativeOxlintRule({
     title: "Prefer named exports",
     description: `
 Use named exports wherever the surrounding framework permits them. Use a
-default export only when a framework requires one.
+default export only when a framework requires one. Configuration files
+(*.config.ts, .mts, .cts, .js, .mjs, .cjs) are exempt: build and test tools
+load their configuration from the default export.
 
 Named exports keep identifiers consistent between their definitions and
 imports, which makes references easier to search, navigate, and refactor.

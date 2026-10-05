@@ -6,7 +6,7 @@ import { inventory, classify } from "./inventory.js";
 import { openProjects } from "./projects.js";
 import { checkImports } from "./imports.js";
 import { compileOxlintConfig } from "./compileOxlintConfig.js";
-import { relativePath, safePath } from "./paths.js";
+import { configurationFile, relativePath, safePath } from "./paths.js";
 import { namingError } from "./naming.js";
 import { checkSuppressions } from "./suppressions.js";
 import { rules } from "../rules/index.js";
@@ -26,7 +26,10 @@ export const checkArchitecture = async (root, architecture, options = {}) => {
     const opened = openProjects(root, architecture);
     try {
         const tree = inventory(root, architecture, opened.sources);
-        const structural = [...opened.issues, ...tree.issues, ...checkSuppressions(tree.files, opened.projects)];
+        // Generated output is never linted, so its suppression comments (often a file-wide disable) are not checked either.
+        const linted = tree.files.filter((file) => file.policy.generated === undefined);
+        const generated = tree.files.filter((file) => file.policy.generated !== undefined);
+        const structural = [...opened.issues, ...tree.issues, ...checkSuppressions(linted, opened.projects)];
         if (options.explain !== undefined) {
             const path = safePath(root, options.explain);
             const relative = relativePath(root, path);
@@ -37,6 +40,7 @@ export const checkArchitecture = async (root, architecture, options = {}) => {
                 projects: opened.projects.filter((project) => project.program.getSourceFile(path) !== undefined).map((project) => relativePath(root, project.configFileName)),
                 matchingTypes: candidates.map((name) => ({ name, patterns: architecture.fileTypes[name]?.files })),
                 policy: selected?.policy,
+                namedExportsExempt: configurationFile(relative),
                 namingIssue: selected?.policy.naming === undefined ? undefined : namingError(relative, selected.policy.naming),
                 advisoryRules: rules.filter((rule) => rule.enforcement.type === "advisory").map((rule) => ({ id: rule.id, description: rule.description })),
                 issues: structural,
@@ -49,17 +53,30 @@ export const checkArchitecture = async (root, architecture, options = {}) => {
         }
         const imports = checkImports(root, tree.files, opened.projects);
         let lintCode = 0;
-        if (tree.files.length > 0) {
+        // Generated files keep their naming and import contracts; those are reported here instead of through Oxlint.
+        const generatedPaths = new Set(generated.map((file) => file.relative));
+        const generatedIssues = [
+            ...generated.flatMap((file) => {
+                const message = file.policy.naming === undefined ? undefined : namingError(file.relative, file.policy.naming);
+                return message === undefined ? [] : [{ ruleId: "file-naming", file: file.relative, message }];
+            }),
+            ...imports.filter((issue) => generatedPaths.has(issue.file)),
+        ];
+        if (generatedIssues.length > 0) {
+            printIssues(generatedIssues);
+            lintCode = 1;
+        }
+        if (linted.length > 0) {
             // Keep the generated config in the project root for Oxlint's relative globs.
             // The private directory is created after inventory and always removed.
             const temporary = mkdtempSync(join(root, ".architecture-run-"));
             try {
                 const configPath = join(temporary, "oxlint.json");
-                const config = compileOxlintConfig(tree.files, imports);
+                const config = compileOxlintConfig(linted, imports);
                 writeFileSync(configPath, JSON.stringify(config));
                 // Chunking prevents exceeding OS argv limits; every invocation uses all policies.
                 for (const project of opened.projects) {
-                    const projectFiles = tree.files.filter((file) => project.program.getSourceFile(file.path) !== undefined);
+                    const projectFiles = linted.filter((file) => project.program.getSourceFile(file.path) !== undefined);
                     for (let start = 0; start < projectFiles.length; start += 100) {
                         const code = await execute(["--config", configPath, "--disable-nested-config", "--no-ignore", "--type-aware", "--tsconfig", project.configFileName, "--report-unused-disable-directives-severity", "error", ...(options.fix ? ["--fix"] : []), ...projectFiles.slice(start, start + 100).map((file) => file.path)], root);
                         if (code !== 0)

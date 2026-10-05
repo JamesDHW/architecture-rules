@@ -1,4 +1,4 @@
-import type { Architecture, ArchitectureInput, EffectivePolicy, FileType, ImportPolicy, NamingPolicy } from "../architecture/types.js";
+import type { Architecture, ArchitectureInput, EffectivePolicy, FileType, GeneratedSetting, ImportPolicy, NamingPolicy } from "../architecture/types.js";
 import { defaultRules, overrideRules } from "../architecture/normalizeRules.js";
 import { fields, freeze, patterns, strings, text } from "../architecture/validation.js";
 
@@ -26,6 +26,11 @@ const imports = (value: unknown, names: readonly string[]): Required<ImportPolic
   };
 };
 
+const generated = (value: unknown, name: string): GeneratedSetting => {
+  const input = fields(value, ["reason"], `${name}.generated`);
+  return { reason: text(input.reason, `${name}.generated.reason`) };
+};
+
 const definitions = new WeakSet<object>();
 export const isArchitecture = (value: unknown): value is Architecture => value !== null && typeof value === "object" && definitions.has(value);
 
@@ -49,7 +54,8 @@ export const normalizeArchitecture = (value: unknown): Architecture => {
   };
   const fileTypes: Record<string, FileType & { readonly policy: EffectivePolicy }> = {};
   for (const [name, value] of Object.entries(types)) {
-    const type = fields(value, ["description", "files", "exclude", "naming", "imports", "rules"], name);
+    const type = fields(value, ["description", "files", "exclude", "naming", "imports", "rules", "generated"], name);
+    if (type.generated !== undefined && type.rules !== undefined) throw new Error(`${name}: a generated file type is never linted, so it takes no rules`);
     const include = patterns(type.files, `${name}.files`);
     if (include.length === 0) throw new Error(`${name}.files must not be empty`);
     const policy: EffectivePolicy = {
@@ -58,6 +64,7 @@ export const normalizeArchitecture = (value: unknown): Architecture => {
       ...(type.naming === undefined ? {} : { naming: naming(type.naming) }),
       imports: type.imports === undefined ? defaults.imports : imports(type.imports, names),
       rules: overrideRules(defaults.rules, type.rules, `fileTypes.${name}`, false),
+      ...(type.generated === undefined ? {} : { generated: generated(type.generated, name) }),
     };
     fileTypes[name] = { description: text(type.description, `${name}.description`), files: include, exclude: patterns(type.exclude ?? [], `${name}.exclude`), policy };
   }

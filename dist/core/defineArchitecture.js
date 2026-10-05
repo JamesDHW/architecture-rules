@@ -27,6 +27,10 @@ const imports = (value, names) => {
         assets: patterns(input.assets ?? [], "imports.assets"),
     };
 };
+const generated = (value, name) => {
+    const input = fields(value, ["reason"], `${name}.generated`);
+    return { reason: text(input.reason, `${name}.generated.reason`) };
+};
 const definitions = new WeakSet();
 export const isArchitecture = (value) => value !== null && typeof value === "object" && definitions.has(value);
 /** Validate and normalize trusted configuration; filesystem checks happen in the runner. */
@@ -52,7 +56,9 @@ export const normalizeArchitecture = (value) => {
     };
     const fileTypes = {};
     for (const [name, value] of Object.entries(types)) {
-        const type = fields(value, ["description", "files", "exclude", "naming", "imports", "rules"], name);
+        const type = fields(value, ["description", "files", "exclude", "naming", "imports", "rules", "generated"], name);
+        if (type.generated !== undefined && type.rules !== undefined)
+            throw new Error(`${name}: a generated file type is never linted, so it takes no rules`);
         const include = patterns(type.files, `${name}.files`);
         if (include.length === 0)
             throw new Error(`${name}.files must not be empty`);
@@ -62,6 +68,7 @@ export const normalizeArchitecture = (value) => {
             ...(type.naming === undefined ? {} : { naming: naming(type.naming) }),
             imports: type.imports === undefined ? defaults.imports : imports(type.imports, names),
             rules: overrideRules(defaults.rules, type.rules, `fileTypes.${name}`, false),
+            ...(type.generated === undefined ? {} : { generated: generated(type.generated, name) }),
         };
         fileTypes[name] = { description: text(type.description, `${name}.description`), files: include, exclude: patterns(type.exclude ?? [], `${name}.exclude`), policy };
     }

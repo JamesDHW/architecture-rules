@@ -426,7 +426,7 @@ const visibleProjects = projects.filter((project) => project.isVisible);
 
 ## Prefer named exports
 
-Use named exports wherever the surrounding framework permits them. Use a default export only when a framework requires one.
+Use named exports wherever the surrounding framework permits them. Use a default export only when a framework requires one. Configuration files (`*.config.ts`, and the `.mts`, `.cts`, `.js`, `.mjs` and `.cjs` forms) are exempt, because build and test tools load their configuration from the default export.
 
 ```ts
 export const ProjectCard: FC<ProjectCardProps> = (props) => {

@@ -8,6 +8,8 @@ export const inside = (root, path) => {
 };
 export const matches = (path, patterns) => patterns.some((pattern) => picomatch.isMatch(path, pattern, { dot: true }));
 export const sourceFile = (path) => /\.(?:[cm]?[jt]sx?)$/i.test(path);
+/** Tool configuration such as vite.config.ts: tools load it from the default export. */
+export const configurationFile = (path) => /\.config\.[cm]?[jt]s$/i.test(path);
 export const infrastructure = (path) => posix(path).split("/").some((part) => [".git", "node_modules", ".pnpm-store"].includes(part));
 export const safePath = (root, path) => {
     const absolute = resolve(root, path);

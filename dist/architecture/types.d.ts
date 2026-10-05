@@ -71,11 +71,20 @@ export type Policy<Name extends string = string> = {
     readonly imports?: ImportPolicy<Name>;
     readonly rules?: FileRules;
 };
-export type FileType<Name extends string = string> = Policy<Name> & {
+/** Generator output: classified, named and import-checked, but never linted. */
+export type GeneratedSetting = {
+    readonly reason: string;
+};
+export type FileType<Name extends string = string> = {
     readonly description: string;
     readonly files: readonly string[];
     readonly exclude?: readonly string[];
-};
+} & ((Policy<Name> & {
+    readonly generated?: never;
+}) | (Omit<Policy<Name>, "rules"> & {
+    readonly generated: GeneratedSetting;
+    readonly rules?: never;
+}));
 export type ArchitectureInput<Name extends string> = {
     readonly projects: {
         readonly tsconfigs: readonly string[];
@@ -102,6 +111,7 @@ export type EffectivePolicy = {
     readonly naming?: NamingPolicy;
     readonly imports: Required<ImportPolicy>;
     readonly rules: Readonly<Record<string, EffectiveRule>>;
+    readonly generated?: GeneratedSetting;
 };
 export type Architecture = {
     readonly projects: ArchitectureInput<string>["projects"];
