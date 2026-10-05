@@ -31,6 +31,9 @@ import {
   maxFileLinesWarnRule,
 } from "./maxFileLines.rule.js";
 import { namedJsxHandlersRule } from "./namedJsxHandlers.rule.js";
+import { noLetRule } from "./noLet.rule.js";
+import { noCapturedMutationRule } from "./noCapturedMutation.rule.js";
+import { destructuredPropsRule } from "./destructuredProps.rule.js";
 import { namedPredicatesRule } from "./namedPredicates.rule.js";
 import {
   asyncAwaitRule,
@@ -181,6 +184,9 @@ export const rules = [
   noDeepRelativeImportsRule,
   constantsModuleRule,
   namedJsxHandlersRule,
+  noLetRule,
+  noCapturedMutationRule,
+  destructuredPropsRule,
 ] as const;
 
 export type ArchitectureRuleId = (typeof rules)[number]["id"];

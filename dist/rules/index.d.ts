@@ -1023,6 +1023,33 @@ export declare const rules: readonly [{
         readonly configuration: "error";
         readonly implementation: import("eslint").Rule.RuleModule;
     };
+}, {
+    readonly id: "no-let";
+    readonly title: "Declare every binding with const";
+    readonly description: string;
+    readonly enforcement: {
+        readonly type: "custom-oxlint";
+        readonly configuration: "error";
+        readonly implementation: import("eslint").Rule.RuleModule;
+    };
+}, {
+    readonly id: "no-captured-mutation";
+    readonly title: "Keep long-lived state in *.state.ts modules";
+    readonly description: string;
+    readonly enforcement: {
+        readonly type: "custom-oxlint";
+        readonly configuration: "error";
+        readonly implementation: import("eslint").Rule.RuleModule;
+    };
+}, {
+    readonly id: "destructured-props";
+    readonly title: "Destructure component props in the parameter list";
+    readonly description: string;
+    readonly enforcement: {
+        readonly type: "custom-oxlint";
+        readonly configuration: "error";
+        readonly implementation: import("eslint").Rule.RuleModule;
+    };
 }];
 export type ArchitectureRuleId = (typeof rules)[number]["id"];
 //# sourceMappingURL=index.d.ts.map

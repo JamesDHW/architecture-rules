@@ -19,6 +19,9 @@ import { fileNamingRule } from "./fileNaming.rule.js";
 import { forceConsistentCasingInFileNamesRule } from "./forceConsistentCasingInFileNames.rule.js";
 import { maxFileLinesRule, maxFileLinesWarnRule, } from "./maxFileLines.rule.js";
 import { namedJsxHandlersRule } from "./namedJsxHandlers.rule.js";
+import { noLetRule } from "./noLet.rule.js";
+import { noCapturedMutationRule } from "./noCapturedMutation.rule.js";
+import { destructuredPropsRule } from "./destructuredProps.rule.js";
 import { namedPredicatesRule } from "./namedPredicates.rule.js";
 import { asyncAwaitRule, awaitThenableRule, eqeqeqRule, exhaustiveDepsRule, explicitExportedReturnTypesRule, explicitJsxPropsRule, guardClausesRule, genericNameDenylistRule, jsxKeyRule, moduleScopeComponentsRule, namedExportsRule, noBooleanCastRule, noCycleRule, noExplicitAnyRule, noFloatingPromisesRule, noForEachRule, noMisusedPromisesRule, noNonNullAssertionRule, noParamReassignRule, noTsCommentsRule, noUnsafeArgumentRule, noUnsafeAssignmentRule, noUnsafeCallRule, noUnsafeMemberAccessRule, noUnsafeReturnRule, noUnsafeTypeAssertionRule, noUnneededTernaryRule, noUselessAssignmentRule, noVarRule, nullishDefaultsRule, preferArrowCallbackRule, preferArrowFunctionsRule, preferAtRule, preferConstRule, preferLogicalOverTernaryRule, reduceSimpleFoldsRule, rulesOfHooksRule, switchExhaustivenessRule, typeAliasesRule, } from "./nativeOxlint.rules.js";
 import { namedDivisibilityRule } from "./namedDivisibility.rule.js";
@@ -128,5 +131,8 @@ export const rules = [
     noDeepRelativeImportsRule,
     constantsModuleRule,
     namedJsxHandlersRule,
+    noLetRule,
+    noCapturedMutationRule,
+    destructuredPropsRule,
 ];
 //# sourceMappingURL=index.js.map

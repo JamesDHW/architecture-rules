@@ -125,6 +125,42 @@ const indexProjectsById = (
 
 **Reason:** Callers can understand an immutable transformation without tracking changes over time. Fresh construction-time mutation preserves that external model while avoiding contorted or noisy immutable accumulators.
 
+## Declare every binding with `const`
+
+Do not use `let`. Compute a new value instead of reassigning an old one. Replace flags and counters with one-time platform signals or parameters: `AbortSignal.timeout(ms)` and `signal.aborted` instead of a `timedOut` flag, a `Promise` that settles once instead of a `ready` flag, and a retry count passed to the next call instead of a counter.
+
+```ts
+const timeout = AbortSignal.timeout(timeoutMilliseconds);
+const child = spawn(command, commandArguments, { signal: timeout });
+child.on("close", (exitCode) => finish({ exitCode, isTimedOut: timeout.aborted }));
+```
+
+**Reason:** A binding that never changes means one meaning for one name. Platform signals that change once and cannot be reset carry the remaining state without a general-purpose mutable variable.
+
+## Keep long-lived state in `*.state.ts` modules
+
+Do not change an array, object, `Map` or `Set` from a function other than the one that created it. State that must outlive a function call, such as live connections or requests waiting for a reply, lives in a `*.state.ts` module that exports a factory of named operations. Other modules receive those operations through their dependencies.
+
+```ts
+// pendingRequests.state.ts
+export const createPendingRequests = () => {
+  const pending = new Map<string, PendingRequest>();
+
+  return {
+    add: (requestId: string, request: PendingRequest): void => {
+      pending.set(requestId, request);
+    },
+    take: (requestId: string): PendingRequest | undefined => {
+      const request = pending.get(requestId);
+      pending.delete(requestId);
+      return request;
+    },
+  };
+};
+```
+
+**Reason:** Long-lived state is where order-dependent bugs live. Confining it to a few small, named modules makes all of it visible in one kind of file, keeps every other function free of hidden changes, and stops state from being scattered through closures.
+
 ## Use `reduce` only for simple folds
 
 Use `reduce` only when the result is genuinely a single simple fold, such as a sum, minimum, or maximum. Use dedicated operations such as `map`, `filter`, or a descriptively named helper for transformation, selection, grouping, indexing, and multi-purpose accumulation.
@@ -160,8 +196,8 @@ const useProjectList = ({
   return { visibleProjects };
 };
 
-const ProjectList: FC<ProjectListProps> = (props) => {
-  const projectList = useProjectList(props);
+const ProjectList: FC<ProjectListProps> = ({ projects, query }) => {
+  const projectList = useProjectList({ projects, query });
   return <List projects={projectList.visibleProjects} />;
 };
 ```
@@ -358,6 +394,16 @@ const handleSave = async (): Promise<void> => {
 return <Button onClick={handleSave}>Save</Button>;
 ```
 
+To bind a row's value, JSX may call a named function when every argument is a plain value: a name, a property such as `connection.id`, or a literal. TypeScript requires the call to return a handler, so calling instead of passing (`onClick={save()}`) does not compile, and an argument cannot hide logic.
+
+```tsx
+const handleRemoveClick = (connectionId: ConnectionId) => async (): Promise<void> => {
+  await removeConnection(connectionId);
+};
+
+return <Button onClick={handleRemoveClick(connection.id)}>Remove</Button>;
+```
+
 An async handler is passed directly, as above. React ignores a handler's return value, so `no-misused-promises` does not check JSX props; it still rejects promises used as conditions, spread into objects, or passed to non-JSX callbacks that expect `void`.
 
 **Reason:** Named handlers keep JSX focused on describing the interface and give behavior a searchable name that communicates the user action it implements.
@@ -367,8 +413,8 @@ An async handler is passed directly, as above. React ignores a handler's return 
 A component with behavior calls exactly one component-specific hook. That hook owns all state, context access, derived values, effects, and handlers and returns the complete model needed by the JSX. A purely presentational component calls no hooks. Do not place behavioral logic or derived-value calculations in the component body.
 
 ```tsx
-const ProjectEditor: FC<ProjectEditorProps> = (props) => {
-  const projectEditor = useProjectEditor(props);
+const ProjectEditor: FC<ProjectEditorProps> = ({ projectId }) => {
+  const projectEditor = useProjectEditor(projectId);
 
   return (
     <Form onSubmit={projectEditor.handleSubmit}>
@@ -389,8 +435,8 @@ const ProjectEditor: FC<ProjectEditorProps> = (props) => {
 Use early returns for mutually exclusive component-level states such as loading, failure, and success. Do not select whole render states with a ternary. A small optional fragment may use `&&` when its explicit boolean condition directly controls that fragment's presence.
 
 ```tsx
-const ProjectPage: FC<ProjectPageProps> = (props) => {
-  const projectPage = useProjectPage(props);
+const ProjectPage: FC<ProjectPageProps> = ({ projectId }) => {
+  const projectPage = useProjectPage(projectId);
 
   if (projectPage.status === "loading") return <LoadingPage />;
   if (projectPage.status === "failure") {
@@ -431,7 +477,7 @@ const visibleProjects = projects.filter((project) => project.isVisible);
 Use named exports wherever the surrounding framework permits them. Use a default export only when a framework requires one. Configuration files (`*.config.ts`, and the `.mts`, `.cts`, `.js`, `.mjs` and `.cjs` forms) are exempt, because build and test tools load their configuration from the default export.
 
 ```ts
-export const ProjectCard: FC<ProjectCardProps> = (props) => {
+export const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
   // ...
 };
 ```
@@ -637,13 +683,29 @@ const ProjectName: FC<ProjectNameProps> = ({ name }) => {
   return <span>{name}</span>;
 };
 
-const ProjectCard: FC<ProjectCardProps> = (props) => {
-  const projectCard = useProjectCard(props);
+const ProjectCard: FC<ProjectCardProps> = ({ project }) => {
+  const projectCard = useProjectCard(project);
   return <ProjectName name={projectCard.name} />;
 };
 ```
 
 **Reason:** Module-scope declarations give each concept a stable identity and visible dependencies. Nested component declarations recreate component identity during rendering and conceal a separate abstraction inside another function.
+
+## Destructure component props in the parameter list
+
+Destructure a component's props where it declares them. Collect forwarded native attributes with a rest element.
+
+```tsx
+const RunList: FC<RunListProps> = ({ runs, emptyText }) => {
+  if (runs.length === 0) return <EmptyState>{emptyText}</EmptyState>;
+
+  return <ul>{runs.map((run) => <RunRow key={run.id} run={run} />)}</ul>;
+};
+
+const Button: FC<ButtonProps> = ({ tone, ...buttonProps }) => <button {...buttonProps} className={buttonRecipe({ tone })} />;
+```
+
+**Reason:** The parameter list then shows every prop the component uses, and the body reads plain names instead of repeated `props.` lookups.
 
 ## Separate each component and its hook in a grouped folder
 
@@ -797,10 +859,14 @@ Keep file and package dependency graphs acyclic. If two modules depend on each o
 
 ## Exempt generated files and prohibit manual edits
 
-Identify generated source with project-specific globs. Exempt those files from human-organization rules such as file length and function order, and do not edit them manually. Keep handwritten boundary adapters fully subject to all rules.
+Identify generated source with project-specific globs in its own file type marked `generated: { reason }`. Generated files are still classified, named, import-checked and type-checked, but never linted. Do not edit them manually. Keep handwritten boundary adapters fully subject to all rules.
 
-```text
-src/generated/**
+```ts
+generatedClient: {
+  description: "OpenAPI client types.",
+  files: ["src/generated/**"],
+  generated: { reason: "Regenerated from openapi.json by pnpm api-types." },
+},
 ```
 
 **Reason:** Generated structure is controlled by its generator and will overwrite human changes. Applying understandability rules to the handwritten adapter preserves a clear, safe boundary without forcing generated artifacts into a human-oriented shape.
