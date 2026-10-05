@@ -382,11 +382,14 @@ export const noMisusedPromisesRule = defineNativeOxlintRule({
     id: "no-misused-promises",
     title: "Do not misuse promises in conditionals or listeners",
     description: `
-Promises used as booleans or event handlers are a common source of unhandled
-asynchronous failures. Treat a promise as asynchronous work, not as a value.
+Promises used as booleans or passed where a callback must finish synchronously
+are a common source of unhandled asynchronous failures. Treat a promise as
+asynchronous work, not as a value. JSX props are the exception: React ignores a
+handler's return value, so an async handler may be passed directly, as in the
+named-handler example.
   `.trim(),
     rule: "typescript/no-misused-promises",
-    configuration: "error",
+    configuration: ["error", { checksVoidReturn: { attributes: false } }],
 });
 export const awaitThenableRule = defineNativeOxlintRule({
     id: "await-thenable",

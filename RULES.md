@@ -358,6 +358,8 @@ const handleSave = async (): Promise<void> => {
 return <Button onClick={handleSave}>Save</Button>;
 ```
 
+An async handler is passed directly, as above. React ignores a handler's return value, so `no-misused-promises` does not check JSX props; it still rejects promises used as conditions, spread into objects, or passed to non-JSX callbacks that expect `void`.
+
 **Reason:** Named handlers keep JSX focused on describing the interface and give behavior a searchable name that communicates the user action it implements.
 
 ## Give each stateful component exactly one component-specific hook
