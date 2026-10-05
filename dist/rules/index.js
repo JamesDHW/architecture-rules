@@ -23,7 +23,7 @@ import { noLetRule } from "./noLet.rule.js";
 import { noCapturedMutationRule } from "./noCapturedMutation.rule.js";
 import { destructuredPropsRule } from "./destructuredProps.rule.js";
 import { namedPredicatesRule } from "./namedPredicates.rule.js";
-import { asyncAwaitRule, awaitThenableRule, eqeqeqRule, exhaustiveDepsRule, explicitExportedReturnTypesRule, explicitJsxPropsRule, guardClausesRule, genericNameDenylistRule, jsxKeyRule, moduleScopeComponentsRule, namedExportsRule, noBooleanCastRule, noCycleRule, noExplicitAnyRule, noFloatingPromisesRule, noForEachRule, noMisusedPromisesRule, noNonNullAssertionRule, noParamReassignRule, noTsCommentsRule, noUnsafeArgumentRule, noUnsafeAssignmentRule, noUnsafeCallRule, noUnsafeMemberAccessRule, noUnsafeReturnRule, noUnsafeTypeAssertionRule, noUnneededTernaryRule, noUselessAssignmentRule, noVarRule, nullishDefaultsRule, preferArrowCallbackRule, preferArrowFunctionsRule, preferAtRule, preferConstRule, preferLogicalOverTernaryRule, reduceSimpleFoldsRule, rulesOfHooksRule, switchExhaustivenessRule, typeAliasesRule, } from "./nativeOxlint.rules.js";
+import { asyncAwaitRule, awaitThenableRule, eqeqeqRule, exhaustiveDepsRule, explicitExportedReturnTypesRule, explicitJsxPropsRule, guardClausesRule, genericNameDenylistRule, jsxKeyRule, moduleScopeComponentsRule, namedExportsRule, noBooleanCastRule, noCycleRule, noExplicitAnyRule, noFloatingPromisesRule, noForEachRule, noMisusedPromisesRule, noShadowRule, noNonNullAssertionRule, noParamReassignRule, noTsCommentsRule, noUnsafeArgumentRule, noUnsafeAssignmentRule, noUnsafeCallRule, noUnsafeMemberAccessRule, noUnsafeReturnRule, noUnsafeTypeAssertionRule, noUnneededTernaryRule, noUselessAssignmentRule, noVarRule, nullishDefaultsRule, preferArrowCallbackRule, preferArrowFunctionsRule, preferAtRule, preferConstRule, preferLogicalOverTernaryRule, reduceSimpleFoldsRule, rulesOfHooksRule, switchExhaustivenessRule, typeAliasesRule, } from "./nativeOxlint.rules.js";
 import { namedDivisibilityRule } from "./namedDivisibility.rule.js";
 import { noBooleanAssignmentBranchesRule } from "./noBooleanAssignmentBranches.rule.js";
 import { noBooleanIfElseRule } from "./noBooleanIfElse.rule.js";
@@ -107,6 +107,7 @@ export const rules = [
     switchExhaustivenessRule,
     noFloatingPromisesRule,
     noMisusedPromisesRule,
+    noShadowRule,
     awaitThenableRule,
     rulesOfHooksRule,
     exhaustiveDepsRule,

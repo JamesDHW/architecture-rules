@@ -707,6 +707,18 @@ const Button: FC<ButtonProps> = ({ tone, ...buttonProps }) => <button {...button
 
 **Reason:** The parameter list then shows every prop the component uses, and the body reads plain names instead of repeated `props.` lookups.
 
+## Do not hide a name from an enclosing scope
+
+Do not declare a name that hides one from an enclosing scope, including an import. Destructured props make this easy: a prop called `title` hides an imported `title` style, and because both are strings TypeScript cannot tell. Rename one of them.
+
+```tsx
+import { dialogTitle } from "./Dialog.css.ts";
+
+const Dialog: FC<DialogProps> = ({ title, children }) => <Title className={dialogTitle}>{title}</Title>;
+```
+
+**Reason:** One name should mean one thing in a scope. A hidden outer name turns a correct-looking reference into a silent bug.
+
 ## Separate each component and its hook in a grouped folder
 
 Give each component a folder containing one component file and, when behavior is needed, one component-specific hook file. Name them `ComponentName.tsx` and `ComponentName.hook.ts`. Keep private supporting modules in the same folder.
