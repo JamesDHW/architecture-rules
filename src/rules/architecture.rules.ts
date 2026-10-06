@@ -23,5 +23,12 @@ export const compilerCheckingRule = defineRule({
 export const reasonedSuppressionsRule = defineRule({
   id: "reasoned-suppressions", title: "Keep lint exceptions narrow and explained",
   description: "Use named-rule disable-line or disable-next-line comments with a nonempty -- reason. Do not use file-wide disables or inline rule reconfiguration to change architecture policy. Structural checks cannot be suppressed by lint comments. The runtime also reports unused directives as errors.",
+  evasions: [
+    {
+      name: "A reason that names no cost",
+      code: "// oxlint-disable-next-line architecture/no-let -- needed\nlet retryCount = 0;",
+      why: "Any non-empty reason passes. Say concretely what complying would cost on this line, so a reviewer can judge it.",
+    },
+  ],
   enforcement: { type: "architecture" },
 });

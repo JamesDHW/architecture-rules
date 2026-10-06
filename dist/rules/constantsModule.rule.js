@@ -45,6 +45,7 @@ export const constantsModuleRule = defineRule({
     id: "constants-module",
     title: "Put semantic constants in a constants module",
     description: DESCRIPTION,
+    instead: "Move the SCREAMING_CASE constant into a sibling *.constants.ts module and import it.",
     enforcement: {
         type: "custom-oxlint",
         configuration: "error",

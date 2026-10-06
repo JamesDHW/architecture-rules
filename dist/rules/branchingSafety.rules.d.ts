@@ -1,4 +1,8 @@
 export declare const explicitConditionalEffectsRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "explicit-conditional-effects";
     readonly title: string;
     readonly description: string;
@@ -15,6 +19,10 @@ export declare const explicitConditionalEffectsRule: {
     };
 };
 export declare const subjectFirstComparisonsRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "subject-first-comparisons";
     readonly title: string;
     readonly description: string;
@@ -28,6 +36,10 @@ export declare const subjectFirstComparisonsRule: {
     };
 };
 export declare const unnecessaryConditionsRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "unnecessary-conditions";
     readonly title: string;
     readonly description: string;
@@ -41,6 +53,10 @@ export declare const unnecessaryConditionsRule: {
     };
 };
 export declare const directBooleanConditionsRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "direct-boolean-conditions";
     readonly title: string;
     readonly description: string;
@@ -54,6 +70,10 @@ export declare const directBooleanConditionsRule: {
     };
 };
 export declare const noDuplicateSwitchCasesRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-duplicate-switch-cases";
     readonly title: string;
     readonly description: string;
@@ -64,6 +84,10 @@ export declare const noDuplicateSwitchCasesRule: {
     };
 };
 export declare const noUnreachableStatementsRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-unreachable-statements";
     readonly title: string;
     readonly description: string;
@@ -74,6 +98,10 @@ export declare const noUnreachableStatementsRule: {
     };
 };
 export declare const scopedCaseDeclarationsRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "scoped-case-declarations";
     readonly title: string;
     readonly description: string;
@@ -84,6 +112,10 @@ export declare const scopedCaseDeclarationsRule: {
     };
 };
 export declare const neutralCollectionResultsRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "neutral-collection-results";
     readonly title: string;
     readonly description: string;

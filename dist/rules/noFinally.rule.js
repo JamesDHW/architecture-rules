@@ -38,6 +38,7 @@ export const noFinallyRule = defineRule({
     id: "no-finally",
     title: "Sequence normalized operations and cleanup without finally",
     description: DESCRIPTION,
+    instead: "Run the operation and then its cleanup through tryCatch, in sequence, and combine both results.",
     enforcement: { type: "custom-oxlint", configuration: "error", implementation },
 });
 //# sourceMappingURL=noFinally.rule.js.map

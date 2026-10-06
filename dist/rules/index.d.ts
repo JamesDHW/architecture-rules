@@ -30,6 +30,11 @@ export declare const rules: readonly [{
     readonly id: "reasoned-suppressions";
     readonly title: "Keep lint exceptions narrow and explained";
     readonly description: "Use named-rule disable-line or disable-next-line comments with a nonempty -- reason. Do not use file-wide disables or inline rule reconfiguration to change architecture policy. Structural checks cannot be suppressed by lint comments. The runtime also reports unused directives as errors.";
+    readonly evasions: readonly [{
+        readonly name: "A reason that names no cost";
+        readonly code: "// oxlint-disable-next-line architecture/no-let -- needed\nlet retryCount = 0;";
+        readonly why: "Any non-empty reason passes. Say concretely what complying would cost on this line, so a reviewer can judge it.";
+    }];
     readonly enforcement: {
         readonly type: "architecture";
     };
@@ -37,6 +42,8 @@ export declare const rules: readonly [{
     readonly id: "allowed-imports";
     readonly title: "Respect architectural import permissions";
     readonly description: string;
+    readonly instead: "Import only what this file type allows (architecture-check explain <file> lists it): move the code to a file type that may import it, or inject the dependency.";
+    readonly suppressWhen: "A module is loaded by a path known only at runtime, such as a plugin named in configuration.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -46,6 +53,7 @@ export declare const rules: readonly [{
     readonly id: "domain-owned-dispatch";
     readonly title: "Dispatch domain actions through their owning reducer";
     readonly description: string;
+    readonly instead: "Route by an explicit domain field and let the child reducer own its action union.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -55,12 +63,17 @@ export declare const rules: readonly [{
     readonly id: "control-flow-braces";
     readonly title: "Use braces except for single-line terminal guards";
     readonly description: string;
+    readonly instead: "Add braces around the body; only a single-line terminal guard such as `if (isDone) return result;` may omit them.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
         readonly implementation: import("eslint").Rule.RuleModule;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "direct-boolean-conditions";
     readonly title: string;
     readonly description: string;
@@ -73,6 +86,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "explicit-conditional-effects";
     readonly title: string;
     readonly description: string;
@@ -88,6 +105,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "neutral-collection-results";
     readonly title: string;
     readonly description: string;
@@ -97,6 +118,10 @@ export declare const rules: readonly [{
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-duplicate-switch-cases";
     readonly title: string;
     readonly description: string;
@@ -106,6 +131,10 @@ export declare const rules: readonly [{
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-unreachable-statements";
     readonly title: string;
     readonly description: string;
@@ -115,6 +144,10 @@ export declare const rules: readonly [{
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "scoped-case-declarations";
     readonly title: string;
     readonly description: string;
@@ -124,6 +157,10 @@ export declare const rules: readonly [{
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "subject-first-comparisons";
     readonly title: string;
     readonly description: string;
@@ -136,6 +173,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "unnecessary-conditions";
     readonly title: string;
     readonly description: string;
@@ -151,6 +192,7 @@ export declare const rules: readonly [{
     readonly id: "no-finally";
     readonly title: "Sequence normalized operations and cleanup without finally";
     readonly description: string;
+    readonly instead: "Run the operation and then its cleanup through tryCatch, in sequence, and combine both results.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -160,6 +202,13 @@ export declare const rules: readonly [{
     readonly id: "no-raw-exceptions";
     readonly title: "Confine raw exceptions to explicit adapters";
     readonly description: string;
+    readonly instead: "Return an error value; wrap a call that can throw or reject in tryCatch or tryCatchAsync, and keep raw try/throw in the error adapter.";
+    readonly suppressWhen: "A framework requires a throw, such as a router redirect, at the one place it is required.";
+    readonly evasions: readonly [{
+        readonly name: "Leaving a rejecting call unwrapped";
+        readonly code: "const loadProject = async (projectId: string): Promise<Project | ProjectError> => {\n  const response = await httpClient.get(`/projects/${projectId}`);\n  return parseProject(response.body);\n};";
+        readonly why: "There is no try or throw to report, so the rule passes, but a network failure rejects past every caller that branches on returned errors. Wrap the call: await tryCatchAsync(() => httpClient.get(url)).";
+    }];
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -183,6 +232,7 @@ export declare const rules: readonly [{
     readonly id: "no-empty-branches";
     readonly title: "Remove empty conditional branches";
     readonly description: string;
+    readonly instead: "Delete the empty branch, or return explicitly for an exhaustive no-op case.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -192,6 +242,7 @@ export declare const rules: readonly [{
     readonly id: "grouped-logical-operators";
     readonly title: "Expose mixed logical operator precedence";
     readonly description: string;
+    readonly instead: "Parenthesize each && group inside an ||: isAdmin || (isOwner && isDraft).";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -201,6 +252,7 @@ export declare const rules: readonly [{
     readonly id: "collection-loops";
     readonly title: "Use for...of as the default loop form";
     readonly description: string;
+    readonly instead: "Use for...of, for await...of, or a collection method such as map, filter, find or some.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -224,6 +276,7 @@ export declare const rules: readonly [{
     readonly id: "no-loop-jumps";
     readonly title: "Replace loop jumps with selection or focused operations";
     readonly description: string;
+    readonly instead: "Replace break and continue with find, filter, some, or a helper that returns.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -247,6 +300,7 @@ export declare const rules: readonly [{
     readonly id: "pure-conditions";
     readonly title: "Keep conditions free of explicit effects";
     readonly description: string;
+    readonly instead: "Compute the effect into a const first, then test the const.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -256,6 +310,7 @@ export declare const rules: readonly [{
     readonly id: "terminal-switch-cases";
     readonly title: "Return from switch cases in a focused operation";
     readonly description: string;
+    readonly instead: "Return from every case; move shared follow-up work into a helper the case returns.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -265,6 +320,7 @@ export declare const rules: readonly [{
     readonly id: "explicit-conditions";
     readonly title: "Use explicit conditions for non-boolean values";
     readonly description: string;
+    readonly instead: "Compare explicitly: name.length > 0, count !== 0, project !== undefined.";
     readonly enforcement: {
         readonly type: "oxlint";
         readonly rule: "typescript/strict-boolean-expressions";
@@ -278,6 +334,7 @@ export declare const rules: readonly [{
     readonly id: "simple-ternaries";
     readonly title: "Keep ternaries simple and side-effect-free";
     readonly description: string;
+    readonly instead: "Use an if with return, or a named function, instead of a nested or effectful ternary.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -288,6 +345,7 @@ export declare const rules: readonly [{
     readonly options: import("../core/defineRule.js").RuleOptions<[import("./fileNaming.rule.js").FileNamingOptions?]>;
     readonly title: "Name files after one primary concept";
     readonly description: string;
+    readonly instead: "Rename the file after its one concept, in the case and with a suffix its file type allows.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -364,6 +422,10 @@ export declare const rules: readonly [{
         };
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "explicit-exported-return-types";
     readonly title: string;
     readonly description: string;
@@ -380,6 +442,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "prefer-arrow-functions";
     readonly title: string;
     readonly description: string;
@@ -395,6 +461,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "prefer-arrow-callback";
     readonly title: string;
     readonly description: string;
@@ -407,6 +477,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "prefer-const";
     readonly title: string;
     readonly description: string;
@@ -419,6 +493,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-var";
     readonly title: string;
     readonly description: string;
@@ -428,6 +506,10 @@ export declare const rules: readonly [{
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-param-reassign";
     readonly title: string;
     readonly description: string;
@@ -441,6 +523,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "reduce-simple-folds";
     readonly title: string;
     readonly description: string;
@@ -452,6 +538,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-for-each";
     readonly title: string;
     readonly description: string;
@@ -461,6 +551,10 @@ export declare const rules: readonly [{
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "prefer-at";
     readonly title: string;
     readonly description: string;
@@ -473,6 +567,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "nullish-defaults";
     readonly title: string;
     readonly description: string;
@@ -494,6 +592,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "eqeqeq";
     readonly title: string;
     readonly description: string;
@@ -505,6 +607,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "async-await";
     readonly title: string;
     readonly description: string;
@@ -516,6 +622,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "named-exports";
     readonly title: string;
     readonly description: string;
@@ -525,6 +635,10 @@ export declare const rules: readonly [{
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "type-aliases";
     readonly title: string;
     readonly description: string;
@@ -534,6 +648,10 @@ export declare const rules: readonly [{
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, "interface" | "type"] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-cycle";
     readonly title: string;
     readonly description: string;
@@ -548,6 +666,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "explicit-jsx-props";
     readonly title: string;
     readonly description: string;
@@ -562,6 +684,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "module-scope-components";
     readonly title: string;
     readonly description: string;
@@ -579,6 +705,7 @@ export declare const rules: readonly [{
     readonly options: import("../core/defineRule.js").RuleOptions<[Partial<import("./maxFileLines.constants.js").MaxFileLinesOptions>?]>;
     readonly title: "Warn when a source file exceeds 150 lines";
     readonly description: string;
+    readonly instead: "Split the file by responsibility: move one cohesive concept into its own file.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: readonly ["warn", {
@@ -589,6 +716,10 @@ export declare const rules: readonly [{
         readonly implementation: import("eslint").Rule.RuleModule;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "max-file-lines";
     readonly title: string;
     readonly description: string;
@@ -602,6 +733,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "guard-clauses";
     readonly title: string;
     readonly description: string;
@@ -613,6 +748,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "generic-name-denylist";
     readonly title: string;
     readonly description: string;
@@ -622,6 +761,10 @@ export declare const rules: readonly [{
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, ...string[]] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-explicit-any";
     readonly title: string;
     readonly description: string;
@@ -634,6 +777,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-non-null-assertion";
     readonly title: string;
     readonly description: string;
@@ -643,6 +790,10 @@ export declare const rules: readonly [{
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-ts-comments";
     readonly title: string;
     readonly description: string;
@@ -666,6 +817,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-unsafe-assignment";
     readonly title: string;
     readonly description: string;
@@ -675,6 +830,10 @@ export declare const rules: readonly [{
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-unsafe-call";
     readonly title: string;
     readonly description: string;
@@ -684,6 +843,10 @@ export declare const rules: readonly [{
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-unsafe-member-access";
     readonly title: string;
     readonly description: string;
@@ -695,6 +858,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-unsafe-return";
     readonly title: string;
     readonly description: string;
@@ -704,6 +871,10 @@ export declare const rules: readonly [{
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-unsafe-argument";
     readonly title: string;
     readonly description: string;
@@ -713,6 +884,10 @@ export declare const rules: readonly [{
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-unsafe-type-assertion";
     readonly title: string;
     readonly description: string;
@@ -722,6 +897,10 @@ export declare const rules: readonly [{
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "switch-exhaustiveness";
     readonly title: string;
     readonly description: string;
@@ -736,6 +915,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-floating-promises";
     readonly title: string;
     readonly description: string;
@@ -773,6 +956,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-misused-promises";
     readonly title: string;
     readonly description: string;
@@ -793,6 +980,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-shadow";
     readonly title: string;
     readonly description: string;
@@ -809,6 +1000,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "await-thenable";
     readonly title: string;
     readonly description: string;
@@ -818,6 +1013,10 @@ export declare const rules: readonly [{
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "rules-of-hooks";
     readonly title: string;
     readonly description: string;
@@ -827,6 +1026,10 @@ export declare const rules: readonly [{
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "exhaustive-deps";
     readonly title: string;
     readonly description: string;
@@ -838,6 +1041,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "jsx-key";
     readonly title: string;
     readonly description: string;
@@ -851,6 +1058,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-boolean-cast";
     readonly title: string;
     readonly description: string;
@@ -866,6 +1077,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-unneeded-ternary";
     readonly title: string;
     readonly description: string;
@@ -877,6 +1092,10 @@ export declare const rules: readonly [{
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "prefer-logical-over-ternary";
     readonly title: string;
     readonly description: string;
@@ -886,6 +1105,10 @@ export declare const rules: readonly [{
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-useless-assignment";
     readonly title: string;
     readonly description: string;
@@ -899,6 +1122,12 @@ export declare const rules: readonly [{
     readonly options: import("../core/defineRule.js").RuleOptions<[import("./namedPredicates.rule.js").NamedPredicatesOptions?]>;
     readonly title: "Name your predicates";
     readonly description: string;
+    readonly instead: "Name the compound condition and test the name: const canEdit = isOwner || isAdmin;";
+    readonly evasions: readonly [{
+        readonly name: "A name that says nothing";
+        readonly code: "const openProject = () => {\n  const condition = isOwner || isAdministrator;\n  if (condition) return showEditor();\n  return showViewer();\n};";
+        readonly why: "The rule asks for the decision to be named; condition, check and flag name nothing. Name what is true: const canEditProject = isOwner || isAdministrator;";
+    }];
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -908,6 +1137,7 @@ export declare const rules: readonly [{
     readonly id: "named-divisibility";
     readonly title: "Name divisibility checks";
     readonly description: string;
+    readonly instead: "Wrap the remainder test in a named predicate such as isDivisibleBy(value, divisor).";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -917,6 +1147,7 @@ export declare const rules: readonly [{
     readonly id: "no-else";
     readonly title: "Do not use else";
     readonly description: string;
+    readonly instead: "Return early for the special case and let the main path continue without else.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -926,6 +1157,7 @@ export declare const rules: readonly [{
     readonly id: "no-collapsible-if";
     readonly title: "Do not nest a sole if inside another if";
     readonly description: string;
+    readonly instead: "Merge the nested ifs into one condition, and name it when it is compound.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -935,6 +1167,7 @@ export declare const rules: readonly [{
     readonly id: "no-boolean-if-else";
     readonly title: "Pass booleans directly instead of branching";
     readonly description: string;
+    readonly instead: "Pass the boolean in directly: setVisible(isOpen), not if (isOpen) setVisible(true) else setVisible(false).";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -944,6 +1177,7 @@ export declare const rules: readonly [{
     readonly id: "prefer-single-boolean-return";
     readonly title: "Return a boolean expression instead of a true/false tail";
     readonly description: string;
+    readonly instead: "Return the condition itself instead of if (condition) return true; return false;";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -953,6 +1187,7 @@ export declare const rules: readonly [{
     readonly id: "one-path-one-result";
     readonly title: "Combine adjacent guards with the same terminal outcome";
     readonly description: string;
+    readonly instead: "Combine adjacent guards that return the same value into one named condition.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "warn";
@@ -962,6 +1197,7 @@ export declare const rules: readonly [{
     readonly id: "prefer-switch";
     readonly title: "Prefer switch over repeated equality ifs";
     readonly description: string;
+    readonly instead: "Use a switch on the value, or a readonly record when each case only maps to a value.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -971,6 +1207,7 @@ export declare const rules: readonly [{
     readonly id: "no-enums";
     readonly title: "Use literal unions instead of enums";
     readonly description: string;
+    readonly instead: "Use a union of string literals instead of an enum.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -980,6 +1217,13 @@ export declare const rules: readonly [{
     readonly id: "no-type-assertions";
     readonly title: "Do not use unchecked type assertions";
     readonly description: string;
+    readonly instead: "Validate or narrow the value with a type guard, a schema parse or satisfies, instead of asserting its type.";
+    readonly suppressWhen: "Attaching a brand to a value that is already validated, or bridging two third-party types that are the same at runtime.";
+    readonly evasions: readonly [{
+        readonly name: "A type guard that only claims the type";
+        readonly code: "const isProject = (value: unknown): value is Project => typeof value === \"object\";";
+        readonly why: "The predicate asserts the type without checking its fields, so the cast has only moved. Check every field the type promises, or parse the value with a schema.";
+    }];
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -989,6 +1233,7 @@ export declare const rules: readonly [{
     readonly id: "readonly-type-properties";
     readonly title: "Declare data as recursively readonly";
     readonly description: string;
+    readonly instead: "Mark every property and index signature readonly.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -998,6 +1243,7 @@ export declare const rules: readonly [{
     readonly id: "no-binding-alias";
     readonly title: "Do not rename values through aliases";
     readonly description: string;
+    readonly instead: "Use the original name, or compute a genuinely new value; import names as they are exported.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -1007,6 +1253,7 @@ export declare const rules: readonly [{
     readonly id: "no-deep-relative-imports";
     readonly title: "Warn on deeply ascending relative imports";
     readonly description: string;
+    readonly instead: "Import through a module alias (package exports or a #subpath import) instead of ../../../.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "warn";
@@ -1016,6 +1263,7 @@ export declare const rules: readonly [{
     readonly id: "constants-module";
     readonly title: "Put semantic constants in a constants module";
     readonly description: string;
+    readonly instead: "Move the SCREAMING_CASE constant into a sibling *.constants.ts module and import it.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -1025,6 +1273,13 @@ export declare const rules: readonly [{
     readonly id: "named-jsx-handlers";
     readonly title: "Name every non-pass-through React handler";
     readonly description: string;
+    readonly instead: "Pass a named handler, or bind one with plain values: onClick={handleRemoveClick(row.id)}.";
+    readonly evasions: readonly [{
+        readonly name: "Passing a row's id through the DOM";
+        readonly lang: "tsx";
+        readonly code: "const handleRemoveClick = (event: MouseEvent<HTMLButtonElement>) => removeConnection(event.currentTarget.value);\nconst Row = ({ connection }: RowProps) => <button value={connection.id} onClick={handleRemoveClick}>Remove</button>;";
+        readonly why: "A typed id becomes a string read back from the DOM. Bind the handler with the value instead: onClick={handleRemoveClick(connection.id)}.";
+    }];
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -1034,6 +1289,18 @@ export declare const rules: readonly [{
     readonly id: "no-let";
     readonly title: "Declare every binding with const";
     readonly description: string;
+    readonly instead: "Declare with const and compute a new value; keep long-lived state in a *.state.ts module.";
+    readonly evasions: readonly [{
+        readonly name: "An array used as a variable";
+        readonly code: "const createRetrier = () => {\n  const attempts: number[] = [];\n  return () => {\n    attempts.push(1);\n    return attempts.length;\n  };\n};";
+        readonly why: "The count is still mutable state shared between calls, only hidden in an array. Pass the count as a parameter, or keep the state in a *.state.ts module.";
+        readonly caughtBy: "no-captured-mutation";
+    }, {
+        readonly name: "An object used as a variable";
+        readonly code: "const createCounter = () => {\n  const counter = { value: 0 };\n  return () => {\n    counter.value += 1;\n    return counter.value;\n  };\n};";
+        readonly why: "Moving the reassignment onto a property keeps the same mutable state. Compute a new value, or keep long-lived state in a *.state.ts module.";
+        readonly caughtBy: "no-captured-mutation";
+    }];
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -1043,6 +1310,8 @@ export declare const rules: readonly [{
     readonly id: "no-captured-mutation";
     readonly title: "Keep long-lived state in *.state.ts modules";
     readonly description: string;
+    readonly instead: "Build a new value inside the function, or move long-lived state into a *.state.ts module.";
+    readonly suppressWhen: "A third-party API hands you a callback that must record into state you created; prefer a *.state.ts module first.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -1052,6 +1321,7 @@ export declare const rules: readonly [{
     readonly id: "destructured-props";
     readonly title: "Destructure component props in the parameter list";
     readonly description: string;
+    readonly instead: "Destructure the props in the parameter list: ({ title, onClose }) =>.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -1061,6 +1331,8 @@ export declare const rules: readonly [{
     readonly id: "no-array-mutation";
     readonly title: "Build new arrays instead of changing them in place";
     readonly description: string;
+    readonly instead: "Build a new array with map, filter, flatMap, a spread, toSorted or Array.fromAsync instead of changing one in place.";
+    readonly suppressWhen: "In-place change is measurably faster on a hot path; name the measurement in the reason.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";

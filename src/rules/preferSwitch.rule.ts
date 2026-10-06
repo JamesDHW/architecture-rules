@@ -63,6 +63,7 @@ export const preferSwitchRule = defineRule({
   id: "prefer-switch",
   title: "Prefer switch over repeated equality ifs",
   description: DESCRIPTION,
+  instead: "Use a switch on the value, or a readonly record when each case only maps to a value.",
   enforcement: {
     type: "custom-oxlint",
     configuration: "error",

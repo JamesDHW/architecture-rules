@@ -81,6 +81,15 @@ export const namedJsxHandlersRule = defineRule({
     id: "named-jsx-handlers",
     title: "Name every non-pass-through React handler",
     description: DESCRIPTION,
+    instead: "Pass a named handler, or bind one with plain values: onClick={handleRemoveClick(row.id)}.",
+    evasions: [
+        {
+            name: "Passing a row's id through the DOM",
+            lang: "tsx",
+            code: "const handleRemoveClick = (event: MouseEvent<HTMLButtonElement>) => removeConnection(event.currentTarget.value);\nconst Row = ({ connection }: RowProps) => <button value={connection.id} onClick={handleRemoveClick}>Remove</button>;",
+            why: "A typed id becomes a string read back from the DOM. Bind the handler with the value instead: onClick={handleRemoveClick(connection.id)}.",
+        },
+    ],
     enforcement: {
         type: "custom-oxlint",
         configuration: "error",

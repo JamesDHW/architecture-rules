@@ -40,4 +40,24 @@ describe("parseArgs", () => {
     expect(parseArgs(["explain", "src/a.ts", "--fix"]).kind).toBe("error");
   });
 
+  it("accepts JSON output and repeated --file selections", () => {
+    expect(parseArgs(["--format", "json", "--file", "src/a.ts", "--file", "src/b.ts"])).toEqual({
+      kind: "run",
+      target: ".",
+      fix: false,
+      format: "json",
+      files: ["src/a.ts", "src/b.ts"],
+    });
+    expect(parseArgs(["--format", "text"])).toEqual({ kind: "run", target: ".", fix: false });
+    expect(parseArgs(["--format", "xml"]).kind).toBe("error");
+    expect(parseArgs(["--file"]).kind).toBe("error");
+  });
+
+  it("accepts report with an optional project directory", () => {
+    expect(parseArgs(["report"])).toEqual({ kind: "run", target: ".", fix: false, format: "report" });
+    expect(parseArgs(["report", "../app", "--config", "a.config.ts"])).toEqual({ kind: "run", target: "../app", fix: false, format: "report", config: "a.config.ts" });
+    expect(parseArgs(["report", "--fix"]).kind).toBe("error");
+    expect(parseArgs(["report", "--format", "json"]).kind).toBe("error");
+  });
+
 });

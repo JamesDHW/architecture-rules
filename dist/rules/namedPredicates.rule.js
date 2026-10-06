@@ -123,6 +123,14 @@ export const namedPredicatesRule = defineRule({
     options: defineRuleOptions(implementation.meta?.schema ?? [], validateOptions),
     title: "Name your predicates",
     description: DESCRIPTION,
+    instead: "Name the compound condition and test the name: const canEdit = isOwner || isAdmin;",
+    evasions: [
+        {
+            name: "A name that says nothing",
+            code: "const openProject = () => {\n  const condition = isOwner || isAdministrator;\n  if (condition) return showEditor();\n  return showViewer();\n};",
+            why: "The rule asks for the decision to be named; condition, check and flag name nothing. Name what is true: const canEditProject = isOwner || isAdministrator;",
+        },
+    ],
     enforcement: {
         type: "custom-oxlint",
         configuration: "error",

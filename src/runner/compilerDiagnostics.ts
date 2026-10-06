@@ -1,5 +1,8 @@
 import type { Diagnostic, Project } from "typescript/unstable/sync";
 
+import { relativePath } from "../analysis/paths.js";
+import type { Finding } from "./findings.js";
+
 /** TypeScript's DiagnosticCategory.Error. */
 const errorCategory = 1;
 
@@ -19,31 +22,32 @@ const projectDiagnostics = (project: Project): readonly Diagnostic[] => {
   ];
 };
 
-const location = (project: Project, diagnostic: Diagnostic): string => {
+const position = (project: Project, diagnostic: Diagnostic): { readonly line?: number; readonly column?: number } => {
   const source = diagnostic.fileName === undefined ? undefined : project.program.getSourceFile(diagnostic.fileName);
   const hasPosition = source !== undefined && diagnostic.pos >= 0;
-  if (!hasPosition) return "";
+  if (!hasPosition) return {};
   const { line, character } = source.getLineAndCharacterOfPosition(diagnostic.pos);
-  return `:${line + 1}:${character + 1}`;
+  return { line: line + 1, column: character + 1 };
 };
 
-const formatDiagnostic = (project: Project, diagnostic: Diagnostic): string => {
-  return `${diagnostic.fileName ?? project.configFileName}${location(project, diagnostic)}: TS${diagnostic.code}: ${diagnostic.text}`;
-};
+const toFinding = (root: string, project: Project, diagnostic: Diagnostic): Finding => ({
+  source: "compiler",
+  severity: "error",
+  ruleId: `TS${diagnostic.code}`,
+  file: relativePath(root, diagnostic.fileName ?? project.configFileName),
+  ...position(project, diagnostic),
+  message: diagnostic.text,
+});
 
-/** Each project's distinct compiler errors, formatted for output. */
-const projectErrors = (project: Project): readonly string[] => {
+/** Each project's distinct compiler errors. */
+const projectErrors = (root: string, project: Project): readonly Finding[] => {
   const errors = projectDiagnostics(project)
     .filter((diagnostic) => diagnostic.category === errorCategory)
-    .map((diagnostic) => [`${diagnostic.fileName}:${diagnostic.pos}:${diagnostic.code}:${diagnostic.text}`, formatDiagnostic(project, diagnostic)] as const);
+    .map((diagnostic) => [`${diagnostic.fileName}:${diagnostic.pos}:${diagnostic.code}:${diagnostic.text}`, toFinding(root, project, diagnostic)] as const);
   return [...new Map(errors).values()];
 };
 
-/** Prints every compiler error and returns how many there were. */
-export const reportCompilerErrors = (projects: readonly Project[]): number => {
-  const errors = projects.flatMap(projectErrors);
-  for (const error of errors) {
-    process.stderr.write(`${error}\n`);
-  }
-  return errors.length;
+/** Every compiler error in the projects, as findings. */
+export const compilerFindings = (root: string, projects: readonly Project[]): readonly Finding[] => {
+  return projects.flatMap((project) => projectErrors(root, project));
 };

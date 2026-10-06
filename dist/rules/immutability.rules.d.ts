@@ -1,4 +1,8 @@
 export declare const preferConstRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "prefer-const";
     readonly title: string;
     readonly description: string;
@@ -12,6 +16,10 @@ export declare const preferConstRule: {
     };
 };
 export declare const noVarRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-var";
     readonly title: string;
     readonly description: string;
@@ -22,6 +30,10 @@ export declare const noVarRule: {
     };
 };
 export declare const noParamReassignRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-param-reassign";
     readonly title: string;
     readonly description: string;
@@ -36,6 +48,10 @@ export declare const noParamReassignRule: {
     };
 };
 export declare const noUselessAssignmentRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-useless-assignment";
     readonly title: string;
     readonly description: string;

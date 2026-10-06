@@ -6,6 +6,7 @@
   "type": "module",
   "files": [
     "dist",
+    "docs",
     "tsconfig.base.json",
     "README.md",
     "examples"
@@ -27,8 +28,9 @@
   },
   "scripts": {
     "build:typescript": "node node_modules/typescript/bin/tsc -p tsconfig.build.json",
-    "generate": "node dist/generateTsconfig.js",
-    "build": "pnpm run build:typescript && pnpm run generate",
+    "generate": "node dist/generateTsconfig.js && node dist/generateRuleDocs.js",
+    "build:clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "pnpm run build:clean && pnpm run build:typescript && pnpm run generate",
     "test": "node node_modules/vitest/vitest.mjs run",
     "check": "pnpm run build && pnpm run typecheck && pnpm test",
     "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json",

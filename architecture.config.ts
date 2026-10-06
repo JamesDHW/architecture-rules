@@ -25,7 +25,7 @@ export default defineArchitecture({
     rules: {
       description: "Canonical rule definitions and their lint implementations.",
       files: ["src/rules/**/*.ts"],
-      naming: { case: "camel", suffixes: [".rule", ".rules", ".constants"] },
+      naming: { case: "camel", suffixes: [".rule", ".rules", ".constants", ".cases"] },
       imports: { internal: ["rules", "core"], external: ["eslint", "oxlint", "picomatch"], builtins: ["path"] },
     },
     config: {
@@ -49,12 +49,13 @@ export default defineArchitecture({
       imports: {
         internal: ["runner", "analysis", "config", "rules", "core", "errors"],
         external: ["oxlint", "typescript/unstable/**"],
-        builtins: ["child_process", "fs", "module", "path", "url"],
+        builtins: ["child_process", "fs", "module", "path", "stream/consumers", "url"],
       },
     },
     cli: {
       description: "Command-line entry point, argument parsing and build scripts.",
-      files: ["src/cli.ts", "src/cli/**/*.ts", "src/generateTsconfig.ts"],
+      files: ["src/cli.ts", "src/cli/**/*.ts", "src/generateTsconfig.ts", "src/generateRuleDocs.ts"],
+      naming: { case: "camel", suffixes: [".constants"] },
       imports: { internal: ["cli", "runner", "config", "rules", "core", "errors"], builtins: ["fs", "fs/promises", "module", "path", "url"] },
     },
     api: {

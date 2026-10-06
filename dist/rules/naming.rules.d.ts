@@ -1,4 +1,8 @@
 export declare const genericNameDenylistRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "generic-name-denylist";
     readonly title: string;
     readonly description: string;
@@ -9,6 +13,10 @@ export declare const genericNameDenylistRule: {
     };
 };
 export declare const noShadowRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-shadow";
     readonly title: string;
     readonly description: string;

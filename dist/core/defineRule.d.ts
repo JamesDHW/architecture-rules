@@ -21,6 +21,16 @@ type AdvisoryEnforcement = {
 export type Enforcement = OxlintEnforcement | CustomOxlintEnforcement | TypeScriptEnforcement | AdvisoryEnforcement | {
     readonly type: "architecture";
 };
+/** Code that satisfies a rule's wording while missing its point. Rendered in the rule's generated documentation. */
+export type RuleEvasion = {
+    readonly name: string;
+    readonly code: string;
+    readonly lang?: "ts" | "tsx";
+    /** What the workaround loses, and what to write instead. */
+    readonly why: string;
+    /** The custom rule that reports this workaround. Omitted when no rule does, so review has to. */
+    readonly caughtBy?: string;
+};
 export type ArchitectureRule<Id extends string = string> = {
     readonly id: Id;
     readonly title: string;
@@ -31,12 +41,17 @@ export type ArchitectureRule<Id extends string = string> = {
      */
     readonly description: string;
     readonly enforcement: Enforcement;
+    /** One line saying what to write instead. The checker prints it after this rule's findings. */
+    readonly instead?: string;
+    /** When a reasoned suppression is better than changing the code. */
+    readonly suppressWhen?: string;
+    /** Known ways to satisfy the rule's wording while missing its point. */
+    readonly evasions?: readonly RuleEvasion[];
 };
 export declare const defineRule: <const RuleDefinition extends ArchitectureRule>(rule: RuleDefinition) => RuleDefinition;
 /** Custom option types and runtime schema travel with their canonical rule. */
 export type RuleOptions<Options extends readonly unknown[]> = {
     readonly schema: NonNullable<NonNullable<Rule.RuleModule["meta"]>["schema"]>;
-    /** Checks the schema cannot express; returns every problem found. */
     readonly validate?: (options: readonly unknown[]) => readonly string[];
     /** Type-only witness; no value is emitted. */
     readonly tuple?: Options;

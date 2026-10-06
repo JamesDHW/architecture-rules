@@ -134,5 +134,7 @@ export const noCapturedMutationRule = defineRule({
   id: "no-captured-mutation",
   title: "Keep long-lived state in *.state.ts modules",
   description: DESCRIPTION,
+  instead: "Build a new value inside the function, or move long-lived state into a *.state.ts module.",
+  suppressWhen: "A third-party API hands you a callback that must record into state you created; prefer a *.state.ts module first.",
   enforcement: { type: "custom-oxlint", configuration: "error", implementation },
 });

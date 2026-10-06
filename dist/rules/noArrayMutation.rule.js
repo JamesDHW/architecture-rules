@@ -63,6 +63,8 @@ export const noArrayMutationRule = defineRule({
     id: "no-array-mutation",
     title: "Build new arrays instead of changing them in place",
     description: DESCRIPTION,
+    instead: "Build a new array with map, filter, flatMap, a spread, toSorted or Array.fromAsync instead of changing one in place.",
+    suppressWhen: "In-place change is measurably faster on a hot path; name the measurement in the reason.",
     enforcement: { type: "custom-oxlint", configuration: "error", implementation },
 });
 //# sourceMappingURL=noArrayMutation.rule.js.map

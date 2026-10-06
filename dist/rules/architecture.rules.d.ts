@@ -34,6 +34,11 @@ export declare const reasonedSuppressionsRule: {
     readonly id: "reasoned-suppressions";
     readonly title: "Keep lint exceptions narrow and explained";
     readonly description: "Use named-rule disable-line or disable-next-line comments with a nonempty -- reason. Do not use file-wide disables or inline rule reconfiguration to change architecture policy. Structural checks cannot be suppressed by lint comments. The runtime also reports unused directives as errors.";
+    readonly evasions: readonly [{
+        readonly name: "A reason that names no cost";
+        readonly code: "// oxlint-disable-next-line architecture/no-let -- needed\nlet retryCount = 0;";
+        readonly why: "Any non-empty reason passes. Say concretely what complying would cost on this line, so a reviewer can judge it.";
+    }];
     readonly enforcement: {
         readonly type: "architecture";
     };

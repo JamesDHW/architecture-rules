@@ -39,6 +39,7 @@ export const readonlyTypePropertiesRule = defineRule({
     id: "readonly-type-properties",
     title: "Declare data as recursively readonly",
     description: DESCRIPTION,
+    instead: "Mark every property and index signature readonly.",
     enforcement: {
         type: "custom-oxlint",
         configuration: "error",

@@ -111,6 +111,7 @@ export const destructuredPropsRule = defineRule({
     id: "destructured-props",
     title: "Destructure component props in the parameter list",
     description: DESCRIPTION,
+    instead: "Destructure the props in the parameter list: ({ title, onClose }) =>.",
     enforcement: { type: "custom-oxlint", configuration: "error", implementation },
 });
 //# sourceMappingURL=destructuredProps.rule.js.map

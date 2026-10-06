@@ -88,6 +88,7 @@ export const maxFileLinesWarnRule = defineRule({
     options: defineRuleOptions(warnImplementation.meta?.schema ?? []),
     title: "Warn when a source file exceeds 150 lines",
     description: DESCRIPTION,
+    instead: "Split the file by responsibility: move one cohesive concept into its own file.",
     enforcement: {
         type: "custom-oxlint",
         configuration: ["warn", WARN_OPTIONS],
@@ -98,6 +99,7 @@ export const maxFileLinesRule = defineNativeOxlintRule({
     id: "max-file-lines",
     title: "Limit source files to 200 lines",
     description: DESCRIPTION,
+    instead: "Split the file by responsibility: move one cohesive concept into its own file.",
     rule: "max-lines",
     configuration: ["error", ERROR_OPTIONS],
 });

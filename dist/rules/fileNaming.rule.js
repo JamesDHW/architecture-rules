@@ -120,6 +120,7 @@ export const fileNamingRule = defineRule({
     options: defineRuleOptions(implementation.meta?.schema ?? []),
     title: "Name files after one primary concept",
     description: DESCRIPTION,
+    instead: "Rename the file after its one concept, in the case and with a suffix its file type allows.",
     enforcement: {
         type: "custom-oxlint",
         configuration: "error",

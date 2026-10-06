@@ -46,6 +46,7 @@ export const groupedLogicalOperatorsRule = defineRule({
   id: "grouped-logical-operators",
   title: "Expose mixed logical operator precedence",
   description: DESCRIPTION,
+  instead: "Parenthesize each && group inside an ||: isAdmin || (isOwner && isDraft).",
   enforcement: {
     type: "custom-oxlint",
     configuration: "error",

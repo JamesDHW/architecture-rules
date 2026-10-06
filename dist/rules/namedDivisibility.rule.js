@@ -84,6 +84,7 @@ export const namedDivisibilityRule = defineRule({
     id: "named-divisibility",
     title: "Name divisibility checks",
     description: DESCRIPTION,
+    instead: "Wrap the remainder test in a named predicate such as isDivisibleBy(value, divisor).",
     enforcement: {
         type: "custom-oxlint",
         configuration: "error",

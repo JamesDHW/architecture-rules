@@ -31,6 +31,7 @@ export const collectionLoopsRule = defineRule({
   id: "collection-loops",
   title: "Use for...of as the default loop form",
   description: collectionLoopsDescription,
+  instead: "Use for...of, for await...of, or a collection method such as map, filter, find or some.",
   enforcement: {
     type: "custom-oxlint",
     configuration: "error",
@@ -80,6 +81,7 @@ export const noLoopJumpsRule = defineRule({
   id: "no-loop-jumps",
   title: "Replace loop jumps with selection or focused operations",
   description: loopJumpsDescription,
+  instead: "Replace break and continue with find, filter, some, or a helper that returns.",
   enforcement: {
     type: "custom-oxlint",
     configuration: "error",

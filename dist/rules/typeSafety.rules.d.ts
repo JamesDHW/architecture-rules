@@ -1,4 +1,8 @@
 export declare const noExplicitAnyRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-explicit-any";
     readonly title: string;
     readonly description: string;
@@ -12,6 +16,10 @@ export declare const noExplicitAnyRule: {
     };
 };
 export declare const noNonNullAssertionRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-non-null-assertion";
     readonly title: string;
     readonly description: string;
@@ -22,6 +30,10 @@ export declare const noNonNullAssertionRule: {
     };
 };
 export declare const noTsCommentsRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-ts-comments";
     readonly title: string;
     readonly description: string;
@@ -46,6 +58,10 @@ export declare const noTsCommentsRule: {
     };
 };
 export declare const noUnsafeAssignmentRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-unsafe-assignment";
     readonly title: string;
     readonly description: string;
@@ -56,6 +72,10 @@ export declare const noUnsafeAssignmentRule: {
     };
 };
 export declare const noUnsafeCallRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-unsafe-call";
     readonly title: string;
     readonly description: string;
@@ -66,6 +86,10 @@ export declare const noUnsafeCallRule: {
     };
 };
 export declare const noUnsafeMemberAccessRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-unsafe-member-access";
     readonly title: string;
     readonly description: string;
@@ -78,6 +102,10 @@ export declare const noUnsafeMemberAccessRule: {
     };
 };
 export declare const noUnsafeReturnRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-unsafe-return";
     readonly title: string;
     readonly description: string;
@@ -88,6 +116,10 @@ export declare const noUnsafeReturnRule: {
     };
 };
 export declare const noUnsafeArgumentRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-unsafe-argument";
     readonly title: string;
     readonly description: string;
@@ -98,6 +130,10 @@ export declare const noUnsafeArgumentRule: {
     };
 };
 export declare const noUnsafeTypeAssertionRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-unsafe-type-assertion";
     readonly title: string;
     readonly description: string;

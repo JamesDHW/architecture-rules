@@ -3,6 +3,7 @@ export declare const collectionLoopsRule: {
     readonly id: "collection-loops";
     readonly title: "Use for...of as the default loop form";
     readonly description: string;
+    readonly instead: "Use for...of, for await...of, or a collection method such as map, filter, find or some.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -27,6 +28,7 @@ export declare const noLoopJumpsRule: {
     readonly id: "no-loop-jumps";
     readonly title: "Replace loop jumps with selection or focused operations";
     readonly description: string;
+    readonly instead: "Replace break and continue with find, filter, some, or a helper that returns.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";

@@ -41,6 +41,7 @@ export const emptyBranchesRule = defineRule({
     id: "no-empty-branches",
     title: "Remove empty conditional branches",
     description: DESCRIPTION,
+    instead: "Delete the empty branch, or return explicitly for an exhaustive no-op case.",
     enforcement: {
         type: "custom-oxlint",
         configuration: "error",

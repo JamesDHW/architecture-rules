@@ -3,6 +3,7 @@ export declare const namedDivisibilityRule: {
     readonly id: "named-divisibility";
     readonly title: "Name divisibility checks";
     readonly description: string;
+    readonly instead: "Wrap the remainder test in a named predicate such as isDivisibleBy(value, divisor).";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";

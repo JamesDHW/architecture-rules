@@ -91,6 +91,7 @@ export const preferSingleBooleanReturnRule = defineRule({
   id: "prefer-single-boolean-return",
   title: "Return a boolean expression instead of a true/false tail",
   description: DESCRIPTION,
+  instead: "Return the condition itself instead of if (condition) return true; return false;",
   enforcement: {
     type: "custom-oxlint",
     configuration: "error",

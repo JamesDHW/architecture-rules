@@ -1,0 +1,1 @@
+{"version":3,"file":"noDeepRelativeImports.cases.d.ts","sourceRoot":"","sources":["../../../src/rules/cases/noDeepRelativeImports.cases.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,SAAS,EAAE,MAAM,yBAAyB,CAAC;AAEzD,eAAO,MAAM,0BAA0B,EAAE,SAAS,SAAS,EAsC1D,CAAC"}

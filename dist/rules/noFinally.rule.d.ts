@@ -3,6 +3,7 @@ export declare const noFinallyRule: {
     readonly id: "no-finally";
     readonly title: "Sequence normalized operations and cleanup without finally";
     readonly description: string;
+    readonly instead: "Run the operation and then its cleanup through tryCatch, in sequence, and combine both results.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";

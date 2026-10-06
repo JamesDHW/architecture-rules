@@ -3,6 +3,7 @@ export declare const onePathOneResultRule: {
     readonly id: "one-path-one-result";
     readonly title: "Combine adjacent guards with the same terminal outcome";
     readonly description: string;
+    readonly instead: "Combine adjacent guards that return the same value into one named condition.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "warn";

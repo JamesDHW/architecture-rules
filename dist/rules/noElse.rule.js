@@ -69,6 +69,7 @@ export const noElseRule = defineRule({
     id: "no-else",
     title: "Do not use else",
     description: DESCRIPTION,
+    instead: "Return early for the special case and let the main path continue without else.",
     enforcement: {
         type: "custom-oxlint",
         configuration: "error",

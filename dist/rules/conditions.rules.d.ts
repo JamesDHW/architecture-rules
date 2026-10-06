@@ -1,4 +1,8 @@
 export declare const guardClausesRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "guard-clauses";
     readonly title: string;
     readonly description: string;
@@ -11,6 +15,10 @@ export declare const guardClausesRule: {
     };
 };
 export declare const nullishDefaultsRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "nullish-defaults";
     readonly title: string;
     readonly description: string;
@@ -33,6 +41,10 @@ export declare const nullishDefaultsRule: {
     };
 };
 export declare const eqeqeqRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "eqeqeq";
     readonly title: string;
     readonly description: string;
@@ -45,6 +57,10 @@ export declare const eqeqeqRule: {
     };
 };
 export declare const noBooleanCastRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-boolean-cast";
     readonly title: string;
     readonly description: string;
@@ -61,6 +77,10 @@ export declare const noBooleanCastRule: {
     };
 };
 export declare const noUnneededTernaryRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-unneeded-ternary";
     readonly title: string;
     readonly description: string;
@@ -73,6 +93,10 @@ export declare const noUnneededTernaryRule: {
     };
 };
 export declare const preferLogicalOverTernaryRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "prefer-logical-over-ternary";
     readonly title: string;
     readonly description: string;

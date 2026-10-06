@@ -12,6 +12,7 @@ and multi-purpose accumulation.
 General accumulators force readers to simulate each iteration and track the
 accumulator's shape.
   `.trim(),
+  instead: "Use map, filter, Object.fromEntries or a named helper; keep reduce for sums, minimums and maximums.",
   rule: "unicorn/no-array-reduce",
   configuration: ["error", { allowSimpleOperations: true }],
 });
@@ -28,6 +29,7 @@ The iteration form should reveal whether code directly transforms data,
 constructs a result, or performs effects. forEach discards callback results
 and misleadingly accepts async callbacks without awaiting them.
   `.trim(),
+  instead: "Use map or filter to build values, or for...of to perform effects.",
   rule: "unicorn/no-array-for-each",
   configuration: "error",
 });
@@ -42,6 +44,7 @@ absence is part of the result.
 
 Runtime collections do not guarantee that an index or key exists.
   `.trim(),
+  instead: "Use .at(index), so a missing element is part of the result's type.",
   rule: "unicorn/prefer-at",
   configuration: "error",
 });

@@ -40,4 +40,4 @@ const implementation: Rule.RuleModule = {
     } };
   },
 };
-export const allowedImportsRule = defineRule({ id: "allowed-imports", title: "Respect architectural import permissions", description: DESCRIPTION, enforcement: { type: "custom-oxlint", configuration: "error", implementation } });
+export const allowedImportsRule = defineRule({ id: "allowed-imports", title: "Respect architectural import permissions", description: DESCRIPTION, instead: "Import only what this file type allows (architecture-check explain <file> lists it): move the code to a file type that may import it, or inject the dependency.", suppressWhen: "A module is loaded by a path known only at runtime, such as a plugin named in configuration.", enforcement: { type: "custom-oxlint", configuration: "error", implementation } });

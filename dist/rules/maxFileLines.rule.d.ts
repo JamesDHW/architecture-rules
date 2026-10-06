@@ -6,6 +6,7 @@ export declare const maxFileLinesWarnRule: {
     readonly options: import("../core/defineRule.js").RuleOptions<[Partial<MaxFileLinesOptions>?]>;
     readonly title: "Warn when a source file exceeds 150 lines";
     readonly description: string;
+    readonly instead: "Split the file by responsibility: move one cohesive concept into its own file.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: readonly ["warn", {
@@ -17,6 +18,10 @@ export declare const maxFileLinesWarnRule: {
     };
 };
 export declare const maxFileLinesRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "max-file-lines";
     readonly title: string;
     readonly description: string;

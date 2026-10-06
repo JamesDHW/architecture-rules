@@ -1,0 +1,114 @@
+/** named-predicates cases for structural guard conditions, which may stay unnamed. */
+export const structuralPredicatesCases = [
+    {
+        valid: [
+            "if (!isNullish(project) && project.isArchived) {}",
+            "if (isNullish(project) || project.isArchived) {}",
+            "if (!isNullish(project) && !project.isArchived) {}",
+            "if (!isNullish(project) && project.members.length > 0) {}",
+            "if (!isNullish(response.project) && response.project.status === ARCHIVED_STATUS) {}",
+            "if (!isNullish(project) && 'archived' === project.status) {}",
+            "if (!isNullish(project) && project.balance > -1) {}",
+            "if (!isNullish(project) && project.balance > +1) {}",
+            "if (!isNullish(project) && project.owner === null) {}",
+            "if (!isNullish(project) && project.status === ARCHIVED_STATUS_2) {}",
+            "if (!isNullish(project) && project.owner.team.isActive) {}",
+            "if (!(isNullish(project)) && project.isArchived) {}",
+            "while (!isNullish(project) && project.isPending) {}",
+            "for (; !isNullish(project) && project.isPending;) {}",
+            "do {} while (isNullish(project) || project.isPending);",
+            "const label = !isNullish(project) && project.isArchived ? 'Archived' : 'Other';",
+            "const isNullish = (candidate: unknown): candidate is null | undefined => candidate === null || candidate === undefined;",
+            "if (project === undefined) {}",
+            "if (canEditProject(project)) {}",
+            {
+                code: "if (isPresent(project) && project.isArchived) {}",
+                options: [{ presenceGuards: ["isPresent"] }],
+            },
+            {
+                code: "if (!isPresent(project) || project.isArchived) {}",
+                options: [{ presenceGuards: ["isPresent"] }],
+            },
+            {
+                code: "if (!isAbsent(project) && project.isArchived) {}",
+                options: [{ nullishGuards: ["isAbsent"] }],
+            },
+        ],
+        invalid: [
+            "if (project !== undefined && project.isArchived) {}",
+            "if (project === null || project.isArchived) {}",
+            "if (isNullish(project) && project.isArchived) {}",
+            "if (!isNullish(project) || project.isArchived) {}",
+            "if (!isNullish(project) && canEditProject(project)) {}",
+            "if (!isNullish(project) && project.ownerId === currentUser.id) {}",
+            "if (!isNullish(project) && project.status === archivedStatus) {}",
+            "if (!isNullish(project) && currentUser.isAdministrator) {}",
+            "if (!isNullish(project) && project.isArchived && isAdministrator) {}",
+            "if (!isNullish(project) && (project.isArchived || project.isDeleted)) {}",
+            "if (!isNullish(loadProject()) && loadProject().isArchived) {}",
+            "if (!isNullish(projects[selectedId]) && projects[selectedId].isArchived) {}",
+            "if (!guards.isNullish(project) && project.isArchived) {}",
+            "if (!isNullish(project, fallback) && project.isArchived) {}",
+            "if (!isPresent(project) && project.isArchived) {}",
+            "if (!(isOwner || isAdministrator)) {}",
+            "if (!isNullish(project) && project.balance > -limit) {}",
+            "if (!isNullish(project) && project.name === /archived/) {}",
+            "if (!isNullish(project) && project.status === ARCHIVED__STATUS) {}",
+            "if (!isNullish(project) && project.status == ARCHIVED_STATUS) {}",
+            "if (!isNullish(project) && project?.isArchived) {}",
+            "if (!isNullish(project) && project) {}",
+            "if (!!isNullish(project) && project.isArchived) {}",
+            "if (!isNullish?.(project) && project.isArchived) {}",
+            "if (isNullish(project) ?? project.isArchived) {}",
+        ].map((code) => ({ code, errors: [{ messageId: "namedPredicate" }] })),
+    },
+    {
+        lang: "tsx",
+        valid: [
+            "const panel = <>{canEditProject && <EditButton />}</>;",
+            "const panel = <>{(!isNullish(project) && project.isArchived) && <ArchiveNotice />}</>;",
+            "const panel = <>{!isNullish(project) && (project.isArchived && <ArchiveNotice />)}</>;",
+        ],
+        invalid: [
+            {
+                code: "const panel = <>{isOwner && (isAdministrator && <EditButton />)}</>;",
+                errors: [{ messageId: "namedPredicate" }],
+            },
+            {
+                code: "const panel = <>{(isOwner || isAdministrator) && <EditButton />}</>;",
+                errors: [{ messageId: "namedPredicate" }],
+            },
+            {
+                code: "const panel = <>{isOwner && isAdministrator && <EditButton />}</>;",
+                errors: [{ messageId: "namedPredicate" }],
+            },
+        ],
+    },
+    {
+        valid: [
+            'const label = isNullish(project) ? "Absent" : "Present";',
+            'const owner = isNullish(project.owner) ? project.owner : "Unassigned";',
+            'const owner = isNullish(project?.owner) ? "Unassigned" : project?.owner;',
+        ],
+        invalid: [
+            {
+                code: 'const name = isNullish(suppliedName) ? "Anonymous" : suppliedName;',
+                errors: [{ messageId: "nullishFallback" }],
+            },
+            {
+                code: 'const name = !isNullish(suppliedName) ? suppliedName : "Anonymous";',
+                errors: [{ messageId: "nullishFallback" }],
+            },
+            {
+                code: 'const owner = isNullish(project.owner) ? "Unassigned" : project.owner;',
+                errors: [{ messageId: "nullishFallback" }],
+            },
+            {
+                code: 'const name = isPresent(suppliedName) ? suppliedName : "Anonymous";',
+                options: [{ presenceGuards: ["isPresent"] }],
+                errors: [{ messageId: "nullishFallback" }],
+            },
+        ],
+    },
+];
+//# sourceMappingURL=structuralPredicates.cases.js.map

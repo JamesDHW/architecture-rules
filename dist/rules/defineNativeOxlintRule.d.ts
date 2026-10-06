@@ -1,5 +1,5 @@
 import type { OxlintConfig } from "oxlint";
-import type { Severity, OxlintRuleConfiguration } from "../core/defineRule.js";
+import type { OxlintRuleConfiguration, RuleEvasion, Severity } from "../core/defineRule.js";
 type NativeMap = NonNullable<OxlintConfig["rules"]>;
 type KnownNativeMap = {
     [K in keyof NativeMap as string extends K ? never : number extends K ? never : K]: NativeMap[K];
@@ -12,7 +12,12 @@ type ReadonlyOptions<T> = T extends readonly unknown[] ? {
 } : T;
 type Configuration<N extends keyof KnownNativeMap> = Severity | readonly [Severity, ...ReadonlyOptions<Tail<KnownNativeMap[N]>>];
 type NativeConfiguration<N extends keyof KnownNativeMap> = Configuration<NoInfer<N>> & OxlintRuleConfiguration;
-type NativeOxlintRule<Id extends string, Native extends keyof KnownNativeMap> = {
+type RuleGuidance = {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly RuleEvasion[];
+};
+type NativeOxlintRule<Id extends string, Native extends keyof KnownNativeMap> = RuleGuidance & {
     readonly id: Id;
     readonly title: string;
     readonly description: string;
@@ -22,7 +27,7 @@ type NativeOxlintRule<Id extends string, Native extends keyof KnownNativeMap> = 
         readonly configuration: NativeConfiguration<Native>;
     };
 };
-export declare const defineNativeOxlintRule: <const Id extends string, const Native extends keyof KnownNativeMap>(rule: {
+export declare const defineNativeOxlintRule: <const Id extends string, const Native extends keyof KnownNativeMap>(rule: RuleGuidance & {
     readonly id: Id;
     readonly title: string;
     readonly description: string;

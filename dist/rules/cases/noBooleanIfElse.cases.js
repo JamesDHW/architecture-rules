@@ -1,0 +1,69 @@
+export const noBooleanIfElseCases = [
+    {
+        valid: [
+            {
+                name: "pass the boolean directly",
+                code: "setBillingAddressSameAsShippingAddress(isEmpty(props.billingAddress));\n",
+            },
+            {
+                name: "named boolean then pass it",
+                code: `
+const hasBillingAddress = isEmpty(props.billingAddress);
+setBillingAddressSameAsShippingAddress(hasBillingAddress);
+`.trim(),
+            },
+            {
+                name: "branches call different functions",
+                code: `
+if (isEmpty(props.billingAddress)) {
+  setBillingAddressSameAsShippingAddress(true);
+} else {
+  setShippingAddress(false);
+}
+`.trim(),
+            },
+            {
+                name: "branches pass non-boolean arguments",
+                code: `
+if (isPrimary) {
+  setLabel("primary");
+} else {
+  setLabel("secondary");
+}
+`.trim(),
+            },
+            {
+                name: "calls with more than one argument",
+                code: "if (isReady) setOpen(true, panel); else setOpen(false, panel);\n",
+            },
+            {
+                name: "an else-if branch is not an else branch",
+                code: "if (isReady) setOpen(true); else if (isClosing) setOpen(false);\n",
+            },
+        ],
+        invalid: [
+            {
+                name: "same member callee",
+                code: "if (isReady) { panel.setOpen(true); } else { panel.setOpen(false); }\n",
+                errors: [{ messageId: "booleanIfElse" }],
+            },
+            {
+                name: "if else passing true and false",
+                code: `
+if (isEmpty(props.billingAddress)) {
+  setBillingAddressSameAsShippingAddress(true);
+} else {
+  setBillingAddressSameAsShippingAddress(false);
+}
+`.trim(),
+                errors: [{ messageId: "booleanIfElse" }],
+            },
+            {
+                name: "reversed true false without blocks",
+                code: "if (isReady) setOpen(false); else setOpen(true);\n",
+                errors: [{ messageId: "booleanIfElse" }],
+            },
+        ],
+    },
+];
+//# sourceMappingURL=noBooleanIfElse.cases.js.map

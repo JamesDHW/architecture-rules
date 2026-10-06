@@ -36,6 +36,7 @@ I prefer the exact condition to be visible at the point of use rather than
 requiring the reader to reconstruct JavaScript truthiness semantics.
   `.trim(),
 
+  instead: "Compare explicitly: name.length > 0, count !== 0, project !== undefined.",
   enforcement: {
     type: "oxlint",
 

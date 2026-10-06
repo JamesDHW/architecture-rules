@@ -75,6 +75,7 @@ export const terminalSwitchCasesRule = defineRule({
     id: "terminal-switch-cases",
     title: "Return from switch cases in a focused operation",
     description: DESCRIPTION,
+    instead: "Return from every case; move shared follow-up work into a helper the case returns.",
     enforcement: {
         type: "custom-oxlint",
         configuration: "error",

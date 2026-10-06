@@ -55,6 +55,7 @@ export const noBooleanIfElseRule = defineRule({
     id: "no-boolean-if-else",
     title: "Pass booleans directly instead of branching",
     description: DESCRIPTION,
+    instead: "Pass the boolean in directly: setVisible(isOpen), not if (isOpen) setVisible(true) else setVisible(false).",
     enforcement: {
         type: "custom-oxlint",
         configuration: "error",

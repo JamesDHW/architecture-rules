@@ -79,12 +79,51 @@ pnpm exec architecture-check
 pnpm exec architecture-check --fix
 pnpm exec architecture-check --config ./architecture.config.ts
 pnpm exec architecture-check explain src/domain/Project.ts
+pnpm exec architecture-check --file src/domain/Project.ts --file src/domain/Task.ts
+pnpm exec architecture-check --format json
+pnpm exec architecture-check report > architecture-report.md
 ```
 
 Both package binary aliases (`architecture-check` and `architecture-rules`)
 run the same required-config checker. `--fix` only applies supported lint fixes;
 it never changes architecture definitions, compiler configs, filenames, or
 manifests. Structural failures stop the run before fixes.
+
+After the findings, the checker prints a **How to fix** section: for each rule
+that fired, the rule's own "write this instead" line and the path to its page in
+`docs/rules/`. The guidance comes from the rule definition, not from the
+agent or reviewer reading the output.
+
+- `--file <path>` (repeatable) lints and reports only those files. The whole
+  project is still classified and type-checked, so import and compiler findings
+  stay correct.
+- `--format json` prints one JSON document, `{ findings, rules }`. Each finding
+  has `source` (`structure`, `lint` or `compiler`), `severity`, `ruleId`,
+  `file`, `line`, `column` and `message`. Each entry in `rules` has `ruleId`,
+  `instead` and `docs`.
+- `report` prints a Markdown report: findings by rule, every suppression with
+  its reason, configuration overrides with where they come from, file types,
+  and the advisory rules that nothing checks. It exits 0 whatever it finds.
+
+## Rule documentation
+
+[`docs/rules/`](docs/rules/README.md) has one generated page per rule. Each page
+is built from the rule's `defineRule(...)` definition and its test cases:
+
+- `description`: what the rule asks for, with good and bad lines.
+- `instead`: one line saying what to write instead. The checker prints it next
+  to findings.
+- `suppressWhen`: when a reasoned suppression is acceptable, with a ready-made
+  suppression comment.
+- `evasions`: workarounds that satisfy the rule's wording but miss its point.
+  Each one names the rule that reports it, or says that review has to catch it.
+  Tests check both claims: a workaround with `caughtBy` must be reported exactly
+  once by that rule, and one without must still pass the rule it evades.
+- Examples: the `valid` and `invalid` cases from `src/rules/cases/*.cases.ts`,
+  the same cases the rule tests run, each reported case with the message the
+  rule prints.
+
+Do not edit `docs/rules/` by hand; `pnpm run build` rewrites it.
 
 ## TypeScript owns the checking scope
 
@@ -276,5 +315,27 @@ space for its raw-transfer buffers. A buffer-allocation failure is an environmen
 failure, not a passing test; ESLint compatibility tests do not replace native
 integration validation. Set `ARCHITECTURE_NATIVE_TESTS=1` when running tests to
 include the end-to-end native JS-plugin smoke test. ESLint is shipped for the
-public rule declaration types; Oxlint remains the lint engine. Build artifacts
-are committed and must be regenerated.
+public rule declaration types; Oxlint remains the lint engine.
+
+Native tests that run the CLI in a temporary fixture cannot find tsgolint from
+the fixture directory. Point Oxlint at this repository's copy:
+
+```sh
+OXLINT_TSGOLINT_PATH="$(find "$PWD/node_modules/.pnpm" -path '*@oxlint-tsgolint*/tsgolint' -type f | head -n 1)" \
+  ARCHITECTURE_NATIVE_TESTS=1 pnpm test
+```
+
+### Generated files and the pre-commit hook
+
+`dist/`, `docs/rules/` and `tsconfig.base.json` are committed, because Git
+installations do not run a build. `pnpm run build` deletes `dist/`, compiles,
+and regenerates the other two. Enable the pre-commit hook once per clone:
+
+```sh
+git config core.hooksPath .githooks
+```
+
+The hook (`.githooks/pre-commit`, plain shell) runs the build and stops the
+commit if any generated file differs from what is staged. Stage the rebuilt
+files and commit again. The build reads the working tree, so stash unstaged
+source changes before committing part of them.

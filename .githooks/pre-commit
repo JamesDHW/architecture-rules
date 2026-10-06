@@ -1,0 +1,20 @@
+#!/bin/sh
+# Rebuilds dist/, docs/rules/ and tsconfig.base.json, then stops the commit if
+# the rebuilt files differ from what is staged.
+# Enable once per clone: git config core.hooksPath .githooks
+set -eu
+
+cd "$(git rev-parse --show-toplevel)"
+
+pnpm -s run build
+
+untracked=$(git ls-files --others --exclude-standard -- dist docs tsconfig.base.json)
+
+if git diff --quiet -- dist docs tsconfig.base.json && [ -z "$untracked" ]; then
+  exit 0
+fi
+
+echo "pre-commit: generated files are out of date:" >&2
+git status --short -- dist docs tsconfig.base.json >&2
+echo "Stage them and commit again: git add dist docs tsconfig.base.json" >&2
+exit 1
