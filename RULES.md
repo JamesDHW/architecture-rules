@@ -107,23 +107,21 @@ const getActiveProjects = (projects: Project[]): Project[] => {
 
 ## Keep values immutable
 
-Do not reassign bindings or mutate inputs, shared state, or previously observable values. Local mutation may construct a fresh, unaliased result inside a focused helper when that is clearer than an immutable accumulator. The result must not escape until construction is complete. Isolate performance-, security-, or API-driven observable mutation behind a descriptive abstraction.
+Do not reassign bindings or mutate inputs, shared state, or previously observable values. Build each result as a new value: `map`, `filter` and `flatMap` for transformations, `Object.fromEntries` for lookups, `Array.fromAsync` for one-at-a-time asynchronous work, `toSorted`, `toReversed` and `toSpliced` for reordering, and an iterator (`values()`) to consume items one by one. Do not change arrays in place with `push`, `pop`, `shift`, `unshift`, `splice`, `sort`, `reverse`, `fill` or `copyWithin`; long-lived state in `*.state.ts` modules is the exception. Where in-place change is measurably faster and that matters, use a reasoned suppression that names the measurement.
 
 ```ts
 const indexProjectsById = (
   projects: readonly Project[],
-): Readonly<Record<ProjectId, Project>> => {
-  const projectsById: Record<ProjectId, Project> = {};
+): Readonly<Record<ProjectId, Project>> =>
+  Object.fromEntries(projects.map((project) => [project.id, project]));
 
-  for (const project of projects) {
-    projectsById[project.id] = project;
-  }
-
-  return projectsById;
+const runChecks = async (checks: readonly Check[]): Promise<readonly CheckFailure[]> => {
+  const outcomes = await Array.fromAsync(checks, runCheck);
+  return outcomes.filter((outcome) => outcome !== undefined);
 };
 ```
 
-**Reason:** Callers can understand an immutable transformation without tracking changes over time. Fresh construction-time mutation preserves that external model while avoiding contorted or noisy immutable accumulators.
+**Reason:** Callers can understand an immutable transformation without tracking changes over time. Every in-place array operation has a direct value-returning replacement, so the rule costs clarity nothing; a suppression keeps the exception visible where performance demands it.
 
 ## Declare every binding with `const`
 

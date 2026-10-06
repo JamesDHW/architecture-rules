@@ -1066,6 +1066,15 @@ export declare const rules: readonly [{
         readonly configuration: "error";
         readonly implementation: import("eslint").Rule.RuleModule;
     };
+}, {
+    readonly id: "no-array-mutation";
+    readonly title: "Build new arrays instead of changing them in place";
+    readonly description: string;
+    readonly enforcement: {
+        readonly type: "custom-oxlint";
+        readonly configuration: "error";
+        readonly implementation: import("eslint").Rule.RuleModule;
+    };
 }];
 export type ArchitectureRuleId = (typeof rules)[number]["id"];
 //# sourceMappingURL=index.d.ts.map

@@ -8,12 +8,9 @@ Do not change an array, object, Map or Set from a function other than the one
 that created it. State that must outlive a function call (a registry of live
 connections, requests waiting for a reply) lives in a *.state.ts module, which
 exports a factory of named operations. Building a value inside one function call
-is not state and stays allowed.
+is not long-lived state and is outside this rule; no-array-mutation covers how to
+build it.
 
-Good (one call builds and returns it):
-  const failures: CheckFailure[] = [];
-  for (const check of checks) { ... failures.push(failure); }
-  return failures;
 Bad (a closure keeps changing it):
   const sockets: WebSocket[] = [];
   socket.addEventListener("open", () => sockets.push(socket));

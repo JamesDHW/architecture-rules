@@ -34,6 +34,7 @@ import { namedJsxHandlersRule } from "./namedJsxHandlers.rule.js";
 import { noLetRule } from "./noLet.rule.js";
 import { noCapturedMutationRule } from "./noCapturedMutation.rule.js";
 import { destructuredPropsRule } from "./destructuredProps.rule.js";
+import { noArrayMutationRule } from "./noArrayMutation.rule.js";
 import { namedPredicatesRule } from "./namedPredicates.rule.js";
 import {
   asyncAwaitRule,
@@ -189,6 +190,7 @@ export const rules = [
   noLetRule,
   noCapturedMutationRule,
   destructuredPropsRule,
+  noArrayMutationRule,
 ] as const;
 
 export type ArchitectureRuleId = (typeof rules)[number]["id"];
