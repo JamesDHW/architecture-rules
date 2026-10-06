@@ -52,6 +52,15 @@ Bad: const getProjectName = (project: Project) => {
   return project.name;
 };
 
+Type-guard calls are checked too: isValidationError(error) is reported when
+error is already a ValidationError. Array.isArray narrows unknown to any[], and every
+predicate is satisfied by any, so guard arrays through a readonly unknown[]
+predicate before checking their elements:
+
+Good: const isUnknownArray = (value: unknown): value is readonly unknown[] => Array.isArray(value);
+      isUnknownArray(value) && value.every(isString)
+Bad: Array.isArray(value) && value.every((entry) => typeof entry === "string")
+
 Redundant conditions obscure contracts and suggest unsupported uncertainty.
 Type proofs rely on accurate declarations; they do not validate runtime input.
 `.trim(),

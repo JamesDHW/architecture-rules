@@ -24,6 +24,14 @@ runCustomRule(noCapturedMutationRule, {
       code: "const create = (dependencies: Deps) => (id: string) => { dependencies.pendingRequests.add(id); };\n",
     },
     {
+      name: "computed method access is out of scope",
+      code: "const make = () => {\n  const pending = new Map<string, number>();\n  return (id: string) => { pending['set'](id, 1); };\n};\n",
+    },
+    {
+      name: "a container from an unknown constructor",
+      code: "const make = () => {\n  const pending = new Registry();\n  return (id: string) => { pending.add(id); };\n};\n",
+    },
+    {
       name: "state module",
       filename: "pendingRequests.state.ts",
       code: "export const createPendingRequests = () => {\n  const pending = new Map<string, number>();\n  return { add: (id: string) => { pending.set(id, 1); } };\n};\n",
@@ -53,6 +61,11 @@ runCustomRule(noCapturedMutationRule, {
     {
       name: "counter incremented from a closure",
       code: "const make = () => {\n  const state = { count: 0 };\n  return () => { state.count++; };\n};\n",
+      errors: [{ messageId: "capturedMutation" }],
+    },
+    {
+      name: "property deleted from a closure",
+      code: "const make = () => {\n  const flags = { ready: true };\n  return () => { delete flags.ready; };\n};\n",
       errors: [{ messageId: "capturedMutation" }],
     },
     {

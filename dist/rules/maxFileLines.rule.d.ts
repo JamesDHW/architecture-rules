@@ -1,9 +1,6 @@
 import type { Rule } from "eslint";
-export type MaxFileLinesOptions = {
-    readonly max: number;
-    readonly skipBlankLines: boolean;
-    readonly skipComments: boolean;
-};
+import { type MaxFileLinesOptions } from "./maxFileLines.constants.js";
+export type { MaxFileLinesOptions } from "./maxFileLines.constants.js";
 export declare const maxFileLinesWarnRule: {
     readonly id: "max-file-lines-warn";
     readonly options: import("../core/defineRule.js").RuleOptions<[Partial<MaxFileLinesOptions>?]>;

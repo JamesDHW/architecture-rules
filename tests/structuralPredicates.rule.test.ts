@@ -10,6 +10,11 @@ runCustomRule(namedPredicatesRule, {
     "if (!isNullish(response.project) && response.project.status === ARCHIVED_STATUS) {}",
     "if (!isNullish(project) && 'archived' === project.status) {}",
     "if (!isNullish(project) && project.balance > -1) {}",
+    "if (!isNullish(project) && project.balance > +1) {}",
+    "if (!isNullish(project) && project.owner === null) {}",
+    "if (!isNullish(project) && project.status === ARCHIVED_STATUS_2) {}",
+    "if (!isNullish(project) && project.owner.team.isActive) {}",
+    "if (!(isNullish(project)) && project.isArchived) {}",
     "while (!isNullish(project) && project.isPending) {}",
     "for (; !isNullish(project) && project.isPending;) {}",
     "do {} while (isNullish(project) || project.isPending);",
@@ -47,6 +52,15 @@ runCustomRule(namedPredicatesRule, {
     "if (!isNullish(project, fallback) && project.isArchived) {}",
     "if (!isPresent(project) && project.isArchived) {}",
     "if (!(isOwner || isAdministrator)) {}",
+    "if (!isNullish(project) && project.balance > -limit) {}",
+    "if (!isNullish(project) && project.name === /archived/) {}",
+    "if (!isNullish(project) && project.status === ARCHIVED__STATUS) {}",
+    "if (!isNullish(project) && project.status == ARCHIVED_STATUS) {}",
+    "if (!isNullish(project) && project?.isArchived) {}",
+    "if (!isNullish(project) && project) {}",
+    "if (!!isNullish(project) && project.isArchived) {}",
+    "if (!isNullish?.(project) && project.isArchived) {}",
+    "if (isNullish(project) ?? project.isArchived) {}",
   ].map((code) => ({ code, errors: [{ messageId: "namedPredicate" }] })),
 });
 
@@ -77,7 +91,11 @@ runCustomRule(
 );
 
 runCustomRule(namedPredicatesRule, {
-  valid: ['const label = isNullish(project) ? "Absent" : "Present";'],
+  valid: [
+    'const label = isNullish(project) ? "Absent" : "Present";',
+    'const owner = isNullish(project.owner) ? project.owner : "Unassigned";',
+    'const owner = isNullish(project?.owner) ? "Unassigned" : project?.owner;',
+  ],
   invalid: [
     {
       code: 'const name = isNullish(suppliedName) ? "Anonymous" : suppliedName;',
@@ -85,6 +103,10 @@ runCustomRule(namedPredicatesRule, {
     },
     {
       code: 'const name = !isNullish(suppliedName) ? suppliedName : "Anonymous";',
+      errors: [{ messageId: "nullishFallback" }],
+    },
+    {
+      code: 'const owner = isNullish(project.owner) ? "Unassigned" : project.owner;',
       errors: [{ messageId: "nullishFallback" }],
     },
     {

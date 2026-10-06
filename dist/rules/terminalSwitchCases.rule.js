@@ -55,14 +55,16 @@ const implementation = {
     create(context) {
         return {
             SwitchStatement(node) {
-                if (node.discriminant.type === "Literal" && typeof node.discriminant.value === "boolean") {
+                const isPredicateSwitch = node.discriminant.type === "Literal" && typeof node.discriminant.value === "boolean";
+                if (isPredicateSwitch) {
                     context.report({ node: node.discriminant, messageId: "predicateSwitch" });
                 }
-                for (const [index, branch] of node.cases.entries()) {
-                    if (branch.consequent.length === 0 && index < node.cases.length - 1)
-                        continue;
-                    if (endsInReturn(branch.consequent.at(-1)))
-                        continue;
+                const lastIndex = node.cases.length - 1;
+                const unterminatedCases = node.cases.filter((branch, index) => {
+                    const isStackedLabel = branch.consequent.length === 0 && index < lastIndex;
+                    return !isStackedLabel && !endsInReturn(branch.consequent.at(-1));
+                });
+                for (const branch of unterminatedCases) {
                     context.report({ node: branch, messageId: "terminal" });
                 }
             },

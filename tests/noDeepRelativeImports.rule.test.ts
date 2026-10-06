@@ -15,11 +15,25 @@ runCustomRule(noDeepRelativeImportsRule, {
       name: "alias import",
       code: 'import { Project } from "@projects/domain/Project.js";\n',
     },
+    {
+      name: "local export without a source",
+      code: "export const project = 1;\n",
+    },
   ],
   invalid: [
     {
       name: "three parents",
       code: 'import { Project } from "../../../domain/Project.js";\n',
+      errors: [{ messageId: "deepRelativeImport" }],
+    },
+    {
+      name: "named re-export through three parents",
+      code: 'export { Project } from "../../../domain/Project.js";\n',
+      errors: [{ messageId: "deepRelativeImport" }],
+    },
+    {
+      name: "star re-export through three parents",
+      code: 'export * from "../../../domain/Project.js";\n',
       errors: [{ messageId: "deepRelativeImport" }],
     },
   ],

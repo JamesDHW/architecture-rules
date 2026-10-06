@@ -1,0 +1,1 @@
+{"version":3,"file":"noCapturedMutation.constants.d.ts","sourceRoot":"","sources":["../../src/rules/noCapturedMutation.constants.ts"],"names":[],"mappings":"AAAA,oEAAoE;AACpE,eAAO,MAAM,0BAA0B,EAAE,WAAW,CAAC,MAAM,CAAoI,CAAC;AAEhM,kEAAkE;AAClE,eAAO,MAAM,sBAAsB,EAAE,WAAW,CAAC,MAAM,CAAoE,CAAC"}

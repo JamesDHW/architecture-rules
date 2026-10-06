@@ -1,5 +1,7 @@
 import path from "node:path";
 import { defineRule } from "../core/defineRule.js";
+import { SCREAMING_SNAKE_CASE } from "./constantsModule.constants.js";
+import { withPlaceholders } from "./messagePlaceholders.js";
 const DESCRIPTION = `
 Declare SCREAMING_SNAKE_CASE semantic constants in a file ending with
 .constants.ts, including constants used by only one consumer.
@@ -7,7 +9,6 @@ Declare SCREAMING_SNAKE_CASE semantic constants in a file ending with
 A consistent suffix makes policy values easy to locate and keeps executable
 modules focused on behavior.
 `.trim();
-const SCREAMING_SNAKE_CASE = /^[A-Z][A-Z0-9]*(_[A-Z0-9]+)+$/;
 const isSemanticConstantName = (name) => {
     return SCREAMING_SNAKE_CASE.test(name);
 };
@@ -28,25 +29,14 @@ const implementation = {
         }
         return {
             VariableDeclarator(node) {
-                if (node.parent.type !== "VariableDeclaration") {
+                const { id, parent } = node;
+                const isSemanticConstant = parent.type === "VariableDeclaration"
+                    && parent.kind === "const"
+                    && id.type === "Identifier"
+                    && isSemanticConstantName(id.name);
+                if (!isSemanticConstant)
                     return;
-                }
-                if (node.parent.kind !== "const") {
-                    return;
-                }
-                if (node.id.type !== "Identifier") {
-                    return;
-                }
-                if (!isSemanticConstantName(node.id.name)) {
-                    return;
-                }
-                context.report({
-                    node: node.id,
-                    messageId: "constantsModule",
-                    data: {
-                        name: node.id.name,
-                    },
-                });
+                context.report(withPlaceholders({ node: id, messageId: "constantsModule" }, { name: id.name }));
             },
         };
     },

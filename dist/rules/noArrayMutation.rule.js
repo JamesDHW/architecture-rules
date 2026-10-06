@@ -1,5 +1,8 @@
 import path from "node:path";
 import { defineRule } from "../core/defineRule.js";
+import { ARRAY_MUTATING_METHODS } from "./noArrayMutation.constants.js";
+import { identifierName } from "./syntaxNode.js";
+import { withPlaceholders } from "./messagePlaceholders.js";
 const DESCRIPTION = `
 Do not change arrays in place with push, pop, shift, unshift, splice, sort,
 reverse, fill or copyWithin. Build the value you need instead: map, filter and
@@ -15,7 +18,6 @@ change is measurably faster and that matters, use a reasoned suppression that
 names the measurement. The check is by method name, so a non-array method with
 the same name (a canvas context's fill) needs a suppression too.
 `.trim();
-const MUTATING_METHODS = new Set(["push", "pop", "shift", "unshift", "splice", "sort", "reverse", "fill", "copyWithin"]);
 const REPLACEMENTS = {
     push: "map, filter, flatMap, a spread or Array.fromAsync",
     pop: "at(-1) and slice(0, -1)",
@@ -27,6 +29,13 @@ const REPLACEMENTS = {
     fill: "Array.from({ length }, () => value)",
     copyWithin: "a new array built with slice",
 };
+/** The method a call such as runs.sort(byDate) invokes; undefined for plain and computed calls. */
+const calledMethod = (callee) => {
+    if (callee.type !== "MemberExpression")
+        return undefined;
+    return callee.computed ? undefined : identifierName(callee.property);
+};
+const isArrayMutatingMethod = (method) => method !== undefined && ARRAY_MUTATING_METHODS.has(method);
 const implementation = {
     meta: {
         type: "suggestion",
@@ -42,13 +51,10 @@ const implementation = {
             return {};
         return {
             CallExpression(node) {
-                const callee = node.callee;
-                if (callee.type !== "MemberExpression" || callee.computed === true)
+                const method = calledMethod(node.callee);
+                if (!isArrayMutatingMethod(method))
                     return;
-                const method = callee.property.type === "Identifier" ? callee.property.name : undefined;
-                if (method === undefined || !MUTATING_METHODS.has(method))
-                    return;
-                context.report({ node, messageId: "arrayMutation", data: { method, replacement: REPLACEMENTS[method] ?? "a new array" } });
+                context.report(withPlaceholders({ node, messageId: "arrayMutation" }, { method, replacement: REPLACEMENTS[method] ?? "a new array" }));
             },
         };
     },

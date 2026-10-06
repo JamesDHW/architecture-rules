@@ -36,10 +36,11 @@ export declare const defineRule: <const RuleDefinition extends ArchitectureRule>
 /** Custom option types and runtime schema travel with their canonical rule. */
 export type RuleOptions<Options extends readonly unknown[]> = {
     readonly schema: NonNullable<NonNullable<Rule.RuleModule["meta"]>["schema"]>;
-    readonly validate?: (options: readonly unknown[]) => void;
+    /** Checks the schema cannot express; returns every problem found. */
+    readonly validate?: (options: readonly unknown[]) => readonly string[];
     /** Type-only witness; no value is emitted. */
     readonly tuple?: Options;
 };
-export declare const defineRuleOptions: <Options extends readonly unknown[]>(schema: RuleOptions<Options>["schema"], validate?: (options: readonly unknown[]) => void) => RuleOptions<Options>;
+export declare const defineRuleOptions: <Options extends readonly unknown[]>(schema: RuleOptions<Options>["schema"], validate?: (options: readonly unknown[]) => readonly string[]) => RuleOptions<Options>;
 export {};
 //# sourceMappingURL=defineRule.d.ts.map

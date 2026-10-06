@@ -1,4 +1,6 @@
 import { defineRule } from "../core/defineRule.js";
+import { isPresent } from "../core/guards.js";
+import { getSoleStatement } from "./branchStatement.js";
 const DESCRIPTION = `
 Do not use intermediary branches to pass true and false into the same call.
 Pass the boolean expression directly.
@@ -6,49 +8,24 @@ Pass the boolean expression directly.
 Stopping the flow instead of accumulating flag assignments prevents unwanted
 behaviour during a change.
 `.trim();
-const asLoose = (node) => node;
-const getSoleStatement = (statement) => {
-    if (statement.type !== "BlockStatement") {
-        return statement;
-    }
-    if (statement.body === undefined || statement.body.length !== 1) {
+const getSoleCall = (branch) => {
+    const sole = getSoleStatement(branch);
+    if (sole?.type !== "ExpressionStatement")
         return undefined;
-    }
-    return statement.body[0];
+    return sole.expression.type === "CallExpression" ? sole.expression : undefined;
 };
-const getBooleanLiteralArg = (statement) => {
-    const sole = getSoleStatement(statement);
-    if (sole === undefined || sole.type !== "ExpressionStatement") {
+/** A branch whose only statement calls a function with a single true or false literal. */
+const getBooleanCall = (branch, sourceCode) => {
+    const call = getSoleCall(branch);
+    if (call?.arguments.length !== 1)
         return undefined;
-    }
-    if (sole.expression === undefined || sole.expression.type !== "CallExpression") {
-        return undefined;
-    }
-    const args = sole.expression.arguments;
-    if (args === undefined || args.length !== 1) {
-        return undefined;
-    }
-    const [argument] = args;
-    if (argument === undefined || argument.type !== "Literal") {
-        return undefined;
-    }
-    if (argument.value !== true && argument.value !== false) {
-        return undefined;
-    }
-    return argument.value;
+    const [argument] = call.arguments;
+    const value = argument?.type === "Literal" ? argument.value : undefined;
+    return typeof value === "boolean" ? { calleeText: sourceCode.getText(call.callee), value } : undefined;
 };
-const getCalleeText = (statement, sourceCode) => {
-    const sole = getSoleStatement(statement);
-    if (sole === undefined || sole.type !== "ExpressionStatement") {
-        return undefined;
-    }
-    if (sole.expression === undefined || sole.expression.type !== "CallExpression") {
-        return undefined;
-    }
-    if (sole.expression.callee === undefined) {
-        return undefined;
-    }
-    return sourceCode.getText(sole.expression.callee);
+const passOppositeBooleansToSameCallee = (thenCall, elseCall) => {
+    return thenCall !== undefined && elseCall !== undefined && thenCall.value !== elseCall.value &&
+        thenCall.calleeText === elseCall.calleeText;
 };
 const implementation = {
     meta: {
@@ -63,29 +40,13 @@ const implementation = {
     create(context) {
         return {
             IfStatement(node) {
-                if (node.alternate === null || node.alternate === undefined) {
+                if (!isPresent(node.alternate))
                     return;
-                }
-                const thenValue = getBooleanLiteralArg(asLoose(node.consequent));
-                const elseValue = getBooleanLiteralArg(asLoose(node.alternate));
-                if (thenValue === undefined || elseValue === undefined) {
+                const thenCall = getBooleanCall(node.consequent, context.sourceCode);
+                const elseCall = getBooleanCall(node.alternate, context.sourceCode);
+                if (!passOppositeBooleansToSameCallee(thenCall, elseCall))
                     return;
-                }
-                if (thenValue === elseValue) {
-                    return;
-                }
-                const thenCallee = getCalleeText(asLoose(node.consequent), context.sourceCode);
-                const elseCallee = getCalleeText(asLoose(node.alternate), context.sourceCode);
-                if (thenCallee === undefined || elseCallee === undefined) {
-                    return;
-                }
-                if (thenCallee !== elseCallee) {
-                    return;
-                }
-                context.report({
-                    node,
-                    messageId: "booleanIfElse",
-                });
+                context.report({ node, messageId: "booleanIfElse" });
             },
         };
     },

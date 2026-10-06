@@ -1,4 +1,5 @@
 import { defineRule } from "../core/defineRule.js";
+import { isPresent } from "../core/guards.js";
 const DESCRIPTION = `
 Do not use else or else if. Handle the special case with an early return,
 throw, break, or continue, then write the remaining path at the same level.
@@ -54,9 +55,8 @@ const implementation = {
     create(context) {
         return {
             IfStatement(node) {
-                if (node.alternate === null || node.alternate === undefined) {
+                if (!isPresent(node.alternate))
                     return;
-                }
                 context.report({
                     node: node.alternate,
                     messageId: "noElse",

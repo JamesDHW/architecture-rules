@@ -53,8 +53,44 @@ switch (food.type) {
 }
 `.trim(),
     },
+    {
+      name: "a member discriminant outranks the identifier compared with it",
+      code: "const choose = () => { if (a === a.b) return 1; if (a === a.c) return 2; };",
+    },
+    {
+      name: "optional member access is not a discriminant",
+      code: "const choose = () => { if (a?.b === 1) return 1; if (a?.b === 2) return 2; };",
+    },
+    {
+      name: "a nonterminal branch disqualifies its whole run",
+      code: "const choose = () => { if (s === 1) return 1; if (s === 2) refresh(); if (s === 3) return 3; if (s === 4) return 4; };",
+    },
+    {
+      name: "an else chain ending in a nonterminal branch",
+      code: "const choose = () => { if (s === 1) return 1; else if (s === 2) return 2; else if (s === 3) { refresh(); } };",
+    },
   ],
   invalid: [
+    {
+      name: "literal before the discriminant",
+      code: "const choose = () => { if (VEGETABLE === food.type) return steam(food); if (PROTEIN === food.type) return grill(food); };",
+      errors: [{ messageId: "preferSwitch" }],
+    },
+    {
+      name: "throw is a terminal branch",
+      code: 'const choose = () => { if (status === "a") return 1; if (status === "b") throw failure; };',
+      errors: [{ messageId: "preferSwitch" }],
+    },
+    {
+      name: "a run may start after an if with else",
+      code: "const choose = () => { if (s === 1) return 1; else refresh(); if (s === 2) return 2; if (s === 3) return 3; };",
+      errors: [{ messageId: "preferSwitch" }],
+    },
+    {
+      name: "an else chain and a following run are reported separately",
+      code: "const choose = () => { if (s === 1) return 1; else if (s === 2) return 2; if (s === 3) return 3; if (s === 4) return 4; };",
+      errors: [{ messageId: "preferSwitch" }, { messageId: "preferSwitch" }],
+    },
     {
       name: "else if chain on the same member",
       code: `

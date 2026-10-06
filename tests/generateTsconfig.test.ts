@@ -7,12 +7,9 @@ describe("buildTsconfig", () => {
   it("contains every TypeScript enforcement", () => {
     const { compilerOptions } = buildTsconfig();
 
-    for (const rule of rules) {
-      if (rule.enforcement.type !== "typescript") {
-        continue;
-      }
-
-      expect(compilerOptions).toMatchObject(rule.enforcement.compilerOptions);
+    const requirements = rules.flatMap(({ enforcement }) => enforcement.type === "typescript" ? [enforcement.compilerOptions] : []);
+    for (const requirement of requirements) {
+      expect(compilerOptions).toMatchObject(requirement);
     }
   });
 

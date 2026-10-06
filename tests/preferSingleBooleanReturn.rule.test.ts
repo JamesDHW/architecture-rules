@@ -35,8 +35,17 @@ if (isReady) return true;
 return true;
 `.trim(),
     },
+    {
+      name: "else branch performs work before returning",
+      code: "const check = () => { if (isReady) return true; else { recordAccess(); return false; } };",
+    },
   ],
   invalid: [
+    {
+      name: "final else of an else-if chain",
+      code: "const check = () => { if (isAdmin) return true; else if (isBlocked) return false; else return true; };",
+      errors: [{ messageId: "booleanTail" }],
+    },
     {
       name: "boolean tail in switch case",
       code: 'const check = () => { switch (status) { case "ready": if (isMember) return true; return false; default: return canAccess(); } };',

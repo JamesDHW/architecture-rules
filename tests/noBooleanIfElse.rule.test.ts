@@ -34,8 +34,21 @@ if (isPrimary) {
 }
 `.trim(),
     },
+    {
+      name: "calls with more than one argument",
+      code: "if (isReady) setOpen(true, panel); else setOpen(false, panel);\n",
+    },
+    {
+      name: "an else-if branch is not an else branch",
+      code: "if (isReady) setOpen(true); else if (isClosing) setOpen(false);\n",
+    },
   ],
   invalid: [
+    {
+      name: "same member callee",
+      code: "if (isReady) { panel.setOpen(true); } else { panel.setOpen(false); }\n",
+      errors: [{ messageId: "booleanIfElse" }],
+    },
     {
       name: "if else passing true and false",
       code: `

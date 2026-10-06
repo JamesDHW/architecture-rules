@@ -1,3 +1,6 @@
+import { childNode, childNodes, isNodeOfType, isSyntaxNode, stringProperty, type SyntaxNode } from "./syntaxNode.js";
+
+/** The node fields these checks read. Any value is accepted and read structurally. */
 export type PredicateNode = {
   readonly type: string;
   readonly name?: string;
@@ -24,74 +27,121 @@ export type GuardNames = {
   readonly presence: readonly string[];
 };
 
-export const isStructuralGuardCondition = (
-  condition: PredicateNode,
-  guards: GuardNames,
-): boolean => {
-  if (condition.type !== "LogicalExpression") return false;
-  if (condition.operator !== "&&" && condition.operator !== "||") return false;
-  if (condition.left === undefined || condition.right === undefined) return false;
-
-  const decision = getGuardDecision(condition.left, guards);
-  if (decision === undefined) return false;
-  if ((condition.operator === "&&") !== decision.establishesPresence) return false;
-  return isPropertyCheck(condition.right, decision.guardedPath);
+type GuardDecision = {
+  readonly guardedPath: string;
+  readonly establishesPresence: boolean;
 };
 
-export const isGuardedNullishFallback = (condition: PredicateNode, guards: GuardNames): boolean => {
-  if (condition.type !== "ConditionalExpression" || condition.test === undefined) return false;
+type GuardCall = {
+  readonly name: string;
+  readonly guardedPath: string;
+};
+
+const comparisonOperators: readonly string[] = ["===", "!==", "<", "<=", ">", ">="];
+
+export const isStructuralGuardCondition = (condition: unknown, guards: GuardNames): boolean => {
+  if (!isNodeOfType(condition, "LogicalExpression")) return false;
+  const decision = getGuardDecision(condition.left, guards);
+  if (decision === undefined) return false;
+  const hasGuardPolarity = presenceRequiredBy(condition.operator) === decision.establishesPresence;
+  return hasGuardPolarity && isPropertyCheck(condition.right, decision.guardedPath);
+};
+
+export const isGuardedNullishFallback = (condition: unknown, guards: GuardNames): boolean => {
+  if (!isNodeOfType(condition, "ConditionalExpression")) return false;
   const decision = getGuardDecision(condition.test, guards);
   if (decision === undefined) return false;
   const presentBranch = decision.establishesPresence ? condition.consequent : condition.alternate;
   return getPropertyPath(presentBranch) === decision.guardedPath;
 };
 
-const getGuardDecision = (condition: PredicateNode, guards: GuardNames): {
-  readonly guardedPath: string;
-  readonly establishesPresence: boolean;
-} | undefined => {
-  const isNegated = condition.type === "UnaryExpression" && condition.operator === "!";
-  const guard = isNegated ? condition.argument : condition;
-  if (guard?.type !== "CallExpression" || guard.optional === true) return undefined;
-  if (guard.callee?.type !== "Identifier" || guard.callee.name === undefined) return undefined;
-  if (guard.arguments?.length !== 1) return undefined;
-  const guardedPath = getPropertyPath(guard.arguments[0]);
-  if (guardedPath === undefined) return undefined;
-
-  const isNullishGuard = guards.nullish.includes(guard.callee.name);
-  const isPresenceGuard = guards.presence.includes(guard.callee.name);
-  if (isNullishGuard === isPresenceGuard) return undefined;
-  return { guardedPath, establishesPresence: isNullishGuard ? isNegated : !isNegated };
-};
-
-const getPropertyPath = (node: PredicateNode | undefined): string | undefined => {
-  if (node?.type === "Identifier") return node.name;
-  if (node?.type !== "MemberExpression" || node.computed !== false || node.optional === true) return undefined;
-  if (node.property?.type !== "Identifier") return undefined;
-  const parentPath = getPropertyPath(node.object);
-  if (parentPath === undefined) return undefined;
-  return `${parentPath}.${node.property.name}`;
-};
-
-const isPropertyCheck = (node: PredicateNode, guardedPath: string): boolean => {
-  if (isGuardedProperty(node, guardedPath)) return true;
-  if (node.type === "UnaryExpression" && node.operator === "!" && node.argument !== undefined) {
-    return isGuardedProperty(node.argument, guardedPath);
+/** && needs a guard that establishes presence; || needs one that establishes absence. */
+const presenceRequiredBy = (operator: unknown): boolean | undefined => {
+  switch (operator) {
+    case "&&":
+      return true;
+    case "||":
+      return false;
+    default:
+      return undefined;
   }
-  if (node.type !== "BinaryExpression" || node.left === undefined || node.right === undefined) return false;
-  if (!["===", "!==", "<", "<=", ">", ">="].includes(node.operator ?? "")) return false;
-  return (isGuardedProperty(node.left, guardedPath) && isLiteralOrConstant(node.right)) ||
-    (isLiteralOrConstant(node.left) && isGuardedProperty(node.right, guardedPath));
 };
 
-const isGuardedProperty = (node: PredicateNode, guardedPath: string): boolean => {
+const isNegation = (node: unknown): node is SyntaxNode => isNodeOfType(node, "UnaryExpression") && node.operator === "!";
+
+const isDirectCall = (node: unknown): node is SyntaxNode => isNodeOfType(node, "CallExpression") && node.optional !== true;
+
+/** A direct call of a named function with one property-path argument, such as isNullish(project.owner). */
+const getGuardCall = (node: unknown): GuardCall | undefined => {
+  const callee = childNode(node, "callee");
+  const guardArguments = childNodes(node, "arguments");
+  const name = isNodeOfType(callee, "Identifier") ? stringProperty(callee, "name") : undefined;
+  const guardedPath = guardArguments.length === 1 ? getPropertyPath(guardArguments[0]) : undefined;
+  const isGuardCall = isDirectCall(node) && name !== undefined && guardedPath !== undefined;
+  return isGuardCall ? { name, guardedPath } : undefined;
+};
+
+const getGuardDecision = (condition: unknown, guards: GuardNames): GuardDecision | undefined => {
+  const isNegated = isNegation(condition);
+  const guardCall = getGuardCall(isNegated ? condition.argument : condition);
+  if (guardCall === undefined) return undefined;
+  const isNullishGuard = guards.nullish.includes(guardCall.name);
+  const isPresenceGuard = guards.presence.includes(guardCall.name);
+  if (isNullishGuard === isPresenceGuard) return undefined;
+  return { guardedPath: guardCall.guardedPath, establishesPresence: isNullishGuard ? isNegated : !isNegated };
+};
+
+/** A non-computed, non-optional access of a named property, such as project.status. */
+const isNamedPropertyAccess = (node: unknown): node is SyntaxNode => {
+  return isNodeOfType(node, "MemberExpression") && node.computed === false && node.optional !== true &&
+    isNodeOfType(node.property, "Identifier");
+};
+
+const getPropertyPath = (node: unknown): string | undefined => {
+  if (isNodeOfType(node, "Identifier")) return stringProperty(node, "name");
+  if (!isNamedPropertyAccess(node)) return undefined;
+  const parentPath = getPropertyPath(node.object);
+  const propertyName = stringProperty(node.property, "name");
+  const hasPath = parentPath !== undefined && propertyName !== undefined;
+  return hasPath ? `${parentPath}.${propertyName}` : undefined;
+};
+
+const isComparison = (node: unknown): node is SyntaxNode => {
+  return isNodeOfType(node, "BinaryExpression") && comparisonOperators.includes(stringProperty(node, "operator") ?? "");
+};
+
+const isPropertyCheck = (node: unknown, guardedPath: string): boolean => {
+  if (isNegation(node)) return isGuardedProperty(node.argument, guardedPath);
+  if (isComparison(node)) return isGuardedComparison(node, guardedPath);
+  return isGuardedProperty(node, guardedPath);
+};
+
+const isGuardedComparison = ({ left, right }: SyntaxNode, guardedPath: string): boolean => {
+  return (isGuardedProperty(left, guardedPath) && isLiteralOrConstant(right)) ||
+    (isLiteralOrConstant(left) && isGuardedProperty(right, guardedPath));
+};
+
+const isGuardedProperty = (node: unknown, guardedPath: string): boolean => {
   const propertyPath = getPropertyPath(node);
   return propertyPath !== undefined && propertyPath.startsWith(`${guardedPath}.`);
 };
 
-const isLiteralOrConstant = (node: PredicateNode): boolean => {
-  if (node.type === "Literal") return node.regex === undefined;
-  if (node.type === "Identifier") return /^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$/.test(node.name ?? "");
-  return node.type === "UnaryExpression" && (node.operator === "-" || node.operator === "+") &&
-    node.argument?.type === "Literal" && typeof node.argument.value === "number";
+const isLiteralOrConstant = (node: unknown): boolean => {
+  if (!isSyntaxNode(node)) return false;
+  switch (node.type) {
+    case "Literal":
+      return node.regex === undefined;
+    case "Identifier":
+      return /^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$/.test(stringProperty(node, "name") ?? "");
+    case "UnaryExpression":
+      return isSignedNumber(node);
+    default:
+      return false;
+  }
+};
+
+const isSignedNumber = (node: SyntaxNode): boolean => {
+  const argument = childNode(node, "argument");
+  return (node.operator === "-" || node.operator === "+") && isNodeOfType(argument, "Literal") &&
+    typeof argument.value === "number";
 };

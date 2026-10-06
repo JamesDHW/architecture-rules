@@ -1,6 +1,8 @@
 import type { Rule } from "eslint";
 
 import { defineRule } from "../core/defineRule.js";
+import { isPresent } from "../core/guards.js";
+import { getSoleStatement, type Statement } from "./branchStatement.js";
 
 const DESCRIPTION = `
 Combine adjacent terminal if guards with identical return expressions into a
@@ -22,8 +24,6 @@ meaning. Distinct policies may need distinct semantic names even when their
 current values coincide. No automatic rewrite is supplied.
 `.trim();
 
-type Statement = Parameters<NonNullable<Rule.RuleListener["IfStatement"]>>[0]["consequent"];
-
 const implementation: Rule.RuleModule = {
   meta: {
     type: "suggestion",
@@ -36,20 +36,21 @@ const implementation: Rule.RuleModule = {
   },
   create(context) {
     const returnedTokens = (statement: Statement): string | undefined => {
-      if (statement.type !== "IfStatement" || statement.alternate !== null) return undefined;
-      const body = statement.consequent;
-      const terminal = body.type === "BlockStatement" && body.body.length === 1 ? body.body[0] : body;
+      const isElseFreeIf = statement.type === "IfStatement" && statement.alternate === null;
+      if (!isElseFreeIf) return undefined;
+      const terminal = getSoleStatement(statement.consequent);
       if (terminal?.type !== "ReturnStatement") return undefined;
-      if (terminal.argument === null || terminal.argument === undefined) return "bare-return";
+      if (!isPresent(terminal.argument)) return "bare-return";
       return JSON.stringify(context.sourceCode.getTokens(terminal.argument).map((token) => [token.type, token.value]));
     };
     const check = (statements: readonly Statement[]): void => {
       for (const [index, statement] of statements.entries()) {
         const next = statements[index + 1];
-        if (next === undefined) continue;
         const result = returnedTokens(statement);
-        if (result === undefined || result !== returnedTokens(next)) continue;
-        context.report({ node: next, messageId: "sameResult" });
+        const repeatsResult = next !== undefined && result !== undefined && result === returnedTokens(next);
+        if (repeatsResult) {
+          context.report({ node: next, messageId: "sameResult" });
+        }
       }
     };
     return {

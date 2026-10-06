@@ -16,17 +16,21 @@ const implementation = {
         messages: { grouping: "Parenthesize mixed && and || operations to expose their grouping. See rule grouped-logical-operators." },
     },
     create(context) {
+        const isParenthesized = (node) => {
+            const before = context.sourceCode.getTokenBefore(node);
+            const after = context.sourceCode.getTokenAfter(node);
+            return before?.value === "(" && after?.value === ")";
+        };
+        /** A nested && or || that differs from its parent's operator must show its grouping. */
+        const needsGrouping = (child, operator) => {
+            return child.type === "LogicalExpression" && child.operator !== operator && child.operator !== "??" && !isParenthesized(child);
+        };
         return {
             LogicalExpression(node) {
-                if (node.operator !== "&&" && node.operator !== "||")
+                if (node.operator === "??")
                     return;
-                for (const child of [node.left, node.right]) {
-                    if (child.type !== "LogicalExpression" || child.operator === node.operator || child.operator === "??")
-                        continue;
-                    const before = context.sourceCode.getTokenBefore(child);
-                    const after = context.sourceCode.getTokenAfter(child);
-                    if (before?.value === "(" && after?.value === ")")
-                        continue;
+                const ungrouped = [node.left, node.right].filter((child) => needsGrouping(child, node.operator));
+                for (const child of ungrouped) {
                     context.report({ node: child, messageId: "grouping" });
                 }
             },

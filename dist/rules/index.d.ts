@@ -576,7 +576,7 @@ export declare const rules: readonly [{
     };
 }, {
     readonly id: "max-file-lines-warn";
-    readonly options: import("../core/defineRule.js").RuleOptions<[Partial<import("./maxFileLines.rule.js").MaxFileLinesOptions>?]>;
+    readonly options: import("../core/defineRule.js").RuleOptions<[Partial<import("./maxFileLines.constants.js").MaxFileLinesOptions>?]>;
     readonly title: "Warn when a source file exceeds 150 lines";
     readonly description: string;
     readonly enforcement: {
@@ -934,15 +934,6 @@ export declare const rules: readonly [{
 }, {
     readonly id: "no-boolean-if-else";
     readonly title: "Pass booleans directly instead of branching";
-    readonly description: string;
-    readonly enforcement: {
-        readonly type: "custom-oxlint";
-        readonly configuration: "error";
-        readonly implementation: import("eslint").Rule.RuleModule;
-    };
-}, {
-    readonly id: "no-boolean-assignment-branches";
-    readonly title: "Do not assign boolean literals in branches";
     readonly description: string;
     readonly enforcement: {
         readonly type: "custom-oxlint";

@@ -47,7 +47,8 @@ const implementation = {
                     node.consequent.type === "ContinueStatement";
                 const isSingleLine = node.loc !== undefined && node.loc !== null &&
                     node.loc.start.line === node.loc.end.line;
-                if (node.alternate === null && isTerminal && isSingleLine)
+                const isSingleLineGuard = node.alternate === null && isTerminal && isSingleLine;
+                if (isSingleLineGuard)
                     return;
                 context.report({ node: node.consequent, messageId: "requireBraces" });
             },

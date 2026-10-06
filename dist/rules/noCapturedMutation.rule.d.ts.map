@@ -1,1 +1,1 @@
-{"version":3,"file":"noCapturedMutation.rule.d.ts","sourceRoot":"","sources":["../../src/rules/noCapturedMutation.rule.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,QAAQ,CAAC;AAiHnC,eAAO,MAAM,sBAAsB;;;;;;;;;CAKjC,CAAC"}
+{"version":3,"file":"noCapturedMutation.rule.d.ts","sourceRoot":"","sources":["../../src/rules/noCapturedMutation.rule.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,QAAQ,CAAC;AAmInC,eAAO,MAAM,sBAAsB;;;;;;;;;CAKjC,CAAC"}

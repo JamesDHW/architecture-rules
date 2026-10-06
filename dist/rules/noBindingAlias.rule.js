@@ -1,27 +1,35 @@
 import { defineRule } from "../core/defineRule.js";
 const DESCRIPTION = `
-Do not declare or assign a variable solely to give an existing variable another
-name, and do not rename imports with as. Use the original name, or create a
-genuinely new value through a named transformation. Renaming while destructuring
-an object property remains allowed.
+Do not declare a const solely to give an existing binding another name, and do
+not rename imports with as. Use the original name, or create a genuinely new
+value through a named transformation. Renaming while destructuring an object
+property remains allowed.
 
 Good: if (shouldEnable) { startSynchronization(); }
 Bad: const isEnabled = shouldEnable;
-Bad: isEnabled = shouldEnable;
 Good: const normalizedProjectName = projectName.trim();
+
+To publish one value under a second public name, rename it in the export list:
+export { listedPackageSchema as registeredPackageSchema }. That states the intent
+at the module boundary instead of creating a local synonym.
 
 Multiple synonymous names for the same binding force readers to track identity
 without adding information. This detects direct aliases, not English synonymy
 between names of genuinely different computations.
 
-The global undefined value is not an alias source: initializing with undefined
-or assigning undefined to clear optional state is outside this rule. A local
-binding named undefined is still subject to the alias check. This exclusion
-classifies aliasing only; it does not endorse mutable state or recommend resets.
-Whether mutation is appropriate belongs to the separate immutability policy.
+Only const declarations are aliases: reassignment is covered by no-let,
+no-var and no-param-reassign. The global undefined value is not an alias
+source; a local binding named undefined is.
 `.trim();
+const declaresName = (scope, name) => {
+    if (scope === null)
+        return false;
+    const definitionCount = scope.set.get(name)?.defs.length ?? 0;
+    return definitionCount > 0 || declaresName(scope.upper, name);
+};
+/** Oxlint does not model undefined as a declared global, so resolve it through the scope chain. */
 const isGlobalUndefined = (node, context) => {
-    return node.name === "undefined" && context.sourceCode.isGlobalReference(node);
+    return node.name === "undefined" && !declaresName(context.sourceCode.getScope(node), node.name);
 };
 const implementation = {
     meta: {
@@ -29,6 +37,7 @@ const implementation = {
         docs: {
             description: DESCRIPTION,
         },
+        schema: [],
         messages: {
             bindingAlias: "Do not alias an existing binding. Use the original name or compute a new value. See rule no-binding-alias.",
             importAlias: "Do not rename imports with as. Use the original export name. See rule no-binding-alias.",
@@ -37,38 +46,17 @@ const implementation = {
     create(context) {
         return {
             VariableDeclarator(node) {
-                if (node.id.type !== "Identifier") {
-                    return;
-                }
-                if (node.init === null || node.init === undefined) {
-                    return;
-                }
-                if (node.init.type !== "Identifier" || isGlobalUndefined(node.init, context)) {
-                    return;
-                }
-                context.report({
-                    node,
-                    messageId: "bindingAlias",
-                });
-            },
-            AssignmentExpression(node) {
-                if (node.operator !== "=" || node.left.type !== "Identifier" || node.right.type !== "Identifier")
-                    return;
-                if (isGlobalUndefined(node.right, context))
+                const declaresConstName = node.parent.type === "VariableDeclaration" && node.parent.kind === "const" && node.id.type === "Identifier";
+                const isAlias = declaresConstName && node.init?.type === "Identifier" && !isGlobalUndefined(node.init, context);
+                if (!isAlias)
                     return;
                 context.report({ node, messageId: "bindingAlias" });
             },
             ImportSpecifier(node) {
-                if (node.imported.type !== "Identifier") {
+                const isRenamed = node.imported.type === "Identifier" && node.imported.name !== node.local.name;
+                if (!isRenamed)
                     return;
-                }
-                if (node.imported.name === node.local.name) {
-                    return;
-                }
-                context.report({
-                    node,
-                    messageId: "importAlias",
-                });
+                context.report({ node, messageId: "importAlias" });
             },
         };
     },

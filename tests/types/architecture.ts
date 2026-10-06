@@ -1,13 +1,13 @@
-import { defineArchitecture } from "../../src/index.js";
+import { defineArchitecture, type Architecture } from "../../src/index.js";
 
 const projects = { tsconfigs: ["tsconfig.json"] } as const;
 // These are compile-only tests, not runtime calls.
-export const valid = () => defineArchitecture({
+export const valid = (): Architecture => defineArchitecture({
   projects,
   defaults: { imports: { internal: ["domain"] }, rules: { "max-file-lines": ["warn", { max: 123 }], "explicit-conditions": { options: { allowString: true }, reason: "Boundary" } } },
   fileTypes: { domain: { description: "Domain", files: ["src/**"], imports: { internal: ["domain"] } } },
 });
-export const invalid = () => {
+export const invalid = (): void => {
   defineArchitecture({ projects,
     // @ts-expect-error filesystem allowlists were removed; TypeScript owns scope
     files: { otherFiles: ["**/*"] },

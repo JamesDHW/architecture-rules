@@ -1,15 +1,15 @@
 import { Linter } from "eslint";
-import { describe, expect, it } from "vitest";
+import { assert, describe, expect, it } from "vitest";
 
 import type { ArchitectureRule } from "../src/core/defineRule.js";
 import { controlFlowBracesRule } from "../src/rules/controlFlowBraces.rule.js";
 import { emptyBranchesRule } from "../src/rules/emptyBranches.rule.js";
-import { noFinallyRule, noRawExceptionsRule } from "../src/rules/exceptionControlFlow.rules.js";
+import { noFinallyRule } from "../src/rules/noFinally.rule.js";
+import { noRawExceptionsRule } from "../src/rules/noRawExceptions.rule.js";
 import { groupedLogicalOperatorsRule } from "../src/rules/groupedLogicalOperators.rule.js";
 import { collectionLoopsRule, noLoopJumpsRule } from "../src/rules/loopControl.rules.js";
 import { namedPredicatesRule } from "../src/rules/namedPredicates.rule.js";
 import { noBindingAliasRule } from "../src/rules/noBindingAlias.rule.js";
-import { noBooleanAssignmentBranchesRule } from "../src/rules/noBooleanAssignmentBranches.rule.js";
 import { noCollapsibleIfRule } from "../src/rules/noCollapsibleIf.rule.js";
 import { noElseRule } from "../src/rules/noElse.rule.js";
 import { onePathOneResultRule } from "../src/rules/onePathOneResult.rule.js";
@@ -18,7 +18,7 @@ import { simpleTernariesRule } from "../src/rules/simpleTernaries.rule.js";
 import { terminalSwitchCasesRule } from "../src/rules/terminalSwitchCases.rule.js";
 
 const lint = (rule: ArchitectureRule, code: string, options: readonly unknown[] = []) => {
-  if (rule.enforcement.type !== "custom-oxlint") throw new Error("Expected a custom rule");
+  assert(rule.enforcement.type === "custom-oxlint", "Expected a custom rule");
   return new Linter().verify(code, {
     languageOptions: { ecmaVersion: "latest", sourceType: "module", parserOptions: { ecmaFeatures: { jsx: true } } },
     plugins: { architecture: { rules: { [rule.id]: rule.enforcement.implementation } } },
@@ -47,6 +47,8 @@ const cases = [
   [namedPredicatesRule, "const label = isNullish(project) ? 'Absent' : 'Present';", undefined],
   [namedPredicatesRule, "const panel = <>{isOwner && (isAdministrator && <EditButton />)}</>;", "namedPredicate"],
   [namedPredicatesRule, "const panel = <>{!isNullish(project) && (project.isArchived && <ArchiveNotice />)}</>;", undefined],
+  [namedPredicatesRule, "if ((isOwner || isAdministrator) && <EditButton />) { publish(); }", "namedPredicate"],
+  [namedPredicatesRule, "const panel = (isOwner || isAdministrator) && <EditButton /> ? edit : view;", "namedPredicate"],
   [onePathOneResultRule, "const run = () => { if (isMissing) return unavailable; if (isArchived) return unavailable; };", "sameResult"],
   [onePathOneResultRule, "if (isOwner) { publish(); } checkpoint(); if (isAdministrator) { publish(); }", undefined],
   [onePathOneResultRule, "const run = () => { if (isMissing) return 'Not available'; if (isArchived) return 'Not  available'; };", undefined],
@@ -68,10 +70,8 @@ const cases = [
   [pureConditionsRule, "if ((() => { count++; return isReady; })()) { publish(); }", "effect"],
   [pureConditionsRule, "if (register(() => { count++; })) { publish(); }", undefined],
   [pureConditionsRule, "const run = async () => { if (await hasAccess()) { publish(); } };", "effect"],
-  [noBooleanAssignmentBranchesRule, "if (shouldEnable) { isEnabled = true; startSynchronization(); }", "booleanAssignment"],
-  [noBooleanAssignmentBranchesRule, "if (shouldEnable) { setIsEnabled(true); }", undefined],
   [noBindingAliasRule, "const isEnabled = shouldEnable;", "bindingAlias"],
-  [noBindingAliasRule, "isEnabled = shouldEnable;", "bindingAlias"],
+  [noBindingAliasRule, "isEnabled = shouldEnable;", undefined],
   [noFinallyRule, "try { publish(); } finally { closeSession(); }", "finally"],
   [noRawExceptionsRule, "try { publish(); } catch (caught) { reportFailure(caught); }", "raw"],
   [simpleTernariesRule, "const Panel = () => isLoading ? <Loading /> : <Details />;", "renderState"],

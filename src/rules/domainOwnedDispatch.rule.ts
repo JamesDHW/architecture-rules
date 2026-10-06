@@ -1,6 +1,9 @@
 import type { Rule } from "eslint";
 
 import { defineRule } from "../core/defineRule.js";
+import { isPresent } from "../core/guards.js";
+import { identifierName, childNode, childNodes, stringProperty, type SyntaxNode } from "./syntaxNode.js";
+import { withPlaceholders } from "./messagePlaceholders.js";
 
 const DESCRIPTION = `
 When a reducer delegates behavior to domain reducers, represent those domains
@@ -35,41 +38,88 @@ No automatic fix can safely invent domain boundaries or migrate action producers
 `.trim();
 
 type SwitchNode = Parameters<NonNullable<Rule.RuleListener["SwitchStatement"]>>[0];
-type Statement = SwitchNode["cases"][number]["consequent"][number];
+type SwitchCase = SwitchNode["cases"][number];
+type Statement = SwitchCase["consequent"][number];
+type ReturnedExpression = NonNullable<Extract<Statement, { readonly type: "ReturnStatement" }>["argument"]>;
+type CallNode = Extract<ReturnedExpression, { readonly type: "CallExpression" }>;
+type RoutedCase = { readonly reducer: string | undefined; readonly labels: readonly SwitchCase[] };
 
-const isReducerName = (name: string): boolean => /^reduce(?:$|[A-Z])/.test(name);
+const isReducerName = (name: string | undefined): boolean => name !== undefined && /^reduce(?:$|[A-Z])/.test(name);
+const isChildReducerName = (name: string | undefined): boolean => name !== undefined && /^reduce[A-Z]/.test(name);
+
+const isFunctionNode = (node: SyntaxNode): boolean => {
+  return node.type === "FunctionDeclaration" || node.type === "FunctionExpression" || node.type === "ArrowFunctionExpression";
+};
+
+
+const isIdentifierNamed = (node: unknown, name: string): boolean => identifierName(node) === name;
+
+/** The nearest function enclosing node, or node itself when it is one. */
+const enclosingFunction = (node: SyntaxNode | undefined): SyntaxNode | undefined => {
+  if (node === undefined) return undefined;
+  return isFunctionNode(node) ? node : enclosingFunction(childNode(node, "parent"));
+};
+
+/** A function declaration's own name, or the identifier a function expression is bound to. */
+const functionName = (fn: SyntaxNode | undefined): string | undefined => {
+  if (fn?.type === "FunctionDeclaration") return stringProperty(childNode(fn, "id"), "name");
+  const declarator = childNode(fn, "parent");
+  return declarator?.type === "VariableDeclarator" ? identifierName(childNode(declarator, "id")) : undefined;
+};
 
 const getReducerParameters = (node: SwitchNode): readonly [string, string] | undefined => {
-  let parent: Rule.Node | null | undefined = node.parent;
-  while (parent !== undefined && parent !== null) {
-    if (parent.type === "FunctionDeclaration" || parent.type === "FunctionExpression" || parent.type === "ArrowFunctionExpression") {
-      const name = parent.type === "FunctionDeclaration" ? parent.id?.name
-        : parent.parent?.type === "VariableDeclarator" && parent.parent.id.type === "Identifier"
-          ? parent.parent.id.name : undefined;
-      if (name === undefined || !isReducerName(name)) return undefined;
-      const [state, action] = parent.params;
-      if (state?.type !== "Identifier" || action?.type !== "Identifier") return undefined;
-      return [state.name, action.name];
-    }
-    parent = parent.parent;
-  }
-  return undefined;
+  const reducer = enclosingFunction(childNode(node, "parent"));
+  if (!isReducerName(functionName(reducer))) return undefined;
+  const [state, action] = childNodes(reducer, "params").map(identifierName);
+  const hasIdentifierParameters = state !== undefined && action !== undefined;
+  return hasIdentifierParameters ? [state, action] : undefined;
+};
+
+/** action.type, read directly from the reducer's action parameter. */
+const isActionTypeRead = (discriminant: SwitchNode["discriminant"], action: string): boolean => {
+  if (discriminant.type !== "MemberExpression") return false;
+  return !discriminant.computed && !discriminant.optional && isIdentifierNamed(discriminant.object, action) && isIdentifierNamed(discriminant.property, "type");
+};
+
+const returnedCall = (statement: Statement | undefined): CallNode | undefined => {
+  if (statement?.type !== "ReturnStatement") return undefined;
+  return statement.argument?.type === "CallExpression" ? statement.argument : undefined;
+};
+
+/** reduceX(state, action): a child reducer receiving both parameters unchanged. */
+const forwardedReducer = (call: CallNode, state: string, action: string): string | undefined => {
+  const reducer = identifierName(call.callee);
+  const [stateArgument, actionArgument] = call.arguments;
+  const isForwarded = call.arguments.length === 2 && isIdentifierNamed(stateArgument, state) && isIdentifierNamed(actionArgument, action);
+  const isForwardingCall = !call.optional && isChildReducerName(reducer) && isForwarded;
+  return isForwardingCall ? reducer : undefined;
 };
 
 const getReturnedReducer = (
   statements: readonly Statement[], state: string, action: string,
 ): string | undefined => {
+  const [statement] = statements;
   if (statements.length !== 1) return undefined;
-  const statement = statements[0];
   if (statement?.type === "BlockStatement") return getReturnedReducer(statement.body, state, action);
-  if (statement?.type !== "ReturnStatement" || statement.argument?.type !== "CallExpression") return undefined;
-  const call = statement.argument;
-  if (call.optional || call.callee.type !== "Identifier" || !/^reduce[A-Z]/.test(call.callee.name)) return undefined;
-  if (call.arguments.length !== 2) return undefined;
-  const [stateArgument, actionArgument] = call.arguments;
-  if (stateArgument?.type !== "Identifier" || stateArgument.name !== state) return undefined;
-  if (actionArgument?.type !== "Identifier" || actionArgument.name !== action) return undefined;
-  return call.callee.name;
+  const call = returnedCall(statement);
+  return call === undefined ? undefined : forwardedReducer(call, state, action);
+};
+
+/** Each case body with the explicit labels that fall through to it; trailing empty cases have no body. */
+const routedCases = (cases: readonly SwitchCase[], state: string, action: string): readonly RoutedCase[] => {
+  const bodyIndexes = cases.flatMap((branch, index) => branch.consequent.length === 0 ? [] : [index]);
+  return bodyIndexes.map((bodyIndex, position) => {
+    const firstIndex = (bodyIndexes[position - 1] ?? -1) + 1;
+    const labels = cases.slice(firstIndex, bodyIndex + 1).filter((branch) => branch.test !== null);
+    const body = cases[bodyIndex]?.consequent ?? [];
+    return { reducer: getReturnedReducer(body, state, action), labels };
+  });
+};
+
+/** Every explicit label routed to each child reducer, in order of the reducer's first case. */
+const labelsByReducer = (routed: readonly RoutedCase[]): readonly (readonly [string, readonly SwitchCase[]])[] => {
+  const reducers = [...new Set(routed.map((routedCase) => routedCase.reducer))].filter(isPresent);
+  return reducers.map((reducer) => [reducer, routed.filter((routedCase) => routedCase.reducer === reducer).flatMap((routedCase) => routedCase.labels)]);
 };
 
 const implementation: Rule.RuleModule = {
@@ -87,28 +137,12 @@ const implementation: Rule.RuleModule = {
         const parameters = getReducerParameters(node);
         if (parameters === undefined) return;
         const [state, action] = parameters;
-        const discriminant = node.discriminant;
-        if (discriminant.type !== "MemberExpression" || discriminant.computed || discriminant.optional) return;
-        if (discriminant.object.type !== "Identifier" || discriminant.object.name !== action) return;
-        if (discriminant.property.type !== "Identifier" || discriminant.property.name !== "type") return;
-
-        const labelsByReducer = new Map<string, SwitchNode["cases"]>();
-        let pendingLabels: SwitchNode["cases"] = [];
-        for (const branch of node.cases) {
-          if (branch.test !== null) pendingLabels.push(branch);
-          if (branch.consequent.length === 0) continue;
-          const reducer = getReturnedReducer(branch.consequent, state, action);
-          if (reducer !== undefined) {
-            const labels = labelsByReducer.get(reducer) ?? [];
-            labels.push(...pendingLabels);
-            labelsByReducer.set(reducer, labels);
+        if (!isActionTypeRead(node.discriminant, action)) return;
+        const repeatedRoutes = labelsByReducer(routedCases(node.cases, state, action)).filter(([, labels]) => labels.length >= 2);
+        for (const [reducer, [firstLabel]] of repeatedRoutes) {
+          if (firstLabel !== undefined) {
+            context.report(withPlaceholders({ node: firstLabel, messageId: "domainRouting" }, { reducer }));
           }
-          pendingLabels = [];
-        }
-        for (const [reducer, labels] of labelsByReducer) {
-          const firstLabel = labels[0];
-          if (labels.length < 2 || firstLabel === undefined) continue;
-          context.report({ node: firstLabel, messageId: "domainRouting", data: { reducer } });
         }
       },
     };

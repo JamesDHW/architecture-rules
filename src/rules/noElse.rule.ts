@@ -1,6 +1,7 @@
 import type { Rule } from "eslint";
 
 import { defineRule } from "../core/defineRule.js";
+import { isPresent } from "../core/guards.js";
 
 const DESCRIPTION = `
 Do not use else or else if. Handle the special case with an early return,
@@ -59,10 +60,7 @@ const implementation: Rule.RuleModule = {
   create(context) {
     return {
       IfStatement(node) {
-        if (node.alternate === null || node.alternate === undefined) {
-          return;
-        }
-
+        if (!isPresent(node.alternate)) return;
         context.report({
           node: node.alternate,
           messageId: "noElse",

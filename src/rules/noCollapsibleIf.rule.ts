@@ -1,6 +1,8 @@
 import type { Rule } from "eslint";
 
 import { defineRule } from "../core/defineRule.js";
+import { isPresent } from "../core/guards.js";
+import { getSoleStatement } from "./branchStatement.js";
 
 const DESCRIPTION = `
 Do not hide simple && or || operations in nested if blocks unless those ifs
@@ -24,26 +26,6 @@ An outer gate with multiple distinct inner operations remains allowed. Do not
 use an arbitrary maximum nesting depth as a substitute for meaningful extraction.
 `.trim();
 
-type LooseNode = {
-  readonly type: string;
-  readonly alternate?: LooseNode | null | undefined;
-  readonly body?: readonly LooseNode[] | undefined;
-};
-
-const asLoose = (node: object): LooseNode => node as unknown as LooseNode;
-
-const getSoleStatement = (statement: LooseNode): LooseNode | undefined => {
-  if (statement.type !== "BlockStatement") {
-    return statement;
-  }
-
-  if (statement.body === undefined || statement.body.length !== 1) {
-    return undefined;
-  }
-
-  return statement.body[0];
-};
-
 const implementation: Rule.RuleModule = {
   meta: {
     type: "suggestion",
@@ -58,23 +40,11 @@ const implementation: Rule.RuleModule = {
   create(context) {
     return {
       IfStatement(node) {
-        if (node.alternate !== null) {
-          return;
-        }
-
-        const inner = getSoleStatement(asLoose(node.consequent));
-        if (inner === undefined || inner.type !== "IfStatement") {
-          return;
-        }
-
-        if (inner.alternate !== null && inner.alternate !== undefined) {
-          return;
-        }
-
-        context.report({
-          node,
-          messageId: "collapsibleIf",
-        });
+        if (node.alternate !== null) return;
+        const inner = getSoleStatement(node.consequent);
+        const isSoleElseFreeIf = inner?.type === "IfStatement" && !isPresent(inner.alternate);
+        if (!isSoleElseFreeIf) return;
+        context.report({ node, messageId: "collapsibleIf" });
       },
     };
   },

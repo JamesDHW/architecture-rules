@@ -1,7 +1,7 @@
 import { Linter } from "eslint";
 import { describe, expect, it } from "vitest";
 
-import { defineArchitecture } from "../src/core/defineArchitecture.js";
+import { defineArchitecture } from "../src/config/defineArchitecture.js";
 import { domainOwnedDispatchRule } from "../src/rules/domainOwnedDispatch.rule.js";
 import { preferSwitchRule } from "../src/rules/preferSwitch.rule.js";
 import { terminalSwitchCasesRule } from "../src/rules/terminalSwitchCases.rule.js";

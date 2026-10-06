@@ -1,6 +1,7 @@
 import type { Rule } from "eslint";
 
 import { defineRule } from "../core/defineRule.js";
+import type { EstreeNode } from "./nodeContext.js";
 
 const DESCRIPTION = `
 Parenthesize mixed && and || operations to make their grouping explicit.
@@ -20,14 +21,20 @@ const implementation: Rule.RuleModule = {
     messages: { grouping: "Parenthesize mixed && and || operations to expose their grouping. See rule grouped-logical-operators." },
   },
   create(context) {
+    const isParenthesized = (node: EstreeNode): boolean => {
+      const before = context.sourceCode.getTokenBefore(node);
+      const after = context.sourceCode.getTokenAfter(node);
+      return before?.value === "(" && after?.value === ")";
+    };
+    /** A nested && or || that differs from its parent's operator must show its grouping. */
+    const needsGrouping = (child: EstreeNode, operator: string): boolean => {
+      return child.type === "LogicalExpression" && child.operator !== operator && child.operator !== "??" && !isParenthesized(child);
+    };
     return {
       LogicalExpression(node) {
-        if (node.operator !== "&&" && node.operator !== "||") return;
-        for (const child of [node.left, node.right]) {
-          if (child.type !== "LogicalExpression" || child.operator === node.operator || child.operator === "??") continue;
-          const before = context.sourceCode.getTokenBefore(child as Rule.Node);
-          const after = context.sourceCode.getTokenAfter(child as Rule.Node);
-          if (before?.value === "(" && after?.value === ")") continue;
+        if (node.operator === "??") return;
+        const ungrouped = [node.left, node.right].filter((child) => needsGrouping(child, node.operator));
+        for (const child of ungrouped) {
           context.report({ node: child, messageId: "grouping" });
         }
       },

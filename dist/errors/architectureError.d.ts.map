@@ -1,0 +1,1 @@
+{"version":3,"file":"architectureError.d.ts","sourceRoot":"","sources":["../../src/errors/architectureError.ts"],"names":[],"mappings":"AAAA,mFAAmF;AACnF,qBAAa,iBAAkB,SAAQ,KAAK;IAC1C,QAAQ,CAAC,MAAM,EAAE,SAAS,MAAM,EAAE,CAAC;IAEnC,YAAY,MAAM,EAAE,SAAS,MAAM,EAAE,EAAE,OAAO,CAAC,EAAE,YAAY,EAI5D;CACF;AAED,eAAO,MAAM,mBAAmB,UAAW,OAAO,KAAG,KAAK,IAAI,iBAAuD,CAAC"}

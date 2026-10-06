@@ -1,4 +1,5 @@
 import { defineRule } from "../core/defineRule.js";
+import { isBranchTest, isDeferredFunction } from "./nodeContext.js";
 const DESCRIPTION = `
 Conditions must compute a decision without performing effects. Reject explicit
 assignment, update, delete, await, yield, construction, and comma sequencing
@@ -17,29 +18,27 @@ invoked function bodies are checked. No automatic rewrite changes evaluation
 order. Explicit effects in logical default expressions are also rejected;
 ordinary value-producing fallback calls remain allowed.
 `.trim();
-const isInsideCondition = (node) => {
-    let child = node;
-    let parent = node.parent;
-    while (parent !== null && parent !== undefined) {
-        if (["FunctionExpression", "ArrowFunctionExpression", "FunctionDeclaration"].includes(parent.type)) {
-            if (parent.parent?.type !== "CallExpression" || parent.parent.callee !== parent)
-                return false;
-        }
-        if (parent.type === "LogicalExpression")
-            return true;
-        if (parent.type === "SwitchStatement" && parent.discriminant === child)
-            return true;
-        if (parent.type === "SwitchCase" && parent.test === child)
-            return true;
-        if ((parent.type === "IfStatement" || parent.type === "WhileStatement" ||
-            parent.type === "DoWhileStatement" || parent.type === "ForStatement" ||
-            parent.type === "ConditionalExpression") && parent.test === child)
-            return true;
-        child = parent;
-        parent = parent.parent;
-    }
-    return false;
+const isEffect = (node) => {
+    if (node.type === "UnaryExpression")
+        return node.operator === "delete";
+    return ["AssignmentExpression", "UpdateExpression", "AwaitExpression", "YieldExpression", "NewExpression", "SequenceExpression"].includes(node.type);
 };
+/** True when the parent of node evaluates node as a decision. */
+const isDecision = (node) => {
+    const { parent } = node;
+    const isSwitchDecision = (parent?.type === "SwitchStatement" && parent.discriminant === node) ||
+        (parent?.type === "SwitchCase" && parent.test === node);
+    return parent?.type === "LogicalExpression" || isSwitchDecision || isBranchTest(node);
+};
+/** True when node is the outermost effect in a condition; nested effects are reported once, through it. */
+const isInsideCondition = (node) => {
+    const { parent } = node;
+    if (parent === null)
+        return false;
+    const endsSearch = isEffect(parent) || isDeferredFunction(parent);
+    return !endsSearch && (isDecision(node) || isInsideCondition(parent));
+};
+const isConditionEffect = (node) => isEffect(node) && isInsideCondition(node);
 const implementation = {
     meta: {
         type: "suggestion",
@@ -49,8 +48,9 @@ const implementation = {
     },
     create(context) {
         const check = (node) => {
-            if (isInsideCondition(node))
-                context.report({ node, messageId: "effect" });
+            if (!isConditionEffect(node))
+                return;
+            context.report({ node, messageId: "effect" });
         };
         return {
             AssignmentExpression: check,
@@ -59,8 +59,7 @@ const implementation = {
             YieldExpression: check,
             NewExpression: check,
             SequenceExpression: check,
-            UnaryExpression(node) { if (node.operator === "delete")
-                check(node); },
+            UnaryExpression: check,
         };
     },
 };

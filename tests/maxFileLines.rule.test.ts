@@ -23,6 +23,16 @@ runCustomRule(maxFileLinesWarnRule, {
       options: [{ max: 2 }],
       code: "const a = 1; // note\nconst b = 2;\n",
     },
+    {
+      name: "inner and closing lines of a block comment are skipped",
+      options: [{ max: 2 }],
+      code: "const a = 1; /* opens after code\n   continues\n*/\nconst b = 2;\n",
+    },
+    {
+      name: "a block comment line shared with code still counts",
+      options: [{ max: 1 }],
+      code: "/* opens alone\n*/ const a = 1;\n",
+    },
   ],
   invalid: [
     {
@@ -42,6 +52,12 @@ runCustomRule(maxFileLinesWarnRule, {
       options: [{ max: 2, skipComments: false }],
       code: "// header\nconst a = 1;\nconst b = 2;\n",
       errors: [{ messageId: "tooManyLines" }],
+    },
+    {
+      name: "the message reports the counted lines and the maximum",
+      options: [{ max: 1 }],
+      code: "/*\n * header\n */\nconst a = 1;\nconst b = 2;\n",
+      errors: [{ message: "File has 2 lines; warning starts at 1. Split by cohesive responsibility. See rule max-file-lines-warn." }],
     },
   ],
 });

@@ -1,18 +1,16 @@
 import { defineRule } from "../core/defineRule.js";
+import { childNode, isNodeOfType } from "./syntaxNode.js";
 const DESCRIPTION = `
 Do not use unchecked type assertions in application code. Type-preserving
 constructs such as as const and satisfies remain allowed.
 
+A chained assertion such as value as unknown as Project is reported once.
+When a dependency's declarations lag its runtime, add a .d.ts augmentation
+instead of asserting. Otherwise use a reasoned line suppression.
+
 Escape hatches move type errors away from their cause and make readers trust
 claims the compiler cannot verify.
 `.trim();
-const getTypeAnnotation = (node) => {
-    if (!("typeAnnotation" in node)) {
-        return undefined;
-    }
-    const { typeAnnotation } = node;
-    return typeAnnotation;
-};
 const isConstKeyword = (typeAnnotation) => {
     if (typeAnnotation.type === "TSConstKeyword") {
         return true;
@@ -20,11 +18,21 @@ const isConstKeyword = (typeAnnotation) => {
     if (typeAnnotation.type !== "TSTypeReference") {
         return false;
     }
-    return typeAnnotation.typeName?.type === "Identifier" && typeAnnotation.typeName.name === "const";
+    const typeName = childNode(typeAnnotation, "typeName");
+    return isNodeOfType(typeName, "Identifier") && typeName.name === "const";
 };
+const isConstAssertion = (node) => {
+    const typeAnnotation = childNode(node, "typeAnnotation");
+    return typeAnnotation !== undefined && isConstKeyword(typeAnnotation);
+};
+const isAssertionType = (type) => type === "TSAsExpression" || type === "TSTypeAssertion";
+/** value as unknown as Project is one escape hatch: report it once, at the outermost cast. */
+const isInsideAssertion = ({ parent }) => {
+    return parent !== null && isAssertionType(parent.type) && !isConstAssertion(parent);
+};
+const isReportedAssertion = (node) => !isConstAssertion(node) && !isInsideAssertion(node);
 const reportUnlessConstAssertion = (context, node) => {
-    const typeAnnotation = getTypeAnnotation(node);
-    if (typeAnnotation !== undefined && isConstKeyword(typeAnnotation)) {
+    if (!isReportedAssertion(node)) {
         return;
     }
     context.report({

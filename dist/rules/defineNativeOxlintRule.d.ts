@@ -11,21 +11,23 @@ type ReadonlyOptions<T> = T extends readonly unknown[] ? {
     readonly [K in keyof T]: ReadonlyOptions<T[K]>;
 } : T;
 type Configuration<N extends keyof KnownNativeMap> = Severity | readonly [Severity, ...ReadonlyOptions<Tail<KnownNativeMap[N]>>];
-export declare const defineNativeOxlintRule: <const Id extends string, const Native extends keyof KnownNativeMap>(rule: {
-    readonly id: Id;
-    readonly title: string;
-    readonly description: string;
-    readonly rule: Native;
-    readonly configuration: Configuration<NoInfer<Native>> & OxlintRuleConfiguration;
-}) => {
+type NativeConfiguration<N extends keyof KnownNativeMap> = Configuration<NoInfer<N>> & OxlintRuleConfiguration;
+type NativeOxlintRule<Id extends string, Native extends keyof KnownNativeMap> = {
     readonly id: Id;
     readonly title: string;
     readonly description: string;
     readonly enforcement: {
         readonly type: "oxlint";
         readonly rule: Native;
-        readonly configuration: Configuration<NoInfer<Native>> & OxlintRuleConfiguration;
+        readonly configuration: NativeConfiguration<Native>;
     };
 };
+export declare const defineNativeOxlintRule: <const Id extends string, const Native extends keyof KnownNativeMap>(rule: {
+    readonly id: Id;
+    readonly title: string;
+    readonly description: string;
+    readonly rule: Native;
+    readonly configuration: NativeConfiguration<Native>;
+}) => NativeOxlintRule<Id, Native>;
 export {};
 //# sourceMappingURL=defineNativeOxlintRule.d.ts.map

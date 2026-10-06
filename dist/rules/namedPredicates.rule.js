@@ -1,12 +1,23 @@
 import { defineRule, defineRuleOptions } from "../core/defineRule.js";
-import { isGuardedNullishFallback, isStructuralGuardCondition } from "./structuralGuardCondition.js";
-const validateOptions = (options) => {
-    const config = options[0];
-    const nullish = config?.nullishGuards ?? ["isNullish"];
-    const presence = config?.presenceGuards ?? [];
-    if (nullish.some((name) => presence.includes(name)))
-        throw new Error("named-predicates: guard lists must not overlap");
+import { isPresent, isRecord, isStringArray } from "../core/guards.js";
+import { continuesAndChain, getJsxPresenceCondition, isNullishFallback, needsName } from "./namedPredicateConditions.js";
+import { isBranchTest } from "./nodeContext.js";
+import { toPredicateNode } from "./predicateNode.js";
+import { withPlaceholders } from "./messagePlaceholders.js";
+const guardListOption = (options, key, fallback) => {
+    const [config] = options;
+    const value = isRecord(config) ? config[key] : undefined;
+    return isStringArray(value) ? value : fallback;
 };
+const readGuardNames = (options) => ({
+    nullish: guardListOption(options, "nullishGuards", ["isNullish"]),
+    presence: guardListOption(options, "presenceGuards", []),
+});
+const overlappingGuardIssues = (guards) => {
+    const overlaps = guards.nullish.some((name) => guards.presence.includes(name));
+    return overlaps ? ["named-predicates: nullishGuards and presenceGuards must not overlap."] : [];
+};
+const validateOptions = (options) => overlappingGuardIssues(readGuardNames(options));
 const DESCRIPTION = `
 Name compound conditions in if statements, loop tests, ternary tests, and JSX
 rendering conditions. Assigned and returned boolean expressions may implement
@@ -38,8 +49,7 @@ Configure nullishGuards and presenceGuards by bare function name. Defaults are
 ["isNullish"] and [], respectively. Names must not occur in both lists. Matching
 names does not prove type-guard semantics, purity, or stability of property reads.
 Implement approved guards as genuine type predicates and review their behavior.
-Reuse an existing helper; otherwise consider @shared/utils/isNullish. That path
-is a suggestion, not a requirement. Explicit standalone null/undefined comparisons
+Reuse an existing guard helper rather than writing a second one. Explicit standalone null/undefined comparisons
 remain allowed when the distinction matters. Ternaries using these approved
 guards solely to default the guarded value must use ?? instead (the same
 nullish-defaults policy, extended here because this rule owns guard names).
@@ -63,74 +73,50 @@ const implementation = {
             }],
         messages: {
             nullishFallback: "Use ?? instead of a guard-based ternary that only supplies a missing-value fallback. See rules named-predicates and nullish-defaults.",
-            namedPredicate: "Name this compound predicate, or use an approved nullish/presence guard ({{guards}}) before a property check on the same value. Absorb a guard plus predicate call into that predicate, preserving narrowing. Reuse a helper; otherwise consider @shared/utils/isNullish (optional). See rule named-predicates.",
+            namedPredicate: "Name this compound predicate, or use an approved nullish/presence guard ({{guards}}) before a property check on the same value. Absorb a guard plus predicate call into that predicate, preserving narrowing. See rule named-predicates.",
         },
     },
     create(context) {
-        const options = context.options[0];
-        const guards = {
-            nullish: options?.nullishGuards ?? ["isNullish"],
-            presence: options?.presenceGuards ?? [],
+        const guards = readGuardNames(context.options);
+        const [optionIssue] = overlappingGuardIssues(guards);
+        // oxlint-disable-next-line architecture/no-raw-exceptions -- ESLint and Oxlint reject invalid rule options when create() throws.
+        if (optionIssue !== undefined)
+            throw new Error(optionIssue);
+        const configuredGuards = [...guards.nullish, ...guards.presence].join(", ");
+        const guardList = configuredGuards === "" ? "none configured" : configuredGuards;
+        const reportUnnamed = (node) => {
+            context.report(withPlaceholders({ node, messageId: "namedPredicate" }, { guards: guardList }));
         };
-        if (guards.nullish.some((name) => guards.presence.includes(name))) {
-            throw new Error("named-predicates: nullishGuards and presenceGuards must not overlap.");
-        }
-        const reported = new WeakSet();
-        const check = (test, reportNode = test) => {
-            if (test === null || test === undefined || reportNode === null || reportNode === undefined)
-                return;
-            const condition = test;
-            if (condition.type === "UnaryExpression") {
-                check(condition.argument, reportNode);
-                return;
+        const isUnnamedTest = (test) => needsName(toPredicateNode(test), guards);
+        /** Statement handlers run first, so a branch test that needs a name has already been reported. */
+        const isReportedTest = (node) => isBranchTest(node) && isUnnamedTest(node);
+        const checkTest = (test) => {
+            const isReported = isPresent(test) && isUnnamedTest(test);
+            if (isReported) {
+                reportUnnamed(test);
             }
-            if (["ChainExpression", "TSAsExpression", "TSSatisfiesExpression", "TSNonNullExpression", "ParenthesizedExpression"].includes(condition.type)) {
-                check(condition.expression, reportNode);
-                return;
-            }
-            if (condition.type !== "LogicalExpression")
-                return;
-            if (isStructuralGuardCondition(condition, guards) || reported.has(reportNode))
-                return;
-            reported.add(reportNode);
-            context.report({
-                node: reportNode,
-                messageId: "namedPredicate",
-                data: { guards: [...guards.nullish, ...guards.presence].join(", ") || "none configured" },
-            });
         };
         return {
-            IfStatement(node) { check(node.test); },
-            WhileStatement(node) { check(node.test); },
-            DoWhileStatement(node) { check(node.test); },
-            ForStatement(node) { check(node.test); },
+            IfStatement(node) { checkTest(node.test); },
+            WhileStatement(node) { checkTest(node.test); },
+            DoWhileStatement(node) { checkTest(node.test); },
+            ForStatement(node) { checkTest(node.test); },
             ConditionalExpression(node) {
-                check(node.test);
-                if (isGuardedNullishFallback(node, guards)) {
+                checkTest(node.test);
+                if (isNullishFallback(node, guards)) {
                     context.report({ node, messageId: "nullishFallback" });
                 }
             },
             LogicalExpression(node) {
-                if (node.operator !== "&&")
+                if (continuesAndChain(node))
                     return;
-                if (node.parent.type === "LogicalExpression" && node.parent.operator === "&&" && node.parent.right === node)
-                    return;
-                const condition = getJsxPresenceCondition(node);
-                if (condition !== undefined)
-                    check(condition, node);
+                const isUnnamedPresence = needsName(getJsxPresenceCondition(node), guards) && !isReportedTest(node);
+                if (isUnnamedPresence) {
+                    reportUnnamed(node);
+                }
             },
         };
     },
-};
-const getJsxPresenceCondition = (node) => {
-    if (node.type !== "LogicalExpression" || node.operator !== "&&" || node.left === undefined || node.right === undefined)
-        return undefined;
-    if (node.right.type === "JSXElement" || node.right.type === "JSXFragment")
-        return node.left;
-    const innerCondition = getJsxPresenceCondition(node.right);
-    if (innerCondition === undefined)
-        return undefined;
-    return { type: "LogicalExpression", operator: "&&", left: node.left, right: innerCondition };
 };
 export const namedPredicatesRule = defineRule({
     id: "named-predicates",

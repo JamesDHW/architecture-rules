@@ -1,6 +1,8 @@
 import type { Rule } from "eslint";
 
 import { defineRule } from "../core/defineRule.js";
+import { isPresent } from "../core/guards.js";
+import { getSoleStatement, type BodyStatement, type Statement } from "./branchStatement.js";
 
 const DESCRIPTION = `
 When the remaining path of a function or block is only "if condition return
@@ -11,105 +13,40 @@ return something other than the opposite literal. Those are exception-first
 decisions, not a boolean wrapped in a detour.
 `.trim();
 
-type LooseNode = {
-  readonly type: string;
-  readonly alternate?: LooseNode | null | undefined;
-  readonly argument?: {
-    readonly type: string;
-    readonly value?: unknown;
-  } | null;
-  readonly body?: readonly LooseNode[] | undefined;
-  readonly consequent?: LooseNode | undefined;
+const getReturnedBoolean = (statement: BodyStatement): boolean | undefined => {
+  if (statement.type !== "ReturnStatement") return undefined;
+  const value = statement.argument?.type === "Literal" ? statement.argument.value : undefined;
+  return typeof value === "boolean" ? value : undefined;
 };
 
-const asLoose = (node: object): LooseNode => node as unknown as LooseNode;
-
-const asLooseList = (nodes: readonly object[]): readonly LooseNode[] => {
-  return nodes as unknown as readonly LooseNode[];
+const getSoleReturnedBoolean = (branch: Statement): boolean | undefined => {
+  const sole = getSoleStatement(branch);
+  return sole === undefined ? undefined : getReturnedBoolean(sole);
 };
 
-const getSoleStatement = (statement: LooseNode): LooseNode | undefined => {
-  if (statement.type !== "BlockStatement") {
-    return statement;
-  }
-
-  if (statement.body === undefined || statement.body.length !== 1) {
-    return undefined;
-  }
-
-  return statement.body[0];
-};
-
-const getReturnedBoolean = (statement: LooseNode): boolean | undefined => {
-  if (statement.type !== "ReturnStatement") {
-    return undefined;
-  }
-
-  const argument = statement.argument;
-  if (argument === undefined || argument === null || argument.type !== "Literal") {
-    return undefined;
-  }
-
-  if (argument.value !== true && argument.value !== false) {
-    return undefined;
-  }
-
-  return argument.value;
-};
-
-const getSoleReturnedBoolean = (statement: LooseNode): boolean | undefined => {
-  const sole = getSoleStatement(statement);
-  if (sole === undefined) {
-    return undefined;
-  }
-
-  return getReturnedBoolean(sole);
-};
-
-const reportIfOppositeBooleanReturns = (
+const reportOppositeBooleanReturns = (
   context: Rule.RuleContext,
-  node: Rule.Node,
+  node: Statement,
   thenValue: boolean | undefined,
   elseValue: boolean | undefined,
-) => {
-  if (thenValue === undefined || elseValue === undefined) {
-    return;
-  }
-
-  if (thenValue === elseValue) {
-    return;
-  }
-
-  context.report({
-    node,
-    messageId: "booleanTail",
-  });
+): void => {
+  const areOpposite = thenValue !== undefined && elseValue !== undefined && thenValue !== elseValue;
+  if (!areOpposite) return;
+  context.report({ node, messageId: "booleanTail" });
 };
 
-const checkStatements = (
-  context: Rule.RuleContext,
-  statements: readonly LooseNode[],
-) => {
+const checkStatements = (context: Rule.RuleContext, statements: readonly BodyStatement[]): void => {
   for (const [index, statement] of statements.entries()) {
-    if (statement.type !== "IfStatement" || statement.consequent === undefined) {
-      continue;
-    }
-
     const next = statements[index + 1];
-    if (next === undefined) {
-      continue;
+    const isGuardBeforeNext = statement.type === "IfStatement" && !isPresent(statement.alternate) && next !== undefined;
+    if (isGuardBeforeNext) {
+      reportOppositeBooleanReturns(
+        context,
+        statement,
+        getSoleReturnedBoolean(statement.consequent),
+        getReturnedBoolean(next),
+      );
     }
-
-    if (statement.alternate !== null && statement.alternate !== undefined) {
-      continue;
-    }
-
-    reportIfOppositeBooleanReturns(
-      context,
-      statement as Rule.Node,
-      getSoleReturnedBoolean(statement.consequent),
-      getReturnedBoolean(next),
-    );
   }
 };
 
@@ -127,29 +64,24 @@ const implementation: Rule.RuleModule = {
   create(context) {
     return {
       IfStatement(node) {
-        if (node.alternate === null || node.alternate === undefined) {
-          return;
-        }
-
-        if (node.alternate.type === "IfStatement") {
-          return;
-        }
-
-        reportIfOppositeBooleanReturns(
+        const { alternate } = node;
+        const isFinalElse = isPresent(alternate) && alternate.type !== "IfStatement";
+        if (!isFinalElse) return;
+        reportOppositeBooleanReturns(
           context,
           node,
-          getSoleReturnedBoolean(asLoose(node.consequent)),
-          getSoleReturnedBoolean(asLoose(node.alternate)),
+          getSoleReturnedBoolean(node.consequent),
+          getSoleReturnedBoolean(alternate),
         );
       },
       SwitchCase(node) {
-        checkStatements(context, asLooseList(node.consequent));
+        checkStatements(context, node.consequent);
       },
       Program(node) {
-        checkStatements(context, asLooseList(node.body));
+        checkStatements(context, node.body);
       },
       BlockStatement(node) {
-        checkStatements(context, asLooseList(node.body));
+        checkStatements(context, node.body);
       },
     };
   },

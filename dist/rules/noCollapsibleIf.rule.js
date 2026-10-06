@@ -1,4 +1,6 @@
 import { defineRule } from "../core/defineRule.js";
+import { isPresent } from "../core/guards.js";
+import { getSoleStatement } from "./branchStatement.js";
 const DESCRIPTION = `
 Do not hide simple && or || operations in nested if blocks unless those ifs
 share a prefix that would otherwise be duplicated.
@@ -20,16 +22,6 @@ Bad:
 An outer gate with multiple distinct inner operations remains allowed. Do not
 use an arbitrary maximum nesting depth as a substitute for meaningful extraction.
 `.trim();
-const asLoose = (node) => node;
-const getSoleStatement = (statement) => {
-    if (statement.type !== "BlockStatement") {
-        return statement;
-    }
-    if (statement.body === undefined || statement.body.length !== 1) {
-        return undefined;
-    }
-    return statement.body[0];
-};
 const implementation = {
     meta: {
         type: "suggestion",
@@ -43,20 +35,13 @@ const implementation = {
     create(context) {
         return {
             IfStatement(node) {
-                if (node.alternate !== null) {
+                if (node.alternate !== null)
                     return;
-                }
-                const inner = getSoleStatement(asLoose(node.consequent));
-                if (inner === undefined || inner.type !== "IfStatement") {
+                const inner = getSoleStatement(node.consequent);
+                const isSoleElseFreeIf = inner?.type === "IfStatement" && !isPresent(inner.alternate);
+                if (!isSoleElseFreeIf)
                     return;
-                }
-                if (inner.alternate !== null && inner.alternate !== undefined) {
-                    return;
-                }
-                context.report({
-                    node,
-                    messageId: "collapsibleIf",
-                });
+                context.report({ node, messageId: "collapsibleIf" });
             },
         };
     },

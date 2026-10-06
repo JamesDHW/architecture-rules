@@ -1,6 +1,8 @@
 import type { Rule } from "eslint";
 
 import { defineRule } from "../core/defineRule.js";
+import { isPresent } from "../core/guards.js";
+import { childNodes, locationOf, type SyntaxNode } from "./syntaxNode.js";
 
 const DESCRIPTION = `
 Mark every data-model property and collection readonly, and compose nested
@@ -11,17 +13,10 @@ Readonly types prevent mutation through this contract and tell readers that
 consumers must treat the value as immutable.
 `.trim();
 
-type TypeLiteralMember = {
-  readonly type: string;
-  readonly readonly?: boolean;
-};
-
-const getTypeLiteralMembers = (node: Rule.Node): readonly TypeLiteralMember[] => {
-  if (!("members" in node) || !Array.isArray(node.members)) {
-    return [];
-  }
-
-  return node.members as readonly TypeLiteralMember[];
+/** Property signatures and index signatures hold data; methods and call signatures do not. */
+const isMutableDataMember = (member: SyntaxNode): boolean => {
+  const holdsData = member.type === "TSPropertySignature" || member.type === "TSIndexSignature";
+  return holdsData && member.readonly !== true;
 };
 
 const implementation: Rule.RuleModule = {
@@ -38,19 +33,9 @@ const implementation: Rule.RuleModule = {
   create(context) {
     return {
       TSTypeLiteral(node: Rule.Node) {
-        for (const member of getTypeLiteralMembers(node)) {
-          if (member.type !== "TSPropertySignature" && member.type !== "TSIndexSignature") {
-            continue;
-          }
-
-          if (member.readonly === true) {
-            continue;
-          }
-
-          context.report({
-            node: member as Rule.Node,
-            messageId: "readonlyProperty",
-          });
+        const locations = childNodes(node, "members").filter(isMutableDataMember).map(locationOf).filter(isPresent);
+        for (const loc of locations) {
+          context.report({ loc, messageId: "readonlyProperty" });
         }
       },
     };

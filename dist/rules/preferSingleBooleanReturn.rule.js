@@ -1,4 +1,6 @@
 import { defineRule } from "../core/defineRule.js";
+import { isPresent } from "../core/guards.js";
+import { getSoleStatement } from "./branchStatement.js";
 const DESCRIPTION = `
 When the remaining path of a function or block is only "if condition return
 true; return false" or the reverse, return the condition instead.
@@ -7,64 +9,29 @@ Early returns that exit with true or false remain allowed when later paths
 return something other than the opposite literal. Those are exception-first
 decisions, not a boolean wrapped in a detour.
 `.trim();
-const asLoose = (node) => node;
-const asLooseList = (nodes) => {
-    return nodes;
-};
-const getSoleStatement = (statement) => {
-    if (statement.type !== "BlockStatement") {
-        return statement;
-    }
-    if (statement.body === undefined || statement.body.length !== 1) {
-        return undefined;
-    }
-    return statement.body[0];
-};
 const getReturnedBoolean = (statement) => {
-    if (statement.type !== "ReturnStatement") {
+    if (statement.type !== "ReturnStatement")
         return undefined;
-    }
-    const argument = statement.argument;
-    if (argument === undefined || argument === null || argument.type !== "Literal") {
-        return undefined;
-    }
-    if (argument.value !== true && argument.value !== false) {
-        return undefined;
-    }
-    return argument.value;
+    const value = statement.argument?.type === "Literal" ? statement.argument.value : undefined;
+    return typeof value === "boolean" ? value : undefined;
 };
-const getSoleReturnedBoolean = (statement) => {
-    const sole = getSoleStatement(statement);
-    if (sole === undefined) {
-        return undefined;
-    }
-    return getReturnedBoolean(sole);
+const getSoleReturnedBoolean = (branch) => {
+    const sole = getSoleStatement(branch);
+    return sole === undefined ? undefined : getReturnedBoolean(sole);
 };
-const reportIfOppositeBooleanReturns = (context, node, thenValue, elseValue) => {
-    if (thenValue === undefined || elseValue === undefined) {
+const reportOppositeBooleanReturns = (context, node, thenValue, elseValue) => {
+    const areOpposite = thenValue !== undefined && elseValue !== undefined && thenValue !== elseValue;
+    if (!areOpposite)
         return;
-    }
-    if (thenValue === elseValue) {
-        return;
-    }
-    context.report({
-        node,
-        messageId: "booleanTail",
-    });
+    context.report({ node, messageId: "booleanTail" });
 };
 const checkStatements = (context, statements) => {
     for (const [index, statement] of statements.entries()) {
-        if (statement.type !== "IfStatement" || statement.consequent === undefined) {
-            continue;
-        }
         const next = statements[index + 1];
-        if (next === undefined) {
-            continue;
+        const isGuardBeforeNext = statement.type === "IfStatement" && !isPresent(statement.alternate) && next !== undefined;
+        if (isGuardBeforeNext) {
+            reportOppositeBooleanReturns(context, statement, getSoleReturnedBoolean(statement.consequent), getReturnedBoolean(next));
         }
-        if (statement.alternate !== null && statement.alternate !== undefined) {
-            continue;
-        }
-        reportIfOppositeBooleanReturns(context, statement, getSoleReturnedBoolean(statement.consequent), getReturnedBoolean(next));
     }
 };
 const implementation = {
@@ -80,22 +47,20 @@ const implementation = {
     create(context) {
         return {
             IfStatement(node) {
-                if (node.alternate === null || node.alternate === undefined) {
+                const { alternate } = node;
+                const isFinalElse = isPresent(alternate) && alternate.type !== "IfStatement";
+                if (!isFinalElse)
                     return;
-                }
-                if (node.alternate.type === "IfStatement") {
-                    return;
-                }
-                reportIfOppositeBooleanReturns(context, node, getSoleReturnedBoolean(asLoose(node.consequent)), getSoleReturnedBoolean(asLoose(node.alternate)));
+                reportOppositeBooleanReturns(context, node, getSoleReturnedBoolean(node.consequent), getSoleReturnedBoolean(alternate));
             },
             SwitchCase(node) {
-                checkStatements(context, asLooseList(node.consequent));
+                checkStatements(context, node.consequent);
             },
             Program(node) {
-                checkStatements(context, asLooseList(node.body));
+                checkStatements(context, node.body);
             },
             BlockStatement(node) {
-                checkStatements(context, asLooseList(node.body));
+                checkStatements(context, node.body);
             },
         };
     },

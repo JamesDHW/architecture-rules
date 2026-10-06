@@ -1,6 +1,7 @@
 import type { Rule } from "eslint";
 
 import { defineRule } from "../core/defineRule.js";
+import { isBranchTest, isDeferredFunction } from "./nodeContext.js";
 
 const DESCRIPTION = `
 Conditions must compute a decision without performing effects. Reject explicit
@@ -21,24 +22,28 @@ order. Explicit effects in logical default expressions are also rejected;
 ordinary value-producing fallback calls remain allowed.
 `.trim();
 
-const isInsideCondition = (node: Rule.Node): boolean => {
-  let child = node;
-  let parent: Rule.Node | null | undefined = node.parent;
-  while (parent !== null && parent !== undefined) {
-    if (["FunctionExpression", "ArrowFunctionExpression", "FunctionDeclaration"].includes(parent.type)) {
-      if (parent.parent?.type !== "CallExpression" || parent.parent.callee !== parent) return false;
-    }
-    if (parent.type === "LogicalExpression") return true;
-    if (parent.type === "SwitchStatement" && parent.discriminant === child) return true;
-    if (parent.type === "SwitchCase" && parent.test === child) return true;
-    if ((parent.type === "IfStatement" || parent.type === "WhileStatement" ||
-      parent.type === "DoWhileStatement" || parent.type === "ForStatement" ||
-      parent.type === "ConditionalExpression") && parent.test === child) return true;
-    child = parent;
-    parent = parent.parent;
-  }
-  return false;
+const isEffect = (node: Rule.Node): boolean => {
+  if (node.type === "UnaryExpression") return node.operator === "delete";
+  return ["AssignmentExpression", "UpdateExpression", "AwaitExpression", "YieldExpression", "NewExpression", "SequenceExpression"].includes(node.type);
 };
+
+/** True when the parent of node evaluates node as a decision. */
+const isDecision = (node: Rule.Node): boolean => {
+  const { parent } = node;
+  const isSwitchDecision = (parent?.type === "SwitchStatement" && parent.discriminant === node) ||
+    (parent?.type === "SwitchCase" && parent.test === node);
+  return parent?.type === "LogicalExpression" || isSwitchDecision || isBranchTest(node);
+};
+
+/** True when node is the outermost effect in a condition; nested effects are reported once, through it. */
+const isInsideCondition = (node: Rule.Node): boolean => {
+  const { parent } = node;
+  if (parent === null) return false;
+  const endsSearch = isEffect(parent) || isDeferredFunction(parent);
+  return !endsSearch && (isDecision(node) || isInsideCondition(parent));
+};
+
+const isConditionEffect = (node: Rule.Node): boolean => isEffect(node) && isInsideCondition(node);
 
 const implementation: Rule.RuleModule = {
   meta: {
@@ -49,7 +54,8 @@ const implementation: Rule.RuleModule = {
   },
   create(context) {
     const check = (node: Rule.Node): void => {
-      if (isInsideCondition(node)) context.report({ node, messageId: "effect" });
+      if (!isConditionEffect(node)) return;
+      context.report({ node, messageId: "effect" });
     };
     return {
       AssignmentExpression: check,
@@ -58,7 +64,7 @@ const implementation: Rule.RuleModule = {
       YieldExpression: check,
       NewExpression: check,
       SequenceExpression: check,
-      UnaryExpression(node) { if (node.operator === "delete") check(node); },
+      UnaryExpression: check,
     };
   },
 };

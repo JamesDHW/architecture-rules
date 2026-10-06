@@ -32,7 +32,7 @@
     "test": "node node_modules/vitest/vitest.mjs run",
     "check": "pnpm run build && pnpm run typecheck && pnpm test",
     "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json",
-    "test:architecture": "node node_modules/vitest/vitest.mjs run tests/architecture.test.ts tests/architectureProjects.test.ts tests/architectureCli.test.ts"
+    "test:architecture": "node node_modules/vitest/vitest.mjs run tests/architecture.test.ts tests/architectureProjects.test.ts tests/architectureImports.test.ts tests/architectureCli.test.ts"
   },
   "keywords": [],
   "author": "",

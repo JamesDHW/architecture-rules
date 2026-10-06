@@ -1,4 +1,6 @@
 import { defineRule } from "../core/defineRule.js";
+import { findEnclosingFunction } from "./nodeContext.js";
+import { childNode, childNodes, isNodeOfType, isSyntaxNode } from "./syntaxNode.js";
 const DESCRIPTION = `
 Do not test or return an inline remainder comparison such as value % n === 0.
 Give that check a name, typically isDivisibleBy(value, n).
@@ -6,82 +8,50 @@ Give that check a name, typically isDivisibleBy(value, n).
 A named divisibility predicate states the intention and can be reused in
 exception-first boolean decisions without repeating arithmetic.
 `.trim();
-const asExpression = (node) => node;
+const isNegation = (node) => node.type === "UnaryExpression" && node.operator === "!";
 const unwrap = (node) => {
-    if (node.type === "UnaryExpression" && node.operator === "!") {
-        if (node.argument === undefined) {
-            return node;
-        }
-        return unwrap(node.argument);
-    }
-    return node;
+    const argument = isNegation(node) ? childNode(node, "argument") : undefined;
+    return argument === undefined ? node : unwrap(argument);
 };
-const isZeroLiteral = (node) => {
-    if (node === undefined || node.type !== "Literal") {
-        return false;
-    }
-    return node.value === 0;
-};
-const isRemainder = (node) => {
-    if (node === undefined || node.type !== "BinaryExpression") {
-        return false;
-    }
-    return node.operator === "%";
+const isZeroLiteral = (node) => isNodeOfType(node, "Literal") && node.value === 0;
+const isRemainder = (node) => isNodeOfType(node, "BinaryExpression") && node.operator === "%";
+const isEqualityComparison = (node) => {
+    return node.type === "BinaryExpression" && (node.operator === "===" || node.operator === "!==");
 };
 const isRemainderZeroComparison = (node) => {
     const comparison = unwrap(node);
-    if (comparison.type !== "BinaryExpression") {
+    if (!isEqualityComparison(comparison)) {
         return false;
     }
-    if (comparison.operator !== "===" && comparison.operator !== "!==") {
-        return false;
-    }
-    return ((isRemainder(comparison.left) && isZeroLiteral(comparison.right)) ||
-        (isZeroLiteral(comparison.left) && isRemainder(comparison.right)));
+    const left = childNode(comparison, "left");
+    const right = childNode(comparison, "right");
+    return (isRemainder(left) && isZeroLiteral(right)) || (isZeroLiteral(left) && isRemainder(right));
 };
-const isPredicateHelper = (fn) => {
-    const body = fn.body;
-    if (body === undefined) {
-        return false;
-    }
-    if (body.type !== "BlockStatement") {
-        return isRemainderZeroComparison(body);
-    }
-    if (body.body === undefined || body.body.length !== 1) {
-        return false;
-    }
-    const [sole] = body.body;
-    if (sole === undefined || sole.type !== "ReturnStatement") {
-        return false;
-    }
-    if (sole.argument === undefined || sole.argument === null) {
-        return false;
-    }
-    return isRemainderZeroComparison(sole.argument);
+/** True when test is present and compares a remainder with zero; narrows away a missing loop test or return value. */
+const isRemainderZeroTest = (test) => {
+    return isSyntaxNode(test) && isRemainderZeroComparison(test);
 };
-const getEnclosingFunction = (node) => {
-    let current = node.parent;
-    while (current !== null && current !== undefined) {
-        if (current.type === "FunctionDeclaration" ||
-            current.type === "FunctionExpression" ||
-            current.type === "ArrowFunctionExpression") {
-            return current;
-        }
-        current = current.parent;
-    }
-    return undefined;
+const soleReturnArgument = (block) => {
+    const [sole, ...others] = childNodes(block, "body");
+    const isSoleReturn = others.length === 0 && sole?.type === "ReturnStatement";
+    return isSoleReturn ? childNode(sole, "argument") : undefined;
+};
+/** The expression a function returns when its body is that expression or a single return statement. */
+const returnedExpression = (fn) => {
+    const body = childNode(fn, "body");
+    return body?.type === "BlockStatement" ? soleReturnArgument(body) : body;
+};
+/** A predicate helper such as isDivisibleBy names the remainder comparison it returns. */
+const isInsidePredicateHelper = (node) => {
+    const enclosingFunction = findEnclosingFunction(node.parent);
+    const returned = enclosingFunction === undefined ? undefined : returnedExpression(enclosingFunction);
+    return returned !== undefined && isRemainderZeroComparison(returned);
 };
 const reportIfRemainderZero = (context, test) => {
-    if (test === null || test === undefined) {
+    if (!isRemainderZeroTest(test)) {
         return;
     }
-    if (!isRemainderZeroComparison(asExpression(test))) {
-        return;
-    }
-    context.report({
-        node: test,
-        messageId: "namedDivisibility",
-    });
+    context.report({ node: test, messageId: "namedDivisibility" });
 };
 const implementation = {
     meta: {
@@ -95,36 +65,17 @@ const implementation = {
     },
     create(context) {
         return {
-            IfStatement(node) {
-                reportIfRemainderZero(context, node.test);
-            },
-            WhileStatement(node) {
-                reportIfRemainderZero(context, node.test);
-            },
-            DoWhileStatement(node) {
-                reportIfRemainderZero(context, node.test);
-            },
-            ForStatement(node) {
-                reportIfRemainderZero(context, node.test);
-            },
-            ConditionalExpression(node) {
-                reportIfRemainderZero(context, node.test);
-            },
+            IfStatement(node) { reportIfRemainderZero(context, node.test); },
+            WhileStatement(node) { reportIfRemainderZero(context, node.test); },
+            DoWhileStatement(node) { reportIfRemainderZero(context, node.test); },
+            ForStatement(node) { reportIfRemainderZero(context, node.test); },
+            ConditionalExpression(node) { reportIfRemainderZero(context, node.test); },
             ReturnStatement(node) {
-                if (node.argument === null || node.argument === undefined) {
-                    return;
+                const { argument } = node;
+                const isUnnamedDivisibility = isRemainderZeroTest(argument) && !isInsidePredicateHelper(node);
+                if (isUnnamedDivisibility) {
+                    context.report({ node: argument, messageId: "namedDivisibility" });
                 }
-                if (!isRemainderZeroComparison(asExpression(node.argument))) {
-                    return;
-                }
-                const enclosingFunction = getEnclosingFunction(node);
-                if (enclosingFunction !== undefined && isPredicateHelper(enclosingFunction)) {
-                    return;
-                }
-                context.report({
-                    node: node.argument,
-                    messageId: "namedDivisibility",
-                });
             },
         };
     },

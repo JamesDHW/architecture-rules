@@ -2,6 +2,9 @@ import path from "node:path";
 import type { Rule } from "eslint";
 
 import { defineRule } from "../core/defineRule.js";
+import { ARRAY_MUTATING_METHODS } from "./noArrayMutation.constants.js";
+import { identifierName } from "./syntaxNode.js";
+import { withPlaceholders } from "./messagePlaceholders.js";
 
 const DESCRIPTION = `
 Do not change arrays in place with push, pop, shift, unshift, splice, sort,
@@ -19,7 +22,6 @@ names the measurement. The check is by method name, so a non-array method with
 the same name (a canvas context's fill) needs a suppression too.
 `.trim();
 
-const MUTATING_METHODS = new Set(["push", "pop", "shift", "unshift", "splice", "sort", "reverse", "fill", "copyWithin"]);
 const REPLACEMENTS: Readonly<Record<string, string>> = {
   push: "map, filter, flatMap, a spread or Array.fromAsync",
   pop: "at(-1) and slice(0, -1)",
@@ -32,7 +34,16 @@ const REPLACEMENTS: Readonly<Record<string, string>> = {
   copyWithin: "a new array built with slice",
 };
 
-type MemberCallee = { readonly type: string; readonly computed?: boolean; readonly property: { readonly type: string; readonly name?: string } };
+type CallNode = Parameters<NonNullable<Rule.RuleListener["CallExpression"]>>[0];
+
+
+/** The method a call such as runs.sort(byDate) invokes; undefined for plain and computed calls. */
+const calledMethod = (callee: CallNode["callee"]): string | undefined => {
+  if (callee.type !== "MemberExpression") return undefined;
+  return callee.computed ? undefined : identifierName(callee.property);
+};
+
+const isArrayMutatingMethod = (method: string | undefined): method is string => method !== undefined && ARRAY_MUTATING_METHODS.has(method);
 
 const implementation: Rule.RuleModule = {
   meta: {
@@ -49,11 +60,9 @@ const implementation: Rule.RuleModule = {
 
     return {
       CallExpression(node) {
-        const callee = node.callee as unknown as MemberCallee;
-        if (callee.type !== "MemberExpression" || callee.computed === true) return;
-        const method = callee.property.type === "Identifier" ? callee.property.name : undefined;
-        if (method === undefined || !MUTATING_METHODS.has(method)) return;
-        context.report({ node, messageId: "arrayMutation", data: { method, replacement: REPLACEMENTS[method] ?? "a new array" } });
+        const method = calledMethod(node.callee);
+        if (!isArrayMutatingMethod(method)) return;
+        context.report(withPlaceholders({ node, messageId: "arrayMutation" }, { method, replacement: REPLACEMENTS[method] ?? "a new array" }));
       },
     };
   },

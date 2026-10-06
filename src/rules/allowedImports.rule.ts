@@ -1,5 +1,7 @@
 import type { Rule } from "eslint";
+import { isRecord, isString, isUnknownArray } from "../core/guards.js";
 import { defineRule } from "../core/defineRule.js";
+import { withPlaceholders } from "./messagePlaceholders.js";
 
 const DESCRIPTION = `
 Import only capabilities allowed for the importing file's architectural type.
@@ -11,6 +13,19 @@ reasoned exception. Dynamic runtime loaders/eval and transitive function purity
 are not proved by this check. The architecture runner supplies resolved edge
 diagnostics; direct plugin use alone does not enforce this policy.
 `.trim();
+
+/** A denied import edge the architecture runner resolved before lint. */
+type ImportIssue = { readonly line: number; readonly column: number; readonly message: string };
+
+const isImportIssue = (value: unknown): value is ImportIssue => {
+  return isRecord(value) && typeof value.line === "number" && typeof value.column === "number" && isString(value.message);
+};
+
+const getImportIssues = (options: unknown): readonly ImportIssue[] => {
+  const issues = isRecord(options) ? options.issues : undefined;
+  return isUnknownArray(issues) ? issues.filter(isImportIssue) : [];
+};
+
 const implementation: Rule.RuleModule = {
   meta: {
     type: "problem", docs: { description: DESCRIPTION },
@@ -19,8 +34,9 @@ const implementation: Rule.RuleModule = {
   },
   create(context) {
     return { Program() {
-      const options = context.options[0] as { readonly issues?: readonly { readonly line: number; readonly column: number; readonly message: string }[] } | undefined;
-      for (const issue of options?.issues ?? []) context.report({ loc: { line: issue.line, column: issue.column }, messageId: "denied", data: { message: issue.message } });
+      for (const issue of getImportIssues(context.options[0])) {
+        context.report(withPlaceholders({ loc: { line: issue.line, column: issue.column }, messageId: "denied" }, { message: issue.message }));
+      }
     } };
   },
 };

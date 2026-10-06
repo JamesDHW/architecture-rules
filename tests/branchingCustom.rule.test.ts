@@ -1,8 +1,6 @@
 import { emptyBranchesRule } from "../src/rules/emptyBranches.rule.js";
-import {
-  noFinallyRule,
-  noRawExceptionsRule,
-} from "../src/rules/exceptionControlFlow.rules.js";
+import { noFinallyRule } from "../src/rules/noFinally.rule.js";
+import { noRawExceptionsRule } from "../src/rules/noRawExceptions.rule.js";
 import { groupedLogicalOperatorsRule } from "../src/rules/groupedLogicalOperators.rule.js";
 import {
   collectionLoopsRule,
@@ -63,6 +61,10 @@ runCustomRule(terminalSwitchCasesRule, {
       errors: [{ messageId: "terminal" }],
     },
     {
+      code: "const handle = () => { switch (status) { case 'idle': { publish(); { return pending; } } case 'ready': { if (isReady) return ready; } } };",
+      errors: [{ messageId: "terminal" }],
+    },
+    {
       code: "const handle = () => { switch (true) { case isReady: return ready; } };",
       errors: [{ messageId: "predicateSwitch" }],
     },
@@ -94,6 +96,7 @@ runCustomRule(emptyBranchesRule, {
   invalid: [
     "if (isReady) {}",
     "if (isReady) { /* deliberate */ }",
+    "if (isReady) { publish(); } else {}",
     "if (isReady);",
     "switch (status) {}",
   ].map((code) => ({ code, errors: [{ messageId: "empty" }] })),

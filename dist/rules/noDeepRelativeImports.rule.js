@@ -1,4 +1,5 @@
 import { defineRule } from "../core/defineRule.js";
+import { childNode, isNodeOfType, stringProperty } from "./syntaxNode.js";
 const DESCRIPTION = `
 Warn when an import ascends three or more parent directories. Use the owning
 module's alias when crossing to a top-level area rather than navigating the
@@ -8,33 +9,15 @@ A deeply ascending path obscures the dependency's ownership and is fragile
 under file moves.
 `.trim();
 const isDeepRelative = (source) => {
-    const matches = source.match(/\.\.\//g);
-    return matches !== null && matches.length >= 3;
+    return (source?.match(/\.\.\//g)?.length ?? 0) >= 3;
 };
 const getImportSource = (node) => {
-    if (!("source" in node)) {
-        return undefined;
-    }
-    const { source } = node;
-    if (source === null || source === undefined || typeof source !== "object") {
-        return undefined;
-    }
-    if (!("type" in source) || source.type !== "Literal") {
-        return undefined;
-    }
-    if (!("value" in source) || typeof source.value !== "string") {
-        return undefined;
-    }
-    return source.value;
+    const source = childNode(node, "source");
+    return isNodeOfType(source, "Literal") ? stringProperty(source, "value") : undefined;
 };
 const reportIfDeep = (context, node) => {
-    const source = getImportSource(node);
-    if (source === undefined) {
+    if (!isDeepRelative(getImportSource(node)))
         return;
-    }
-    if (!isDeepRelative(source)) {
-        return;
-    }
     context.report({
         node,
         messageId: "deepRelativeImport",

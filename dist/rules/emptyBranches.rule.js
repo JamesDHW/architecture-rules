@@ -12,6 +12,9 @@ Bad: if (isProjectArchived) { /* Intentionally do nothing. */ }
 Comments do not turn an empty conditional into meaningful executable behavior.
 Do not introduce a dummy statement or helper merely to evade this rule.
 `.trim();
+const isEmptyBranch = (branch) => {
+    return branch?.type === "EmptyStatement" || (branch?.type === "BlockStatement" && branch.body.length === 0);
+};
 const implementation = {
     meta: {
         type: "suggestion",
@@ -22,17 +25,14 @@ const implementation = {
     create(context) {
         return {
             IfStatement(node) {
-                for (const branch of [node.consequent, node.alternate]) {
-                    if (branch === null || branch === undefined)
-                        continue;
-                    if (branch.type !== "EmptyStatement" && !(branch.type === "BlockStatement" && branch.body.length === 0))
-                        continue;
+                for (const branch of [node.consequent, node.alternate].filter(isEmptyBranch)) {
                     context.report({ node: branch, messageId: "empty" });
                 }
             },
             SwitchStatement(node) {
-                if (node.cases.length === 0)
+                if (node.cases.length === 0) {
                     context.report({ node, messageId: "empty" });
+                }
             },
         };
     },

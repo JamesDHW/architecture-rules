@@ -1,34 +1,61 @@
 #!/usr/bin/env node
 
-import { existsSync, realpathSync } from "node:fs";
-import { registerHooks } from "node:module";
-import { dirname, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
-import { parseArgs } from "./cli/parseArgs.js";
-import { isArchitecture } from "./core/defineArchitecture.js";
-import { checkArchitecture } from "./architecture/runner.js";
+import { realpathSync } from "node:fs";
+import { dirname } from "node:path";
 
-const HELP = `Usage: architecture-check [--config path] [--fix] [project-dir]
+import { ArchitectureError } from "./errors/architectureError.js";
+import { tryCatchAsync } from "./errors/tryCatch.js";
+import { checkArchitecture } from "./runner/runner.js";
+import { configPathFor, loadArchitecture } from "./cli/loadArchitecture.js";
+import { parseArgs, type RunArgs } from "./cli/parseArgs.js";
+
+const help = `Usage: architecture-check [--config path] [--fix] [project-dir]
        architecture-check explain <file> [--config path]
 
 Requires architecture.config.ts (or architecture.config.mts) exporting defineArchitecture(...).
 Checks the configured TypeScript programs, rooted at the configuration's directory.
 `;
+
+const printHelp = (): number => {
+  process.stdout.write(help);
+  return 0;
+};
+
+const printUsageError = (message: string): number => {
+  process.stderr.write(`${message}\n${help}`);
+  return 1;
+};
+
+const printError = (error: ArchitectureError): number => {
+  for (const issue of error.issues) {
+    process.stderr.write(`architecture-config: ${issue}\n`);
+  }
+  return 1;
+};
+
+const check = async (args: RunArgs): Promise<number | ArchitectureError> => {
+  const configPath = configPathFor(args);
+  const architecture = await loadArchitecture(configPath);
+  if (architecture instanceof ArchitectureError) return architecture;
+  const explain = args.explain === undefined ? {} : { explain: args.explain };
+  return checkArchitecture(dirname(realpathSync(configPath)), architecture, { fix: args.fix, ...explain });
+};
+
+const run = async (args: RunArgs): Promise<number> => {
+  const outcome = await tryCatchAsync(async () => check(args));
+  return outcome instanceof ArchitectureError ? printError(outcome) : outcome;
+};
+
 const main = async (): Promise<number> => {
   const args = parseArgs(process.argv.slice(2));
-  if (args.kind === "help") { process.stdout.write(HELP); return 0; }
-  if (args.kind === "error") { process.stderr.write(`${args.message}\n${HELP}`); return 1; }
-  const defaultConfig = ["architecture.config.ts", "architecture.config.mts"].map(name => resolve(args.target, name)).find(path => existsSync(path));
-  const configPath = resolve(args.config ?? defaultConfig ?? resolve(args.target, "architecture.config.ts"));
-  if (!existsSync(configPath)) throw new Error(`Required architecture configuration not found: ${configPath}`);
-  const root = dirname(realpathSync(configPath));
-  const configUrl = pathToFileURL(configPath).href;
-  // A .ts config in a package without "type": "module" (e.g. a CommonJS Next app) is still ESM; skip Node's reparse warning.
-  registerHooks({ load: (url, context, nextLoad) => nextLoad(url, url === configUrl && configPath.endsWith(".ts") ? { ...context, format: "module-typescript" } : context) });
-  // oxlint-disable-next-line architecture/allowed-imports -- Load the user-selected trusted architecture definition.
-  const loaded: { default?: unknown } = await import(configUrl);
-  if (!isArchitecture(loaded.default)) throw new Error("Configuration must default-export defineArchitecture(...)");
-  return checkArchitecture(root, loaded.default, { fix: args.fix, ...(args.explain === undefined ? {} : { explain: args.explain }) });
+  switch (args.kind) {
+    case "help":
+      return printHelp();
+    case "error":
+      return printUsageError(args.message);
+    case "run":
+      return run(args);
+  }
 };
-try { process.exitCode = await main(); }
-catch (error) { process.stderr.write(`architecture-config: ${error instanceof Error ? error.message : String(error)}\n`); process.exitCode = 1; }
+
+process.exitCode = await main();

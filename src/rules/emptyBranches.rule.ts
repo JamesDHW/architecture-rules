@@ -1,6 +1,7 @@
 import type { Rule } from "eslint";
 
 import { defineRule } from "../core/defineRule.js";
+import type { Statement } from "./branchStatement.js";
 
 const DESCRIPTION = `
 Do not leave empty or comment-only conditional branches. Remove the meaningless
@@ -16,6 +17,10 @@ Comments do not turn an empty conditional into meaningful executable behavior.
 Do not introduce a dummy statement or helper merely to evade this rule.
 `.trim();
 
+const isEmptyBranch = (branch: Statement | null | undefined): branch is Statement => {
+  return branch?.type === "EmptyStatement" || (branch?.type === "BlockStatement" && branch.body.length === 0);
+};
+
 const implementation: Rule.RuleModule = {
   meta: {
     type: "suggestion",
@@ -26,14 +31,14 @@ const implementation: Rule.RuleModule = {
   create(context) {
     return {
       IfStatement(node) {
-        for (const branch of [node.consequent, node.alternate]) {
-          if (branch === null || branch === undefined) continue;
-          if (branch.type !== "EmptyStatement" && !(branch.type === "BlockStatement" && branch.body.length === 0)) continue;
+        for (const branch of [node.consequent, node.alternate].filter(isEmptyBranch)) {
           context.report({ node: branch, messageId: "empty" });
         }
       },
       SwitchStatement(node) {
-        if (node.cases.length === 0) context.report({ node, messageId: "empty" });
+        if (node.cases.length === 0) {
+          context.report({ node, messageId: "empty" });
+        }
       },
     };
   },

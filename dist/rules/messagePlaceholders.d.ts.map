@@ -1,0 +1,1 @@
+{"version":3,"file":"messagePlaceholders.d.ts","sourceRoot":"","sources":["../../src/rules/messagePlaceholders.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,QAAQ,CAAC;AAEnC,sFAAsF;AACtF,MAAM,MAAM,mBAAmB,GAAG,QAAQ,CAAC,MAAM,CAAC,MAAM,EAAE,MAAM,CAAC,CAAC,CAAC;AAEnE;;;;GAIG;AACH,eAAO,MAAM,gBAAgB,eACf,IAAI,CAAC,gBAAgB,gBACnB,mBAAmB,KAChC,IAAI,CAAC,gBAGP,CAAC"}

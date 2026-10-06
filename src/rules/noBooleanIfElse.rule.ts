@@ -1,6 +1,8 @@
 import type { Rule } from "eslint";
 
 import { defineRule } from "../core/defineRule.js";
+import { isPresent } from "../core/guards.js";
+import { getSoleStatement, type Statement } from "./branchStatement.js";
 
 const DESCRIPTION = `
 Do not use intermediary branches to pass true and false into the same call.
@@ -10,80 +12,32 @@ Stopping the flow instead of accumulating flag assignments prevents unwanted
 behaviour during a change.
 `.trim();
 
-type LooseNode = {
-  readonly type: string;
-  readonly body?: readonly LooseNode[] | undefined;
-  readonly expression?:
-    | {
-        readonly type: string;
-        readonly callee?: object;
-        readonly arguments?: readonly {
-          readonly type: string;
-          readonly value?: unknown;
-        }[];
-      }
-    | undefined;
+type BooleanCall = {
+  readonly calleeText: string;
+  readonly value: boolean;
 };
 
-const asLoose = (node: object): LooseNode => node as unknown as LooseNode;
-
-const getSoleStatement = (statement: LooseNode): LooseNode | undefined => {
-  if (statement.type !== "BlockStatement") {
-    return statement;
-  }
-
-  if (statement.body === undefined || statement.body.length !== 1) {
-    return undefined;
-  }
-
-  return statement.body[0];
+const getSoleCall = (branch: Statement) => {
+  const sole = getSoleStatement(branch);
+  if (sole?.type !== "ExpressionStatement") return undefined;
+  return sole.expression.type === "CallExpression" ? sole.expression : undefined;
 };
 
-const getBooleanLiteralArg = (statement: LooseNode): boolean | undefined => {
-  const sole = getSoleStatement(statement);
-  if (sole === undefined || sole.type !== "ExpressionStatement") {
-    return undefined;
-  }
-
-  if (sole.expression === undefined || sole.expression.type !== "CallExpression") {
-    return undefined;
-  }
-
-  const args = sole.expression.arguments;
-  if (args === undefined || args.length !== 1) {
-    return undefined;
-  }
-
-  const [argument] = args;
-  if (argument === undefined || argument.type !== "Literal") {
-    return undefined;
-  }
-
-  if (argument.value !== true && argument.value !== false) {
-    return undefined;
-  }
-
-  return argument.value;
+/** A branch whose only statement calls a function with a single true or false literal. */
+const getBooleanCall = (branch: Statement, sourceCode: Rule.RuleContext["sourceCode"]): BooleanCall | undefined => {
+  const call = getSoleCall(branch);
+  if (call?.arguments.length !== 1) return undefined;
+  const [argument] = call.arguments;
+  const value = argument?.type === "Literal" ? argument.value : undefined;
+  return typeof value === "boolean" ? { calleeText: sourceCode.getText(call.callee), value } : undefined;
 };
 
-const getCalleeText = (
-  statement: LooseNode,
-  sourceCode: Rule.RuleContext["sourceCode"],
-): string | undefined => {
-  const sole = getSoleStatement(statement);
-  if (sole === undefined || sole.type !== "ExpressionStatement") {
-    return undefined;
-  }
-
-  if (sole.expression === undefined || sole.expression.type !== "CallExpression") {
-    return undefined;
-  }
-
-  if (sole.expression.callee === undefined) {
-    return undefined;
-  }
-
-  return sourceCode.getText(sole.expression.callee as Rule.Node);
+const passOppositeBooleansToSameCallee = (
+  thenCall: BooleanCall | undefined,
+  elseCall: BooleanCall | undefined,
+): boolean => {
+  return thenCall !== undefined && elseCall !== undefined && thenCall.value !== elseCall.value &&
+    thenCall.calleeText === elseCall.calleeText;
 };
 
 const implementation: Rule.RuleModule = {
@@ -100,34 +54,11 @@ const implementation: Rule.RuleModule = {
   create(context) {
     return {
       IfStatement(node) {
-        if (node.alternate === null || node.alternate === undefined) {
-          return;
-        }
-
-        const thenValue = getBooleanLiteralArg(asLoose(node.consequent));
-        const elseValue = getBooleanLiteralArg(asLoose(node.alternate));
-        if (thenValue === undefined || elseValue === undefined) {
-          return;
-        }
-
-        if (thenValue === elseValue) {
-          return;
-        }
-
-        const thenCallee = getCalleeText(asLoose(node.consequent), context.sourceCode);
-        const elseCallee = getCalleeText(asLoose(node.alternate), context.sourceCode);
-        if (thenCallee === undefined || elseCallee === undefined) {
-          return;
-        }
-
-        if (thenCallee !== elseCallee) {
-          return;
-        }
-
-        context.report({
-          node,
-          messageId: "booleanIfElse",
-        });
+        if (!isPresent(node.alternate)) return;
+        const thenCall = getBooleanCall(node.consequent, context.sourceCode);
+        const elseCall = getBooleanCall(node.alternate, context.sourceCode);
+        if (!passOppositeBooleansToSameCallee(thenCall, elseCall)) return;
+        context.report({ node, messageId: "booleanIfElse" });
       },
     };
   },

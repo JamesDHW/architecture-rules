@@ -6,6 +6,8 @@ runCustomRule(noArrayMutationRule, {
     { name: "transformations", code: "const names = projects.filter(isVisible).map((project) => project.name);\n" },
     { name: "non-mutating reorder", code: "const ordered = runs.toSorted(byDate).toReversed();\n" },
     { name: "sequential async", code: "const results = await Array.fromAsync(checks, runCheck);\n" },
+    { name: "computed access", code: "items['push'](value);\n" },
+    { name: "plain function named push", code: "push(value);\n" },
     { name: "map registry calls are another rule's concern", code: "registry.set(id, value);\nregistry.delete(id);\n" },
     {
       name: "state module",

@@ -1,5 +1,5 @@
-export { defineArchitecture } from "./core/defineArchitecture.js";
+export { defineArchitecture } from "./config/defineArchitecture.js";
 export { defineRule, defineRuleOptions } from "./core/defineRule.js";
 export { rules, type ArchitectureRuleId } from "./rules/index.js";
-export type { Architecture, ArchitectureInput, FileType, Policy, NamingPolicy, ImportPolicy, FileRules, ProjectRules, RuleSetting, OptionsFor } from "./architecture/types.js";
+export type { Architecture, ArchitectureInput, FileType, Policy, NamingPolicy, ImportPolicy, FileRules, ProjectRules, RuleSetting, OptionsFor } from "./config/types.js";
 //# sourceMappingURL=index.d.ts.map

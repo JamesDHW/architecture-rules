@@ -3,7 +3,9 @@ import { runCustomRule } from "./utils/runCustomRule.js";
 
 const reducer = (body: string) => `const reduce = (state, action) => { ${body} };`;
 const dispatch = (body: string) => reducer(`switch (action.type) { ${body} }`);
-const errors = [{ messageId: "domainRouting", data: { reducer: "reduceAdmin" } }];
+// oxlint-disable-next-line eslint/id-denylist -- RuleTester matches message placeholders through a field named data.
+const routingError = (reducerName: string) => ({ messageId: "domainRouting", data: { reducer: reducerName } });
+const errors = [routingError("reduceAdmin")];
 
 runCustomRule(domainOwnedDispatchRule, {
   valid: [
@@ -33,13 +35,17 @@ runCustomRule(domainOwnedDispatchRule, {
     { name: "non-reducer function", code: `function render(state, action) { switch (action.type) { case 'a': case 'b': return reduceAdmin(state, action); } }` },
     { name: "nested callback is not the reducer", code: reducer(`return items.map(() => { switch (action.type) { case 'a': case 'b': return reduceAdmin(state, action); } });`) },
     { name: "intervening body consumes pending labels", code: dispatch(`case 'a': return state; case 'b': return reduceAdmin(state, action);`) },
+    { name: "anonymous default export is not a named reducer", code: `export default function (state, action) { switch (action.type) { case 'a': case 'b': return reduceAdmin(state, action); } }` },
+    { name: "switch outside any function", code: `switch (action.type) { case 'a': case 'b': reduceAdmin(state, action); }` },
+    { name: "destructured parameters are outside enforcement", code: `const reduce = ({ state }, action) => { switch (action.type) { case 'a': case 'b': return reduceAdmin(state, action); } };` },
   ],
   invalid: [
     { name: "grouped child action labels", code: dispatch(`case 'adminPanel': case 'adminForm': return reduceAdmin(state, action);`), errors },
     { name: "separate child action returns", code: dispatch(`case 'a': return reduceAdmin(state, action); case 'other': return state; case 'b': return reduceAdmin(state, action);`), errors },
     { name: "braced body", code: dispatch(`case 'a': case 'b': { { return reduceAdmin(state, action); } }`), errors },
     { name: "named reducer declaration with different parameter names", code: `function reduceApp(previous, event) { switch (event.type) { case 'a': case 'b': return reduceAdmin(previous, event); } }`, errors },
+    { name: "labels before and after a default body", code: dispatch(`case 'a': default: return reduceAdmin(state, action); case 'b': { return reduceAdmin(state, action); }`), errors },
     { name: "function expression reducer", code: `const reduceApp = function(previous, event) { switch (event.type) { case 'a': case 'b': return reduceAdmin(previous, event); } };`, errors },
-    { name: "one diagnostic per child", code: dispatch(`case 'a': case 'b': return reduceAdmin(state, action); case 'c': case 'd': return reduceCreate(state, action);`), errors: [...errors, { messageId: "domainRouting", data: { reducer: "reduceCreate" } }] },
+    { name: "one diagnostic per child", code: dispatch(`case 'a': case 'b': return reduceAdmin(state, action); case 'c': case 'd': return reduceCreate(state, action);`), errors: [...errors, routingError("reduceCreate")] },
   ],
 });

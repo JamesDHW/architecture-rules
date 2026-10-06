@@ -8,14 +8,22 @@ type Tail<T> = T extends readonly [unknown, ...infer Options] ? Options : never;
 type ReadonlyOptions<T> = T extends readonly unknown[] ? { readonly [K in keyof T]: ReadonlyOptions<T[K]> }
   : T extends object ? { readonly [K in keyof T]: ReadonlyOptions<T[K]> } : T;
 type Configuration<N extends keyof KnownNativeMap> = Severity | readonly [Severity, ...ReadonlyOptions<Tail<KnownNativeMap[N]>>];
+type NativeConfiguration<N extends keyof KnownNativeMap> = Configuration<NoInfer<N>> & OxlintRuleConfiguration;
+
+type NativeOxlintRule<Id extends string, Native extends keyof KnownNativeMap> = {
+  readonly id: Id;
+  readonly title: string;
+  readonly description: string;
+  readonly enforcement: { readonly type: "oxlint"; readonly rule: Native; readonly configuration: NativeConfiguration<Native> };
+};
 
 export const defineNativeOxlintRule = <const Id extends string, const Native extends keyof KnownNativeMap>(rule: {
   readonly id: Id;
   readonly title: string;
   readonly description: string;
   readonly rule: Native;
-  readonly configuration: Configuration<NoInfer<Native>> & OxlintRuleConfiguration;
-}) => defineRule({
+  readonly configuration: NativeConfiguration<Native>;
+}): NativeOxlintRule<Id, Native> => defineRule({
   id: rule.id,
   title: rule.title,
   description: rule.description,

@@ -1,5 +1,5 @@
 import { defineRule } from "../core/defineRule.js";
-const LOOP_DESCRIPTION = `
+const collectionLoopsDescription = `
 Use for...of or for await...of for intentional iteration. Prefer dedicated
 collection operations for direct transformations and searches. Do not use
 classic for, for...in, while, or do...while by default. Require a documented
@@ -26,14 +26,14 @@ bookkeeping, and aligns with immutable bindings and checked collection access.
 export const collectionLoopsRule = defineRule({
     id: "collection-loops",
     title: "Use for...of as the default loop form",
-    description: LOOP_DESCRIPTION,
+    description: collectionLoopsDescription,
     enforcement: {
         type: "custom-oxlint",
         configuration: "error",
         implementation: {
             meta: {
                 type: "suggestion",
-                docs: { description: LOOP_DESCRIPTION },
+                docs: { description: collectionLoopsDescription },
                 schema: [],
                 messages: { loop: "Use for...of, for await...of, or a dedicated collection operation. Other loop forms require an explicit scoped exception. See rule collection-loops." },
             },
@@ -47,7 +47,7 @@ export const collectionLoopsRule = defineRule({
         },
     },
 });
-const JUMP_DESCRIPTION = `
+const loopJumpsDescription = `
 Do not use break, continue, or labelled statements by default. Use find/some
 for searches, filter stable collections before effectful iteration, or extract
 a focused helper that returns its result. Switch cases also return rather
@@ -73,14 +73,14 @@ multiple loop exit mechanisms; it does not claim every jump is a bug.
 export const noLoopJumpsRule = defineRule({
     id: "no-loop-jumps",
     title: "Replace loop jumps with selection or focused operations",
-    description: JUMP_DESCRIPTION,
+    description: loopJumpsDescription,
     enforcement: {
         type: "custom-oxlint",
         configuration: "error",
         implementation: {
             meta: {
                 type: "suggestion",
-                docs: { description: JUMP_DESCRIPTION },
+                docs: { description: loopJumpsDescription },
                 schema: [],
                 messages: { jump: "Use selection, a dedicated operation, or a focused helper return instead of break, continue, or labels. Preserve evaluation order; never introduce a mutable flag. See rule no-loop-jumps." },
             },

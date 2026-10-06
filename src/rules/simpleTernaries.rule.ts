@@ -1,6 +1,7 @@
 import type { Rule } from "eslint";
 
 import { defineRule } from "../core/defineRule.js";
+import { isDeferredFunction, isFunctionNode } from "./nodeContext.js";
 
 const DESCRIPTION = `
 Prefer a ternary for one ordinary simple value choice, rather than an if-return
@@ -32,6 +33,31 @@ Bodies of functions created inside a branch execute later and are not checked
 as branch effects. Immediately invoked function bodies are checked.
 `.trim();
 
+const isJsxType = (type: string): boolean => type === "JSXElement" || type === "JSXFragment";
+
+/** A ternary returned as a whole render state: a JSX branch, returned directly or as an arrow body. */
+const isRenderStateChoice = (node: Rule.Node): boolean => {
+  if (node.type !== "ConditionalExpression") return false;
+  const hasJsxBranch = [node.consequent.type, node.alternate.type].some(isJsxType);
+  const isReturned = node.parent.type === "ReturnStatement" ||
+    (node.parent.type === "ArrowFunctionExpression" && node.parent.body === node);
+  return hasJsxBranch && isReturned;
+};
+
+/** True when another ternary encloses node without a function boundary between them. */
+const hasEnclosingTernary = (node: Rule.Node): boolean => {
+  const { parent } = node;
+  return parent !== null && !isFunctionNode(parent) && (parent.type === "ConditionalExpression" || hasEnclosingTernary(parent));
+};
+
+const isBranchOf = (parent: Rule.Node, child: Rule.Node): boolean => parent.type === "ConditionalExpression" && parent.test !== child;
+
+/** True when node executes as part of a ternary branch; functions created there run later. */
+const isInTernaryBranch = (node: Rule.Node): boolean => {
+  const { parent } = node;
+  return parent !== null && !isDeferredFunction(parent) && (isBranchOf(parent, node) || isInTernaryBranch(parent));
+};
+
 const implementation: Rule.RuleModule = {
   meta: {
     type: "suggestion",
@@ -44,41 +70,18 @@ const implementation: Rule.RuleModule = {
     schema: [],
   },
   create(context) {
-    const findEnclosingChoice = (node: Rule.Node): Rule.Node | undefined => {
-      let child = node;
-      let parent: Rule.Node | null | undefined = node.parent;
-      while (parent !== undefined && parent !== null) {
-        if (parent.type === "ArrowFunctionExpression" || parent.type === "FunctionExpression" || parent.type === "FunctionDeclaration") {
-          if (parent.parent?.type !== "CallExpression" || parent.parent.callee !== parent) return undefined;
-        }
-        if (parent.type === "ConditionalExpression" && parent.test !== child) return parent;
-        child = parent;
-        parent = parent.parent;
-      }
-      return undefined;
-    };
-
     const reportEffect = (node: Rule.Node): void => {
-      if (findEnclosingChoice(node) === undefined) return;
+      if (!isInTernaryBranch(node)) return;
       context.report({ node, messageId: "effect" });
     };
 
     return {
       ConditionalExpression(node) {
-        const branchTypes: readonly string[] = [node.consequent.type, node.alternate.type];
-        const hasJsxBranch = branchTypes.some((type) => type === "JSXElement" || type === "JSXFragment");
-        if (hasJsxBranch && (node.parent.type === "ReturnStatement" ||
-          (node.parent.type === "ArrowFunctionExpression" && node.parent.body === node))) {
+        if (isRenderStateChoice(node)) {
           context.report({ node, messageId: "renderState" });
         }
-        let parent: Rule.Node | null | undefined = node.parent;
-        while (parent !== undefined && parent !== null) {
-          if (parent.type === "ArrowFunctionExpression" || parent.type === "FunctionExpression" || parent.type === "FunctionDeclaration") return;
-          if (parent.type === "ConditionalExpression") {
-            context.report({ node, messageId: "nested" });
-            return;
-          }
-          parent = parent.parent;
+        if (hasEnclosingTernary(node)) {
+          context.report({ node, messageId: "nested" });
         }
       },
       AssignmentExpression: reportEffect,
@@ -88,7 +91,9 @@ const implementation: Rule.RuleModule = {
       NewExpression: reportEffect,
       SequenceExpression: reportEffect,
       UnaryExpression(node) {
-        if (node.operator === "delete") reportEffect(node);
+        if (node.operator === "delete") {
+          reportEffect(node);
+        }
       },
     };
   },

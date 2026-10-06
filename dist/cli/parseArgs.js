@@ -1,36 +1,47 @@
+const explainUsage = "Usage: architecture-check explain <file> [--config path]";
+const failure = (message) => ({ kind: "error", message });
+const isOptionValue = (value) => value !== undefined && !value.startsWith("-");
+const parseConfig = (argv, options) => {
+    const [path, ...rest] = argv;
+    if (!isOptionValue(path))
+        return failure("--config requires a path");
+    if (options.config !== undefined)
+        return failure("--config may be specified only once");
+    return parseOptions(rest, { ...options, config: path });
+};
+const parseOptions = (argv, options) => {
+    const [arg, ...rest] = argv;
+    switch (arg) {
+        case undefined:
+            return options;
+        case "--fix":
+            return parseOptions(rest, { ...options, fix: true });
+        case "--config":
+            return parseConfig(rest, options);
+        default:
+            return arg.startsWith("-") ? failure(`Unknown option: ${arg}`) : parseOptions(rest, { ...options, positionals: [...options.positionals, arg] });
+    }
+};
+const isExplainTarget = (file, extra, fix) => {
+    return file !== undefined && extra.length === 0 && !fix;
+};
+const toRunArgs = ({ positionals, fix, config }) => {
+    const configOption = config === undefined ? {} : { config };
+    const [first, second, ...extra] = positionals;
+    if (first === "explain") {
+        if (!isExplainTarget(second, extra, fix))
+            return failure(explainUsage);
+        return { kind: "run", target: ".", fix: false, explain: second, ...configOption };
+    }
+    if (second !== undefined)
+        return failure("Expected at most one path argument.");
+    return { kind: "run", target: first ?? ".", fix, ...configOption };
+};
 export const parseArgs = (argv) => {
-    if (argv.includes("--help") || argv.includes("-h"))
+    const wantsHelp = argv.includes("--help") || argv.includes("-h");
+    if (wantsHelp)
         return { kind: "help" };
-    const positionals = [];
-    let fix = false;
-    let config;
-    for (let index = 0; index < argv.length; index++) {
-        const arg = argv[index];
-        if (arg === "--fix") {
-            fix = true;
-            continue;
-        }
-        if (arg === "--config") {
-            const path = argv[++index];
-            if (path === undefined || path.startsWith("-"))
-                return { kind: "error", message: "--config requires a path" };
-            if (config !== undefined)
-                return { kind: "error", message: "--config may be specified only once" };
-            config = path;
-            continue;
-        }
-        if (arg?.startsWith("-"))
-            return { kind: "error", message: `Unknown option: ${arg}` };
-        if (arg !== undefined)
-            positionals.push(arg);
-    }
-    if (positionals[0] === "explain") {
-        if (positionals.length !== 2 || fix)
-            return { kind: "error", message: "Usage: architecture-check explain <file> [--config path]" };
-        return { kind: "run", target: ".", fix: false, explain: positionals[1], ...(config === undefined ? {} : { config }) };
-    }
-    if (positionals.length > 1)
-        return { kind: "error", message: "Expected at most one path argument." };
-    return { kind: "run", target: positionals[0] ?? ".", fix, ...(config === undefined ? {} : { config }) };
+    const options = parseOptions(argv, { positionals: [], fix: false });
+    return "kind" in options ? options : toRunArgs(options);
 };
 //# sourceMappingURL=parseArgs.js.map

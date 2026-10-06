@@ -22,6 +22,14 @@ runCustomRule(
         code: 'const Field = () => <input onChange={handleTextChange("describes", 1, true, `x`)} />;\n',
       },
       {
+        name: "string handler value",
+        code: 'const Button = () => <button onClick="save()">Save</button>;\n',
+      },
+      {
+        name: "lowercase on-prefixed prop",
+        code: "const Button = () => <Toggle one={() => 1} />;\n",
+      },
+      {
         name: "non-handler prop may be inline",
         code: "const View = () => <Text value={() => 1} />;\n",
       },
@@ -48,6 +56,11 @@ runCustomRule(
         errors: [{ messageId: "namedJsxHandler" }],
       },
       {
+        name: "optional call",
+        code: "const Button = () => <button onClick={handleClick?.(id)}>Save</button>;\n",
+        errors: [{ messageId: "namedJsxHandler" }],
+      },
+      {
         name: "call on a call result",
         code: "const Button = () => <button onClick={useModel().handleClick(id)}>Save</button>;\n",
         errors: [{ messageId: "namedJsxHandler" }],
@@ -56,6 +69,11 @@ runCustomRule(
         name: "template literal with an expression",
         code: "const Button = () => <button onClick={handleClick(`row-${id}`)}>Save</button>;\n",
         errors: [{ messageId: "namedJsxHandler" }],
+      },
+      {
+        name: "reports the handler expression",
+        code: "const Button = () => <button\n  onClick={() => save()}>Save</button>;\n",
+        errors: [{ messageId: "namedJsxHandler", line: 2, column: 11, endLine: 2, endColumn: 23 }],
       },
       {
         name: "inline function handler",

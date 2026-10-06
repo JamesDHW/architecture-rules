@@ -2,6 +2,10 @@ import path from "node:path";
 import type { Rule } from "eslint";
 
 import { defineRule } from "../core/defineRule.js";
+import { isString } from "../core/guards.js";
+import { CONTAINER_CONSTRUCTORS, CONTAINER_MUTATING_METHODS } from "./noCapturedMutation.constants.js";
+import { childNode, isNodeOfType, type SyntaxNode } from "./syntaxNode.js";
+import { withPlaceholders } from "./messagePlaceholders.js";
 
 const DESCRIPTION = `
 Do not change an array, object, Map or Set from a function other than the one
@@ -25,35 +29,67 @@ Set, new WeakMap or new WeakSet. It does not see mutation through function
 parameters or objects returned by other calls.
 `.trim();
 
-const MUTATING_METHODS = new Set(["push", "pop", "shift", "unshift", "splice", "sort", "reverse", "fill", "copyWithin", "set", "delete", "clear", "add"]);
-const CONTAINER_CONSTRUCTORS = new Set(["Map", "Set", "WeakMap", "WeakSet", "Array", "Object"]);
+type Scope = ReturnType<Rule.RuleContext["sourceCode"]["getScope"]>;
+type Variable = Scope["variables"][number];
+type CallNode = Parameters<NonNullable<Rule.RuleListener["CallExpression"]>>[0];
+type IdentifierNode = SyntaxNode & { readonly name: string };
 
-type Node = Rule.Node;
-type AnyNode = { readonly type: string; readonly [key: string]: unknown };
+const isIdentifier = (node: unknown): node is IdentifierNode => isNodeOfType(node, "Identifier") && isString(node.name);
 
-const unwrap = (node: AnyNode | null | undefined): AnyNode | null | undefined => {
-  const isWrapper = node?.type === "TSAsExpression" || node?.type === "TSSatisfiesExpression" || node?.type === "TSNonNullExpression" || node?.type === "ParenthesizedExpression";
-  return isWrapper ? unwrap(node.expression as AnyNode) : node;
+const isWrapper = (node: SyntaxNode | undefined): boolean => {
+  return node?.type === "TSAsExpression" || node?.type === "TSSatisfiesExpression" || node?.type === "TSNonNullExpression" || node?.type === "ParenthesizedExpression";
 };
 
-const isContainerCreation = (init: AnyNode | null | undefined): boolean => {
+/** The expression inside any as, satisfies, non-null or parenthesis wrappers. */
+const unwrap = (node: SyntaxNode | undefined): SyntaxNode | undefined => {
+  return isWrapper(node) ? unwrap(childNode(node, "expression")) : node;
+};
+
+/** [], {}, or new Map, Set, WeakMap, WeakSet, Array or Object, possibly wrapped. */
+const isContainerCreation = (init: SyntaxNode | undefined): boolean => {
   const value = unwrap(init);
-  if (value === null || value === undefined) return false;
-  if (value.type === "ArrayExpression" || value.type === "ObjectExpression") return true;
-  if (value.type !== "NewExpression") return false;
-  const callee = value.callee as AnyNode;
-  return callee.type === "Identifier" && CONTAINER_CONSTRUCTORS.has(callee.name as string);
+  if (value?.type !== "NewExpression") return value?.type === "ArrayExpression" || value?.type === "ObjectExpression";
+  const callee = childNode(value, "callee");
+  return isIdentifier(callee) && CONTAINER_CONSTRUCTORS.has(callee.name);
 };
 
 /** The identifier at the root of a.b.c, or undefined when the chain passes through a call. */
-const rootIdentifier = (node: AnyNode): AnyNode | undefined => {
+const rootIdentifier = (node: SyntaxNode | undefined): IdentifierNode | undefined => {
   const value = unwrap(node);
-  if (value?.type === "Identifier") return value;
-  if (value?.type === "MemberExpression") return rootIdentifier(value.object as AnyNode);
-  return undefined;
+  if (value?.type === "MemberExpression") return rootIdentifier(childNode(value, "object"));
+  return isIdentifier(value) ? value : undefined;
 };
 
-const enclosingFunctionScope = (scope: ReturnType<Rule.RuleContext["sourceCode"]["getScope"]>) => scope.variableScope;
+/** The member expression a mutation writes through, such as box.current in box.current = 1. */
+const memberTarget = (node: unknown): SyntaxNode | undefined => isNodeOfType(node, "MemberExpression") ? node : undefined;
+
+/** The object a mutating method call such as pending.set(id, request) changes. */
+const mutatedObject = (callee: CallNode["callee"]): SyntaxNode | undefined => {
+  if (callee.type !== "MemberExpression") return undefined;
+  const isMutatingCall = !callee.computed && isIdentifier(callee.property) && CONTAINER_MUTATING_METHODS.has(callee.property.name);
+  return isMutatingCall ? childNode(callee, "object") : undefined;
+};
+
+const enclosingFunctionScope = (scope: Scope): Scope => scope.variableScope;
+
+const findVariable = (scope: Scope | null, name: string): Variable | undefined => {
+  if (scope === null) return undefined;
+  return scope.set.get(name) ?? findVariable(scope.upper, name);
+};
+
+/** A variable whose declaration initializes it with a container. */
+const isDeclaredContainer = (variable: Variable | undefined): variable is Variable => {
+  const definition = variable?.defs[0];
+  return definition?.type === "Variable" && isContainerCreation(childNode(definition.node, "init"));
+};
+
+/** The variable root names, when it holds a container created in a function other than the one enclosing scope. */
+const capturedContainer = (root: IdentifierNode, scope: Scope): Variable | undefined => {
+  const reference = [...scope.references, ...scope.through].find((candidate) => candidate.identifier === root);
+  const variable = reference?.resolved ?? findVariable(scope, root.name);
+  const isCaptured = isDeclaredContainer(variable) && enclosingFunctionScope(variable.scope) !== enclosingFunctionScope(scope);
+  return isCaptured ? variable : undefined;
+};
 
 const implementation: Rule.RuleModule = {
   meta: {
@@ -68,48 +104,30 @@ const implementation: Rule.RuleModule = {
     const filename = path.basename(context.filename.replaceAll("\\", "/"));
     if (/\.state\.[cm]?tsx?$/.test(filename)) return {};
 
-    const check = (target: AnyNode, at: Node): void => {
+    const check = (target: SyntaxNode | undefined, at: Rule.Node): void => {
       const root = rootIdentifier(target);
       if (root === undefined) return;
-      const scope = context.sourceCode.getScope(at);
-      const reference = [...scope.references, ...scope.through].find((candidate) => candidate.identifier === (root as unknown));
-      const variable = reference?.resolved ?? findVariable(scope, root.name as string);
-      const definition = variable?.defs[0];
-      if (variable === null || variable === undefined || definition?.type !== "Variable") return;
-      const declarator = definition.node as unknown as AnyNode;
-      if (!isContainerCreation(declarator.init as AnyNode)) return;
-      if (enclosingFunctionScope(variable.scope) === enclosingFunctionScope(scope)) return;
-      context.report({ node: at, messageId: "capturedMutation", data: { name: variable.name } });
+      const variable = capturedContainer(root, context.sourceCode.getScope(at));
+      if (variable === undefined) return;
+      context.report(withPlaceholders({ node: at, messageId: "capturedMutation" }, { name: variable.name }));
     };
 
     return {
       CallExpression(node) {
-        const callee = node.callee as unknown as AnyNode;
-        if (callee.type !== "MemberExpression" || callee.computed === true) return;
-        const property = callee.property as AnyNode;
-        if (property.type !== "Identifier" || !MUTATING_METHODS.has(property.name as string)) return;
-        check(callee.object as AnyNode, node);
+        check(mutatedObject(node.callee), node);
       },
       AssignmentExpression(node) {
-        const left = node.left as unknown as AnyNode;
-        if (left.type === "MemberExpression") check(left, node);
+        check(memberTarget(node.left), node);
       },
       UpdateExpression(node) {
-        const argument = node.argument as unknown as AnyNode;
-        if (argument.type === "MemberExpression") check(argument, node);
+        check(memberTarget(node.argument), node);
       },
       UnaryExpression(node) {
-        const argument = node.argument as unknown as AnyNode;
-        if (node.operator === "delete" && argument.type === "MemberExpression") check(argument, node);
+        if (node.operator !== "delete") return;
+        check(memberTarget(node.argument), node);
       },
     };
   },
-};
-
-type Scope = ReturnType<Rule.RuleContext["sourceCode"]["getScope"]>;
-const findVariable = (scope: Scope | null, name: string): Scope["variables"][number] | undefined => {
-  if (scope === null) return undefined;
-  return scope.set.get(name) ?? findVariable(scope.upper, name);
 };
 
 export const noCapturedMutationRule = defineRule({

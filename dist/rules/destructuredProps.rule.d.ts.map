@@ -1,1 +1,1 @@
-{"version":3,"file":"destructuredProps.rule.d.ts","sourceRoot":"","sources":["../../src/rules/destructuredProps.rule.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,QAAQ,CAAC;AAiGnC,eAAO,MAAM,qBAAqB;;;;;;;;;CAKhC,CAAC"}
+{"version":3,"file":"destructuredProps.rule.d.ts","sourceRoot":"","sources":["../../src/rules/destructuredProps.rule.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,QAAQ,CAAC;AAiHnC,eAAO,MAAM,qBAAqB;;;;;;;;;CAKhC,CAAC"}

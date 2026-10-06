@@ -1,4 +1,5 @@
 import { defineRule } from "../core/defineRule.js";
+import { childNode, childNodes, locationOf, stringProperty } from "./syntaxNode.js";
 const DESCRIPTION = `
 JSX may pass through an existing callback directly. Any handler that creates
 behavior—by adapting arguments, branching, sequencing work, or invoking a
@@ -13,38 +14,47 @@ Named handlers keep JSX focused on describing the interface and give behavior
 a searchable name that communicates the user action it implements.
 `.trim();
 const isHandlerPropName = (name) => {
-    return name.startsWith("on") && name.length > 2 && name[2] === name[2]?.toUpperCase();
-};
-const asJsxAttribute = (node) => {
-    return node;
+    return name !== undefined && name.startsWith("on") && name.length > 2 && name[2] === name[2]?.toUpperCase();
 };
 /** A name or a property path such as model.handleSave or rows[index]; never a call. */
 const isReference = (node) => {
-    if (node.type === "Identifier")
+    if (node?.type === "Identifier")
         return true;
-    if (node.type !== "MemberExpression")
+    if (node?.type !== "MemberExpression")
         return false;
-    const property = node.property;
-    const isPlainProperty = node.computed !== true || isPlainValue(property);
-    return isPlainProperty && isReference(node.object);
+    const isPlainProperty = node.computed !== true || isPlainValue(childNode(node, "property"));
+    return isPlainProperty && isReference(childNode(node, "object"));
 };
+/** A literal, a template literal without expressions, or a reference. */
 const isPlainValue = (node) => {
-    if (node.type === "Literal")
-        return true;
-    if (node.type === "TemplateLiteral")
-        return node.expressions.length === 0;
-    return isReference(node);
+    if (node?.type === "TemplateLiteral")
+        return childNodes(node, "expressions").length === 0;
+    return node?.type === "Literal" || isReference(node);
 };
 /** handleRemoveClick(connection.id): a named function called with plain values only. */
 const isBoundHandler = (node) => {
-    if (node.type !== "CallExpression" || node.optional === true)
+    if (node.type !== "CallExpression")
         return false;
-    const args = node.arguments;
-    return isReference(node.callee) && args.every(isPlainValue);
+    return node.optional !== true && isReference(childNode(node, "callee")) && childNodes(node, "arguments").every(isPlainValue);
 };
-const isPassThroughExpression = (node) => {
-    const expression = node;
-    return isReference(expression) || isBoundHandler(expression);
+const isPassThroughExpression = (node) => isReference(node) || isBoundHandler(node);
+const isInlineHandler = (expression) => {
+    return expression !== undefined && !isPassThroughExpression(expression);
+};
+/** The expression in onX={expression}; undefined for other props, string values and empty containers. */
+const handlerExpression = (attribute) => {
+    const name = childNode(attribute, "name");
+    const propName = name?.type === "JSXIdentifier" ? stringProperty(name, "name") : undefined;
+    if (!isHandlerPropName(propName))
+        return undefined;
+    const value = childNode(attribute, "value");
+    const expression = value?.type === "JSXExpressionContainer" ? childNode(value, "expression") : undefined;
+    return expression?.type === "JSXEmptyExpression" ? undefined : expression;
+};
+/** Where an inline handler such as onClick={() => save()} appears, when this attribute has one. */
+const inlineHandlerLocation = (attribute) => {
+    const expression = handlerExpression(attribute);
+    return isInlineHandler(expression) ? locationOf(expression) : undefined;
 };
 const implementation = {
     meta: {
@@ -59,30 +69,10 @@ const implementation = {
     create(context) {
         return {
             JSXAttribute(node) {
-                const attribute = asJsxAttribute(node);
-                if (attribute.name.type !== "JSXIdentifier" || attribute.name.name === undefined) {
-                    return;
+                const loc = inlineHandlerLocation(node);
+                if (loc !== undefined) {
+                    context.report({ loc, messageId: "namedJsxHandler" });
                 }
-                if (!isHandlerPropName(attribute.name.name)) {
-                    return;
-                }
-                if (attribute.value === null || attribute.value === undefined) {
-                    return;
-                }
-                if (attribute.value.type !== "JSXExpressionContainer") {
-                    return;
-                }
-                const { expression } = attribute.value;
-                if (expression === undefined || expression.type === "JSXEmptyExpression") {
-                    return;
-                }
-                if (isPassThroughExpression(expression)) {
-                    return;
-                }
-                context.report({
-                    node: expression,
-                    messageId: "namedJsxHandler",
-                });
             },
         };
     },

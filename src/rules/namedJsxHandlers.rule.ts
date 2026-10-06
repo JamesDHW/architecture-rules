@@ -1,6 +1,7 @@
-import type { Rule } from "eslint";
+import type { AST, Rule } from "eslint";
 
 import { defineRule } from "../core/defineRule.js";
+import { childNode, childNodes, locationOf, stringProperty, type SyntaxNode } from "./syntaxNode.js";
 
 const DESCRIPTION = `
 JSX may pass through an existing callback directly. Any handler that creates
@@ -16,54 +17,50 @@ Named handlers keep JSX focused on describing the interface and give behavior
 a searchable name that communicates the user action it implements.
 `.trim();
 
-const isHandlerPropName = (name: string): boolean => {
-  return name.startsWith("on") && name.length > 2 && name[2] === name[2]?.toUpperCase();
+const isHandlerPropName = (name: string | undefined): boolean => {
+  return name !== undefined && name.startsWith("on") && name.length > 2 && name[2] === name[2]?.toUpperCase();
 };
-
-type JsxAttributeNode = {
-  readonly name: {
-    readonly type: string;
-    readonly name?: string;
-  };
-  readonly value?: {
-    readonly type: string;
-    readonly expression?: {
-      readonly type: string;
-    };
-  } | null;
-};
-
-const asJsxAttribute = (node: Rule.Node): JsxAttributeNode => {
-  return node as unknown as JsxAttributeNode;
-};
-
-type ExpressionNode = { readonly type: string; readonly [key: string]: unknown };
 
 /** A name or a property path such as model.handleSave or rows[index]; never a call. */
-const isReference = (node: ExpressionNode): boolean => {
-  if (node.type === "Identifier") return true;
-  if (node.type !== "MemberExpression") return false;
-  const property = node.property as ExpressionNode;
-  const isPlainProperty = node.computed !== true || isPlainValue(property);
-  return isPlainProperty && isReference(node.object as ExpressionNode);
+const isReference = (node: SyntaxNode | undefined): boolean => {
+  if (node?.type === "Identifier") return true;
+  if (node?.type !== "MemberExpression") return false;
+  const isPlainProperty = node.computed !== true || isPlainValue(childNode(node, "property"));
+  return isPlainProperty && isReference(childNode(node, "object"));
 };
 
-const isPlainValue = (node: ExpressionNode): boolean => {
-  if (node.type === "Literal") return true;
-  if (node.type === "TemplateLiteral") return (node.expressions as readonly unknown[]).length === 0;
-  return isReference(node);
+/** A literal, a template literal without expressions, or a reference. */
+const isPlainValue = (node: SyntaxNode | undefined): boolean => {
+  if (node?.type === "TemplateLiteral") return childNodes(node, "expressions").length === 0;
+  return node?.type === "Literal" || isReference(node);
 };
 
 /** handleRemoveClick(connection.id): a named function called with plain values only. */
-const isBoundHandler = (node: ExpressionNode): boolean => {
-  if (node.type !== "CallExpression" || node.optional === true) return false;
-  const args = node.arguments as readonly ExpressionNode[];
-  return isReference(node.callee as ExpressionNode) && args.every(isPlainValue);
+const isBoundHandler = (node: SyntaxNode): boolean => {
+  if (node.type !== "CallExpression") return false;
+  return node.optional !== true && isReference(childNode(node, "callee")) && childNodes(node, "arguments").every(isPlainValue);
 };
 
-const isPassThroughExpression = (node: { readonly type: string }): boolean => {
-  const expression = node as ExpressionNode;
-  return isReference(expression) || isBoundHandler(expression);
+const isPassThroughExpression = (node: SyntaxNode): boolean => isReference(node) || isBoundHandler(node);
+
+const isInlineHandler = (expression: SyntaxNode | undefined): expression is SyntaxNode => {
+  return expression !== undefined && !isPassThroughExpression(expression);
+};
+
+/** The expression in onX={expression}; undefined for other props, string values and empty containers. */
+const handlerExpression = (attribute: Rule.Node): SyntaxNode | undefined => {
+  const name = childNode(attribute, "name");
+  const propName = name?.type === "JSXIdentifier" ? stringProperty(name, "name") : undefined;
+  if (!isHandlerPropName(propName)) return undefined;
+  const value = childNode(attribute, "value");
+  const expression = value?.type === "JSXExpressionContainer" ? childNode(value, "expression") : undefined;
+  return expression?.type === "JSXEmptyExpression" ? undefined : expression;
+};
+
+/** Where an inline handler such as onClick={() => save()} appears, when this attribute has one. */
+const inlineHandlerLocation = (attribute: Rule.Node): AST.SourceLocation | undefined => {
+  const expression = handlerExpression(attribute);
+  return isInlineHandler(expression) ? locationOf(expression) : undefined;
 };
 
 const implementation: Rule.RuleModule = {
@@ -80,36 +77,10 @@ const implementation: Rule.RuleModule = {
   create(context) {
     return {
       JSXAttribute(node: Rule.Node) {
-        const attribute = asJsxAttribute(node);
-        if (attribute.name.type !== "JSXIdentifier" || attribute.name.name === undefined) {
-          return;
+        const loc = inlineHandlerLocation(node);
+        if (loc !== undefined) {
+          context.report({ loc, messageId: "namedJsxHandler" });
         }
-
-        if (!isHandlerPropName(attribute.name.name)) {
-          return;
-        }
-
-        if (attribute.value === null || attribute.value === undefined) {
-          return;
-        }
-
-        if (attribute.value.type !== "JSXExpressionContainer") {
-          return;
-        }
-
-        const { expression } = attribute.value;
-        if (expression === undefined || expression.type === "JSXEmptyExpression") {
-          return;
-        }
-
-        if (isPassThroughExpression(expression)) {
-          return;
-        }
-
-        context.report({
-          node: expression as Rule.Node,
-          messageId: "namedJsxHandler",
-        });
       },
     };
   },

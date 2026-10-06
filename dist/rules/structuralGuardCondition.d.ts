@@ -1,3 +1,4 @@
+/** The node fields these checks read. Any value is accepted and read structurally. */
 export type PredicateNode = {
     readonly type: string;
     readonly name?: string;
@@ -22,6 +23,6 @@ export type GuardNames = {
     readonly nullish: readonly string[];
     readonly presence: readonly string[];
 };
-export declare const isStructuralGuardCondition: (condition: PredicateNode, guards: GuardNames) => boolean;
-export declare const isGuardedNullishFallback: (condition: PredicateNode, guards: GuardNames) => boolean;
+export declare const isStructuralGuardCondition: (condition: unknown, guards: GuardNames) => boolean;
+export declare const isGuardedNullishFallback: (condition: unknown, guards: GuardNames) => boolean;
 //# sourceMappingURL=structuralGuardCondition.d.ts.map

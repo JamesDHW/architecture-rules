@@ -1,4 +1,6 @@
 import { defineRule } from "../core/defineRule.js";
+import { isPresent } from "../core/guards.js";
+import { getSoleStatement } from "./branchStatement.js";
 const DESCRIPTION = `
 Combine adjacent terminal if guards with identical return expressions into a
 named predicate when they represent the same outcome. Preserve short-circuit
@@ -29,25 +31,24 @@ const implementation = {
     },
     create(context) {
         const returnedTokens = (statement) => {
-            if (statement.type !== "IfStatement" || statement.alternate !== null)
+            const isElseFreeIf = statement.type === "IfStatement" && statement.alternate === null;
+            if (!isElseFreeIf)
                 return undefined;
-            const body = statement.consequent;
-            const terminal = body.type === "BlockStatement" && body.body.length === 1 ? body.body[0] : body;
+            const terminal = getSoleStatement(statement.consequent);
             if (terminal?.type !== "ReturnStatement")
                 return undefined;
-            if (terminal.argument === null || terminal.argument === undefined)
+            if (!isPresent(terminal.argument))
                 return "bare-return";
             return JSON.stringify(context.sourceCode.getTokens(terminal.argument).map((token) => [token.type, token.value]));
         };
         const check = (statements) => {
             for (const [index, statement] of statements.entries()) {
                 const next = statements[index + 1];
-                if (next === undefined)
-                    continue;
                 const result = returnedTokens(statement);
-                if (result === undefined || result !== returnedTokens(next))
-                    continue;
-                context.report({ node: next, messageId: "sameResult" });
+                const repeatsResult = next !== undefined && result !== undefined && result === returnedTokens(next);
+                if (repeatsResult) {
+                    context.report({ node: next, messageId: "sameResult" });
+                }
             }
         };
         return {

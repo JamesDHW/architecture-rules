@@ -1,6 +1,10 @@
 import { fileNamingRule } from "../src/rules/fileNaming.rule.js";
 import { runCustomRule } from "./utils/runCustomRule.js";
 
+const rulesPolicy = { architecture: { case: "camel", suffixes: [".test", ".rule.test"] } };
+
+const hookPolicy = { architecture: { case: "camel", prefix: "use", allowedNames: ["page.tsx"] } };
+
 const clientPolicy = {
   allow: {
     framework: ["**/page.tsx", "**/layout.tsx"],
@@ -56,8 +60,40 @@ runCustomRule(fileNamingRule, {
       options: [clientPolicy],
       code: "export const Page = () => null;\n",
     },
+    {
+      name: "architecture policy: the longest matching suffix is removed before the case check",
+      filename: "tests/noLet.rule.test.ts",
+      options: [rulesPolicy],
+      code: "export const cases = [];\n",
+    },
+    {
+      name: "architecture policy: required prefix present",
+      filename: "src/useProject.ts",
+      options: [hookPolicy],
+      code: "export const useProject = () => ({});\n",
+    },
+    {
+      name: "architecture policy: allowed framework name skips case and prefix",
+      filename: "src/app/page.tsx",
+      options: [hookPolicy],
+      code: "export const Page = () => null;\n",
+    },
   ],
   invalid: [
+    {
+      name: "architecture policy: wrong case reports the suffix it removed",
+      filename: "tests/NoLet.rule.test.ts",
+      options: [rulesPolicy],
+      code: "export const cases = [];\n",
+      errors: [{ message: "Filename 'NoLet.rule.test.ts' must use camel case before .rule.test. See rule file-naming." }],
+    },
+    {
+      name: "architecture policy: missing prefix",
+      filename: "src/project.ts",
+      options: [hookPolicy],
+      code: "export const project = {};\n",
+      errors: [{ message: "Filename 'project.ts' must start with 'use'. See rule file-naming." }],
+    },
     {
       name: "snake_case component with client suffix rules",
       filename: "src/project_editor.tsx",
