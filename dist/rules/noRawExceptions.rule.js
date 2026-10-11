@@ -2,7 +2,7 @@ import { defineRule } from "../core/defineRule.js";
 const DESCRIPTION = `
 Return errors as values instead of throwing or catching exceptions. Keep the
 project's error adapter, such as a tryCatch helper and its error types, in a
-file type of its own and turn this rule off there with a reason. Everywhere
+layer of its own and turn this rule off there with a reason. Everywhere
 else, wrap a throwing or rejecting external operation with that adapter
 immediately and branch on the returned error.
 
@@ -18,7 +18,7 @@ external call is wrapped.
 const implementation = {
     meta: {
         type: "suggestion", docs: { description: DESCRIPTION }, schema: [],
-        messages: { raw: "Return errors as values. Raw throw and catch belong in the error adapter file type. See rule no-raw-exceptions." },
+        messages: { raw: "Return errors as values. Raw throw and catch belong in the error adapter layer. See rule no-raw-exceptions." },
     },
     create(context) {
         return {

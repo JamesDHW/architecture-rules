@@ -96,8 +96,8 @@ const scopeIssue = (rule, project) => {
     const isRunnerControlled = id === "file-naming" || id === "allowed-imports";
     if (isRunnerControlled)
         return "Use naming/imports, not a direct architecture rule override";
-    const isFileTypeCompilerRule = !project && enforcement.type === "typescript";
-    return isFileTypeCompilerRule ? `${id} is a project-wide compiler requirement, not a file-type rule` : undefined;
+    const isLayerCompilerRule = !project && enforcement.type === "typescript";
+    return isLayerCompilerRule ? `${id} is a project-wide compiler requirement, not a layer rule` : undefined;
 };
 const severityIssues = (rule, severity) => {
     if (!isSeverity(severity))

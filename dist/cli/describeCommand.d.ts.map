@@ -1,0 +1,1 @@
+{"version":3,"file":"describeCommand.d.ts","sourceRoot":"","sources":["../../src/cli/describeCommand.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,iBAAiB,EAAE,MAAM,gCAAgC,CAAC;AAGnE,OAAO,KAAK,EAAE,cAAc,EAAE,OAAO,EAAE,MAAM,gBAAgB,CAAC;AAc9D,wGAAwG;AACxG,eAAO,MAAM,eAAe,SAAgB,OAAO,UAAU,cAAc,KAAG,OAAO,CAAC,MAAM,GAAG,iBAAiB,CAM/G,CAAC"}

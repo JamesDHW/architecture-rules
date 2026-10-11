@@ -30,42 +30,57 @@ export type FileRuleId = Exclude<RuleId, StructuralRuleId | CompilerRuleId | "fi
 export type FileRules = { readonly [K in FileRuleId]?: RuleSetting<K> };
 export type ProjectRules = FileRules & { readonly [K in CompilerRuleId]?: "error" | "off" | { readonly severity: "error" | "off"; readonly reason: string } };
 
-export type ImportPolicy<Name extends string = string> = {
-  readonly internal?: readonly Name[];
+/**
+ * What a layer may import. internal names layers (including itself); external
+ * names package specifiers and Node built-ins with the node: prefix; assets are
+ * root-relative patterns for non-source files such as stylesheets and images.
+ */
+export type DependencyPolicy<Layer extends string = string> = {
+  readonly internal?: readonly Layer[];
   readonly external?: readonly string[];
-  readonly builtins?: readonly string[];
   readonly assets?: readonly string[];
 };
-export type Policy<Name extends string = string> = {
+export type Policy<Layer extends string = string> = {
   readonly naming?: NamingPolicy;
-  readonly imports?: ImportPolicy<Name>;
+  readonly dependencies?: DependencyPolicy<Layer>;
   readonly rules?: FileRules;
 };
 /** Generator output: classified, named and import-checked, but never linted. */
 export type GeneratedSetting = { readonly reason: string };
-export type FileType<Name extends string = string> = {
+export type LayerDefinition<Layer extends string = string> = {
   readonly description: string;
   readonly files: readonly string[];
   readonly exclude?: readonly string[];
 } & (
-  | (Policy<Name> & { readonly generated?: never })
-  | (Omit<Policy<Name>, "rules"> & { readonly generated: GeneratedSetting; readonly rules?: never })
+  | (Policy<Layer> & { readonly generated?: never })
+  | (Omit<Policy<Layer>, "rules"> & { readonly generated: GeneratedSetting; readonly rules?: never })
 );
-export type ArchitectureInput<Name extends string> = {
-  readonly projects: { readonly tsconfigs: readonly string[]; readonly references?: "follow" | "explicit" };
-  readonly defaults?: Omit<Policy<NoInfer<Name>>, "rules"> & { readonly rules?: ProjectRules };
-  readonly fileTypes: { readonly [K in Name]: FileType<NoInfer<Name>> };
+/** The tsconfigs whose programs define the source under check; references are followed unless set to explicit. */
+export type TypeScriptProjects = { readonly tsconfigs: readonly string[]; readonly references?: "follow" | "explicit" };
+/**
+ * Read top to bottom, the configuration follows the order decisions are made:
+ * the TypeScript projects, then layers with their dependencies, then rules.
+ */
+export type ArchitectureInput<Layer extends string> = {
+  readonly projects: TypeScriptProjects;
+  readonly layers: { readonly [K in Layer]: LayerDefinition<NoInfer<Layer>> };
+  /** Naming policy for every layer that does not set its own. */
+  readonly naming?: NamingPolicy;
+  /** Project-wide rule settings; a layer's rules override them. */
+  readonly rules?: ProjectRules;
 };
 export type EffectiveRule = { readonly severity: Severity; readonly options: readonly unknown[]; readonly origin: string; readonly reason?: string };
 export type EffectivePolicy = {
-  readonly origins: { readonly naming: string; readonly imports: string };
+  readonly origins: { readonly naming: string; readonly dependencies: string };
   readonly naming?: NamingPolicy;
-  readonly imports: Required<ImportPolicy>;
+  readonly dependencies: Required<DependencyPolicy>;
   readonly rules: Readonly<Record<string, EffectiveRule>>;
   readonly generated?: GeneratedSetting;
 };
+export type NormalizedLayer = LayerDefinition & { readonly policy: EffectivePolicy };
 export type Architecture = {
-  readonly projects: ArchitectureInput<string>["projects"];
+  readonly projects: Required<TypeScriptProjects>;
+  /** The policy a layer inherits when it sets nothing itself. */
   readonly defaults: EffectivePolicy;
-  readonly fileTypes: Readonly<Record<string, FileType & { readonly policy: EffectivePolicy }>>;
+  readonly layers: Readonly<Record<string, NormalizedLayer>>;
 };

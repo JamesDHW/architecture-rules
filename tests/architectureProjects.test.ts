@@ -63,7 +63,7 @@ describe("TypeScript project and inventory integration", () => {
       "tsconfig.b.json": JSON.stringify({ compilerOptions: requiredOptions, files: ["src/domain/shared.ts"] }),
       "src/domain/shared.ts": "export {};",
     });
-    const a = defineArchitecture({ projects: { tsconfigs: ["tsconfig.a.json", "tsconfig.b.json"] }, fileTypes: { app: { description: "App", files: ["src/**"] } } });
+    const a = defineArchitecture({ projects: { tsconfigs: ["tsconfig.a.json", "tsconfig.b.json"] }, layers: { app: { description: "App", files: ["src/**"] } } });
     const opened = openFixtureProjects(root, a);
     expect(inventory(root, a, opened.sources).files.map(file => file.relative)).toContain("src/domain/shared.ts");
   });

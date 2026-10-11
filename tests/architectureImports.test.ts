@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { checkImports } from "../src/analysis/imports.js";
+import { defineArchitecture } from "../src/config/defineArchitecture.js";
 import { inventory } from "../src/analysis/inventory.js";
 import { checkSuppressions } from "../src/analysis/suppressions.js";
 import { openFixtureProjects } from "./utils/fixtures.js";
@@ -16,7 +17,7 @@ describe("Import and suppression checks on TypeScript programs", () => {
     const tree = inventory(root, a, opened.sources);
     expect(tree.issues).toEqual([]);
     const modelIssues = checkImports(root, tree.files, opened.projects).filter((issue) => issue.file === "src/domain/model.ts");
-    expect(modelIssues.map((issue) => issue.message)).toContainEqual("File type domain may not import adapter: src/adapters/client.ts");
+    expect(modelIssues.map((issue) => issue.message)).toContainEqual("Layer domain may not import adapter: src/adapters/client.ts");
   });
   it("checks re-exports, import types, and nonliteral dynamic imports", () => {
     const root = projectFixture({
@@ -43,10 +44,21 @@ export const other = value;` });
     const a = twoLayerArchitecture(); const opened = openFixtureProjects(root, a);
     expect(checkSuppressions(inventory(root, a, opened.sources).files, opened.projects)).toHaveLength(2);
   });
-  it("checks built-ins without requiring local @types packages", () => {
-    const root = projectFixture({ "src/domain/model.ts": "import fs from 'node:fs'; export { fs };" });
-    const a = twoLayerArchitecture(); const opened = openFixtureProjects(root, a);
-    expect(checkImports(root, inventory(root, a, opened.sources).files, opened.projects)[0]?.message).toContain("Built-in import is not permitted");
+  it("checks built-ins as node: specifiers, however the import spells them, without local @types packages", () => {
+    const root = projectFixture({
+      "src/domain/model.ts": "import fs from 'node:fs'; export { fs };",
+      "src/adapters/files.ts": "import { readFile } from 'fs/promises'; import path from 'node:path'; export { readFile, path };",
+    });
+    const a = defineArchitecture({
+      projects: { tsconfigs: ["tsconfig.json"] },
+      layers: {
+        domain: { description: "Domain", files: ["src/domain/**"], dependencies: { internal: ["domain"] } },
+        adapter: { description: "Adapter", files: ["src/adapters/**"], dependencies: { external: ["node:fs/promises", "node:path"] } },
+      },
+    });
+    const opened = openFixtureProjects(root, a);
+    const messages = checkImports(root, inventory(root, a, opened.sources).files, opened.projects).map((issue) => issue.message);
+    expect(messages).toEqual(["External import is not permitted: node:fs"]);
   });
   it("ignores directive-like JSX text but validates actual JSX comments", () => {
     const root = projectFixture({ "src/domain/view.tsx": `export const View = () => <div>// oxlint-disable

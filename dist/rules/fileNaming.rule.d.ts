@@ -1,9 +1,8 @@
 import type { Rule } from "eslint";
-export type FilenameCase = "pascal" | "camel" | "pascalOrCamel";
+import { type NamingPolicy } from "./namingPolicy.js";
+/** The runner passes each file's layer naming policy; the rule cannot be configured directly. */
 export type FileNamingOptions = {
-    readonly allow?: Readonly<Record<string, readonly string[]>>;
-    readonly banned?: readonly string[];
-    readonly suffixes?: Readonly<Record<string, FilenameCase>>;
+    readonly architecture?: NamingPolicy;
 };
 export declare const fileNamingRule: {
     readonly id: "file-naming";

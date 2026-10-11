@@ -6,7 +6,7 @@
   "type": "module",
   "files": [
     "dist",
-    "tsconfig.base.json",
+    "presets",
     "README.md",
     "examples"
   ],
@@ -23,15 +23,16 @@
       "types": "./dist/plugin.d.ts",
       "default": "./dist/plugin.js"
     },
-    "./tsconfig.base.json": "./tsconfig.base.json"
+    "./tsconfig": "./presets/tsconfig.json",
+    "./presets/tsconfig.json": "./presets/tsconfig.json"
   },
   "scripts": {
-    "build:typescript": "node node_modules/typescript/bin/tsc -p tsconfig.build.json",
-    "generate": "node dist/generateTsconfig.js",
-    "build": "pnpm run build:typescript && pnpm run generate",
+    "build": "node node_modules/typescript/bin/tsc -p tsconfig.build.json",
     "test": "node node_modules/vitest/vitest.mjs run",
     "check": "pnpm run build && pnpm run typecheck && pnpm test",
     "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json",
+    "architecture": "pnpm run build && node dist/cli.js",
+    "describe": "pnpm run build && node dist/cli.js describe",
     "test:architecture": "node node_modules/vitest/vitest.mjs run tests/architecture.test.ts tests/architectureProjects.test.ts tests/architectureImports.test.ts tests/architectureCli.test.ts"
   },
   "keywords": [],
@@ -53,6 +54,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.13.3",
+    "architecture-rules": "link:.",
     "vitest": "^4.1.11"
   },
   "peerDependencies": {

@@ -16,7 +16,7 @@ export const explainFile = (root, architecture, opened, tree, structural, file) 
         projects: opened.projects
             .filter((project) => project.program.getSourceFile(path) !== undefined)
             .map((project) => relativePath(root, project.configFileName)),
-        matchingTypes: classify(architecture, relative).map((name) => ({ name, patterns: architecture.fileTypes[name]?.files })),
+        matchingLayers: classify(architecture, relative).map((name) => ({ name, patterns: architecture.layers[name]?.files })),
         policy: selected?.policy,
         namedExportsExempt: configurationFile(relative),
         namingIssue: naming === undefined ? undefined : namingError(relative, naming),

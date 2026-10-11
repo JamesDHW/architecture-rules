@@ -4,10 +4,12 @@ import { dirname } from "node:path";
 import { ArchitectureError } from "./errors/architectureError.js";
 import { tryCatchAsync } from "./errors/tryCatch.js";
 import { checkArchitecture } from "./runner/runner.js";
+import { describeCommand } from "./cli/describeCommand.js";
 import { configPathFor, loadArchitecture } from "./cli/loadArchitecture.js";
 import { parseArgs } from "./cli/parseArgs.js";
 const help = `Usage: architecture-check [--config path] [--fix] [project-dir]
        architecture-check explain <file> [--config path]
+       architecture-check describe [--json | --mermaid] [--config path] [project-dir]
 
 Requires architecture.config.ts (or architecture.config.mts) exporting defineArchitecture(...).
 Checks the configured TypeScript programs, rooted at the configuration's directory.
@@ -27,6 +29,8 @@ const printError = (error) => {
     return 1;
 };
 const check = async (args) => {
+    if (args.describe !== undefined)
+        return describeCommand(args, args.describe);
     const configPath = configPathFor(args);
     const architecture = await loadArchitecture(configPath);
     if (architecture instanceof ArchitectureError)

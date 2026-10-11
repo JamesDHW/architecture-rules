@@ -2,154 +2,101 @@ import { isRecord } from "../core/guards.js";
 import { ArchitectureError } from "../errors/architectureError.js";
 import { orThrow } from "../errors/tryCatch.js";
 import { isRegisteredArchitecture, registerArchitecture } from "./architectureRegistry.state.js";
-import {
-  ARCHITECTURE_FIELDS, DEFAULT_FIELDS, FILE_TYPE_FIELDS, GENERATED_FIELDS, IMPORT_FIELDS,
-  NAMING_CASES, NAMING_FIELDS, PROJECT_FIELDS, REFERENCE_MODES, RESERVED_TYPE_NAMES,
-} from "./configuration.constants.js";
+import { ARCHITECTURE_FIELDS, LAYER_FIELDS, PROJECTS_FIELDS, REFERENCE_MODES, RESERVED_LAYER_NAMES } from "./configuration.constants.js";
 import { defaultRules, overrideRules } from "./normalizeRules.js";
-import type { Architecture, ArchitectureInput, EffectivePolicy, FileType, GeneratedSetting, ImportPolicy, NamingPolicy } from "./types.js";
-import { checked, fields, freeze, optional, patterns, strings, text, type Checked } from "./validation.js";
+import { dependencies, generated, naming } from "./policies.js";
+import type { Architecture, ArchitectureInput, EffectivePolicy, NormalizedLayer } from "./types.js";
+import { checked, fields, freeze, optional, patterns, text, type Checked } from "./validation.js";
 
-type NormalizedFileType = FileType & { readonly policy: EffectivePolicy };
+/** Label for settings made at the top level of architecture.config.ts. */
+const projectWide = "architecture";
 
-const isNamingCase = (value: unknown): value is NamingPolicy["case"] => NAMING_CASES.some((name) => name === value);
+type ReferenceMode = Architecture["projects"]["references"];
 
-const isReferenceMode = (value: unknown): value is NonNullable<Architecture["projects"]["references"]> => {
-  return REFERENCE_MODES.some((mode) => mode === value);
-};
+const isReferenceMode = (value: unknown): value is ReferenceMode => REFERENCE_MODES.some((mode) => mode === value);
 
-const isExactBasename = (name: string): boolean => !/[/\\*?{}[\]]/.test(name);
+const isValidLayerName = (name: string): boolean => /^[A-Za-z][\w-]*$/.test(name) && !RESERVED_LAYER_NAMES.includes(name);
 
-const isValidTypeName = (name: string): boolean => /^[A-Za-z][\w-]*$/.test(name) && !RESERVED_TYPE_NAMES.includes(name);
-
-const naming = (value: unknown, label: string): Checked<NamingPolicy> => {
-  const input = fields(value, NAMING_FIELDS, label);
-  const namingCase = input.value.case;
-  const prefix = optional(input.value.prefix, (entry) => text(entry, `${label}.prefix`));
-  const suffixes = optional(input.value.suffixes, (entry) => strings(entry, `${label}.suffixes`));
-  const allowedNames = optional(input.value.allowedNames, (entry) => strings(entry, `${label}.allowedNames`));
-  const inexactNames = allowedNames.value?.filter((name) => !isExactBasename(name)) ?? [];
-  const issues = [
-    ...input.issues, ...prefix.issues, ...suffixes.issues, ...allowedNames.issues,
-    ...(isNamingCase(namingCase) ? [] : [`Invalid ${label}.case`]),
-    ...(inexactNames.length > 0 ? [`${label}.allowedNames must be exact basenames`] : []),
-  ];
-  return checked({
-    case: isNamingCase(namingCase) ? namingCase : "camel",
-    ...(prefix.value === undefined ? {} : { prefix: prefix.value }),
-    ...(suffixes.value === undefined ? {} : { suffixes: suffixes.value }),
-    ...(allowedNames.value === undefined ? {} : { allowedNames: allowedNames.value }),
-  }, issues);
-};
-
-const imports = (value: unknown, typeNames: readonly string[], label: string): Checked<Required<ImportPolicy>> => {
-  const input = fields(value ?? {}, IMPORT_FIELDS, label);
-  const internal = strings(input.value.internal ?? [], `${label}.internal`);
-  const external = strings(input.value.external ?? [], `${label}.external`);
-  const builtins = strings(input.value.builtins ?? [], `${label}.builtins`);
-  const assets = patterns(input.value.assets ?? [], `${label}.assets`);
-  const unknownTypes = internal.value.filter((name) => !typeNames.includes(name));
-  return checked({
-    internal: internal.value,
-    external: external.value,
-    builtins: builtins.value.map((name) => name.replace(/^node:/, "")),
-    assets: assets.value,
-  }, [
-    ...input.issues, ...internal.issues, ...external.issues, ...builtins.issues, ...assets.issues,
-    ...unknownTypes.map((name) => `Unknown internal file type: ${name}`),
-  ]);
-};
-
-const generated = (value: unknown, label: string): Checked<GeneratedSetting> => {
-  const input = fields(value, GENERATED_FIELDS, label);
-  const reason = text(input.value.reason, `${label}.reason`);
-  return checked({ reason: reason.value }, [...input.issues, ...reason.issues]);
-};
-
-const projects = (value: unknown): Checked<Architecture["projects"]> => {
-  const input = fields(value, PROJECT_FIELDS, "projects");
+const typescriptProjects = (value: unknown): Checked<Architecture["projects"]> => {
+  const input = fields(value, PROJECTS_FIELDS, "projects");
   const tsconfigs = patterns(input.value.tsconfigs, "projects.tsconfigs", true);
   const references = input.value.references ?? "follow";
   const hasNoProjects = tsconfigs.issues.length === 0 && tsconfigs.value.length === 0;
   return checked({ tsconfigs: tsconfigs.value, references: isReferenceMode(references) ? references : "follow" }, [
     ...input.issues, ...tsconfigs.issues,
-    ...(hasNoProjects ? ["At least one tsconfig is required"] : []),
-    ...(isReferenceMode(references) ? [] : ["Invalid projects.references"]),
+    ...(hasNoProjects ? ["projects.tsconfigs needs at least one tsconfig"] : []),
+    ...(isReferenceMode(references) ? [] : ["projects.references must be follow or explicit"]),
   ]);
 };
 
-const defaultPolicy = (value: unknown, typeNames: readonly string[]): Checked<EffectivePolicy> => {
-  const input = fields(value ?? {}, DEFAULT_FIELDS, "defaults");
-  const policyNaming = optional(input.value.naming, (entry) => naming(entry, "defaults.naming"));
-  const policyImports = imports(input.value.imports, typeNames, "defaults.imports");
-  const policyRules = overrideRules(defaultRules(), input.value.rules, "defaults", true);
+/** The project-wide policy every layer inherits: top-level naming and rules. Dependencies are always declared per layer. */
+const projectPolicy = (config: Readonly<Record<string, unknown>>): Checked<EffectivePolicy> => {
+  const policyNaming = optional(config.naming, (entry) => naming(entry, "naming"));
+  const policyRules = overrideRules(defaultRules(), config.rules, projectWide, true);
   return checked({
-    origins: {
-      naming: input.value.naming === undefined ? "unconfigured" : "defaults",
-      imports: input.value.imports === undefined ? "deny by default" : "defaults",
-    },
+    origins: { naming: config.naming === undefined ? "unconfigured" : projectWide, dependencies: "deny by default" },
     ...(policyNaming.value === undefined ? {} : { naming: policyNaming.value }),
-    imports: policyImports.value,
+    dependencies: { internal: [], external: [], assets: [] },
     rules: policyRules.value,
-  }, [...input.issues, ...policyNaming.issues, ...policyImports.issues, ...policyRules.issues]);
+  }, [...policyNaming.issues, ...policyRules.issues]);
 };
 
-const fileType = (name: string, value: unknown, typeNames: readonly string[], defaults: EffectivePolicy): Checked<NormalizedFileType> => {
-  const label = `fileTypes.${name}`;
-  const input = fields(value, FILE_TYPE_FIELDS, label);
-  const declared = input.value;
-  const description = text(declared.description, `${label}.description`);
-  const files = patterns(declared.files, `${label}.files`);
-  const exclude = patterns(declared.exclude ?? [], `${label}.exclude`);
-  const typeNaming = optional(declared.naming, (entry) => naming(entry, `${label}.naming`));
-  const typeImports = optional(declared.imports, (entry) => imports(entry, typeNames, `${label}.imports`));
-  const typeRules = overrideRules(defaults.rules, declared.rules, label, false);
-  const typeGenerated = optional(declared.generated, (entry) => generated(entry, `${label}.generated`));
-  const isGeneratedWithRules = declared.generated !== undefined && declared.rules !== undefined;
-  const hasNoFiles = files.issues.length === 0 && files.value.length === 0;
+const layer = (name: string, value: unknown, layerNames: readonly string[], defaults: EffectivePolicy): Checked<NormalizedLayer> => {
+  const label = `layers.${name}`;
+  const declared = fields(value, LAYER_FIELDS, label);
+  const { description, files, exclude, rules } = declared.value;
+  const layerFiles = patterns(files, `${label}.files`);
+  const layerExclude = patterns(exclude ?? [], `${label}.exclude`);
+  const layerDescription = text(description, `${label}.description`);
+  const layerNaming = optional(declared.value.naming, (entry) => naming(entry, `${label}.naming`));
+  const layerDependencies = optional(declared.value.dependencies, (entry) => dependencies(entry, layerNames, `${label}.dependencies`));
+  const layerRules = overrideRules(defaults.rules, rules, label, false);
+  const layerGenerated = optional(declared.value.generated, (entry) => generated(entry, `${label}.generated`));
+  const isGeneratedWithRules = declared.value.generated !== undefined && rules !== undefined;
+  const hasNoFiles = layerFiles.issues.length === 0 && layerFiles.value.length === 0;
   const policy: EffectivePolicy = {
     origins: {
-      naming: declared.naming === undefined ? defaults.origins.naming : label,
-      imports: declared.imports === undefined ? defaults.origins.imports : label,
+      naming: declared.value.naming === undefined ? defaults.origins.naming : label,
+      dependencies: declared.value.dependencies === undefined ? defaults.origins.dependencies : label,
     },
     ...(defaults.naming === undefined ? {} : { naming: defaults.naming }),
-    ...(typeNaming.value === undefined ? {} : { naming: typeNaming.value }),
-    imports: typeImports.value ?? defaults.imports,
-    rules: typeRules.value,
-    ...(typeGenerated.value === undefined ? {} : { generated: typeGenerated.value }),
+    ...(layerNaming.value === undefined ? {} : { naming: layerNaming.value }),
+    dependencies: layerDependencies.value ?? defaults.dependencies,
+    rules: layerRules.value,
+    ...(layerGenerated.value === undefined ? {} : { generated: layerGenerated.value }),
   };
-  return checked({ description: description.value, files: files.value, exclude: exclude.value, policy }, [
-    ...input.issues, ...description.issues, ...files.issues, ...exclude.issues,
-    ...typeNaming.issues, ...typeImports.issues, ...typeRules.issues, ...typeGenerated.issues,
-    ...(isGeneratedWithRules ? [`${label}: a generated file type is never linted, so it takes no rules`] : []),
+  return checked({ description: layerDescription.value, files: layerFiles.value, exclude: layerExclude.value, policy }, [
+    ...declared.issues, ...layerDescription.issues, ...layerFiles.issues, ...layerExclude.issues,
+    ...layerNaming.issues, ...layerDependencies.issues, ...layerRules.issues, ...layerGenerated.issues,
+    ...(isGeneratedWithRules ? [`${label}: a generated layer is never linted, so it takes no rules`] : []),
     ...(hasNoFiles ? [`${label}.files must not be empty`] : []),
   ]);
 };
 
-const fileTypeInputs = (value: unknown): Checked<Readonly<Record<string, unknown>>> => {
-  if (!isRecord(value)) return checked({}, ["fileTypes must be an object"]);
+const layerInputs = (value: unknown): Checked<Readonly<Record<string, unknown>>> => {
+  if (!isRecord(value)) return checked({}, ["layers must be an object"]);
   const names = Object.keys(value);
-  const hasValidNames = names.length > 0 && names.every(isValidTypeName);
-  return checked(value, hasValidNames ? [] : ["fileTypes requires valid, non-reserved names"]);
+  const hasValidNames = names.length > 0 && names.every(isValidLayerName);
+  return checked(value, hasValidNames ? [] : ["layers needs at least one layer, each with a valid, non-reserved name"]);
 };
 
 /** Validates and normalizes configuration, returning every problem at once; filesystem checks happen in the runner. */
 export const normalizeArchitecture = (value: unknown): Architecture | ArchitectureError => {
   const config = fields(value, ARCHITECTURE_FIELDS, "architecture");
-  const checkedProjects = projects(config.value.projects);
-  const typeInputs = fileTypeInputs(config.value.fileTypes);
-  const typeNames = Object.keys(typeInputs.value);
-  const defaults = defaultPolicy(config.value.defaults, typeNames);
-  const fileTypes = Object.entries(typeInputs.value).map(([name, entry]) => ({ name, result: fileType(name, entry, typeNames, defaults.value) }));
+  const projects = typescriptProjects(config.value.projects);
+  const inputs = layerInputs(config.value.layers);
+  const layerNames = Object.keys(inputs.value);
+  const defaults = projectPolicy(config.value);
+  const layers = Object.entries(inputs.value).map(([name, entry]) => ({ name, result: layer(name, entry, layerNames, defaults.value) }));
   const issues = [
-    ...config.issues, ...checkedProjects.issues, ...typeInputs.issues, ...defaults.issues,
-    ...fileTypes.flatMap(({ result }) => result.issues),
+    ...config.issues, ...projects.issues, ...inputs.issues, ...defaults.issues,
+    ...layers.flatMap(({ result }) => result.issues),
   ];
   if (issues.length > 0) return new ArchitectureError(issues);
   const architecture: Architecture = freeze({
-    projects: checkedProjects.value,
+    projects: projects.value,
     defaults: defaults.value,
-    fileTypes: Object.fromEntries(fileTypes.map(({ name, result }) => [name, result.value])),
+    layers: Object.fromEntries(layers.map(({ name, result }) => [name, result.value])),
   });
   registerArchitecture(architecture);
   return architecture;
@@ -158,6 +105,6 @@ export const normalizeArchitecture = (value: unknown): Architecture | Architectu
 export const isArchitecture = (value: unknown): value is Architecture => isRecord(value) && isRegisteredArchitecture(value);
 
 /** The configuration boundary: invalid configuration fails while architecture.config.ts loads. */
-export const defineArchitecture = <const Name extends string>(config: ArchitectureInput<Name>): Architecture => {
+export const defineArchitecture = <const Layer extends string>(config: ArchitectureInput<Layer>): Architecture => {
   return orThrow(normalizeArchitecture(config));
 };

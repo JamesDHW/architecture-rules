@@ -1,10 +1,10 @@
 import { defineArchitecture } from "../../src/config/defineArchitecture.js";
 import type { Architecture } from "../../src/config/types.js";
-import { buildTsconfig } from "../../src/generateTsconfig.js";
 import { temporaryRoot, tsconfigJson, writeFiles } from "./fixtures.js";
+import { presetCompilerOptions } from "./preset.js";
 
-/** The compiler options the package requires, for fixtures that write their own tsconfig. */
-export const requiredOptions = buildTsconfig().compilerOptions;
+/** The preset's compiler options, for fixtures that write their own tsconfig. */
+export const requiredOptions = presetCompilerOptions();
 
 /** A temporary project with one domain model and a bundler-style tsconfig, plus the given files. */
 export const projectFixture = (files: Readonly<Record<string, string>> = {}, compilerOptions: Readonly<Record<string, unknown>> = {}): string => {
@@ -20,8 +20,8 @@ export const projectFixture = (files: Readonly<Record<string, string>> = {}, com
 /** Domain may import only domain; adapters may import domain. */
 export const twoLayerArchitecture = (): Architecture => defineArchitecture({
   projects: { tsconfigs: ["tsconfig.json"] },
-  fileTypes: {
-    domain: { description: "Domain", files: ["src/domain/**"], imports: { internal: ["domain"] } },
-    adapter: { description: "Adapter", files: ["src/adapters/**"], imports: { internal: ["domain"] } },
+  layers: {
+    domain: { description: "Domain", files: ["src/domain/**"], dependencies: { internal: ["domain"] } },
+    adapter: { description: "Adapter", files: ["src/adapters/**"], dependencies: { internal: ["domain"] } },
   },
 });

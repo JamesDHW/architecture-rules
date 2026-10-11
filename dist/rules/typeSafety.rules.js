@@ -76,7 +76,7 @@ export const noUnsafeTypeAssertionRule = defineNativeOxlintRule({
     title: "Do not use narrowing type assertions",
     description: `
 Off by default: no-type-assertions already rejects every assertion, so this
-rule would only report the same casts a second time. Enable it in a file type
+rule would only report the same casts a second time. Enable it in a layer
 that relaxes no-type-assertions (for example a boundary adapter) to keep
 rejecting the unsafe subset: assertions that narrow a value to a type the
 compiler cannot verify.

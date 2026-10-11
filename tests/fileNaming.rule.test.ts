@@ -1,119 +1,67 @@
+import type { RuleTester } from "oxlint/plugins-dev";
+
 import { fileNamingRule } from "../src/rules/fileNaming.rule.js";
 import { runCustomRule } from "./utils/runCustomRule.js";
 
-const rulesPolicy = { architecture: { case: "camel", suffixes: [".test", ".rule.test"] } };
+type TestOptions = NonNullable<Exclude<Parameters<RuleTester["run"]>[2]["valid"][number], string>["options"]>;
 
-const hookPolicy = { architecture: { case: "camel", prefix: "use", allowedNames: ["page.tsx"] } };
+const rulesPolicy = { architecture: { case: "camelCase", suffixes: [".rule", ".test"] } };
+const hookPolicy = { architecture: { case: "camelCase", prefix: "use", allowedNames: ["page.tsx"] } };
+const testPolicy = { architecture: { case: "camelCase", requiredSuffix: ".test", suffixes: [".rule"] } };
+const componentPolicy = { architecture: { case: ["PascalCase", "kebab-case"], prefix: ["Admin", "admin-"] } };
+const snakePolicy = { architecture: { case: "snake_case", requiredSuffix: [".model", ".view"] } };
 
-const clientPolicy = {
-  allow: {
-    framework: ["**/page.tsx", "**/layout.tsx"],
-  },
-  banned: ["utils.ts", "utils.tsx", "helpers.ts", "helpers.tsx"],
-  suffixes: {
-    ".hook.ts": "pascal",
-    ".constants.ts": "camel",
-    ".tsx": "pascal",
-    ".ts": "pascalOrCamel",
-  },
-};
+const file = (filename: string, options: TestOptions) => ({ filename, options, code: "export const value = 1;\n" });
 
 runCustomRule(fileNamingRule, {
   valid: [
-    {
-      name: "any filename when the client supplies no policy",
-      filename: "src/project-editor.tsx",
-      code: "export const ProjectEditor = () => null;\n",
-    },
-    {
-      name: "generic dumping-ground names when the client supplies no policy",
-      filename: "src/utils.ts",
-      code: "export const identity = <Value>(value: Value) => value;\n",
-    },
-    {
-      name: "PascalCase component with client suffix rules",
-      filename: "src/ProjectEditor.tsx",
-      options: [clientPolicy],
-      code: "export const ProjectEditor = () => null;\n",
-    },
-    {
-      name: "PascalCase hook module with client suffix rules",
-      filename: "src/ProjectEditor.hook.ts",
-      options: [clientPolicy],
-      code: "export const useProjectEditor = () => ({});\n",
-    },
-    {
-      name: "camelCase module with client suffix rules",
-      filename: "src/createProject.ts",
-      options: [clientPolicy],
-      code: "export const createProject = () => ({});\n",
-    },
-    {
-      name: "camelCase constants suffix with client suffix rules",
-      filename: "src/foo.constants.ts",
-      options: [clientPolicy],
-      code: "export const foo = 1;\n",
-    },
-    {
-      name: "framework page allowed by named glob group",
-      filename: "src/app/page.tsx",
-      options: [clientPolicy],
-      code: "export const Page = () => null;\n",
-    },
-    {
-      name: "architecture policy: the longest matching suffix is removed before the case check",
-      filename: "tests/noLet.rule.test.ts",
-      options: [rulesPolicy],
-      code: "export const cases = [];\n",
-    },
-    {
-      name: "architecture policy: required prefix present",
-      filename: "src/useProject.ts",
-      options: [hookPolicy],
-      code: "export const useProject = () => ({});\n",
-    },
-    {
-      name: "architecture policy: allowed framework name skips case and prefix",
-      filename: "src/app/page.tsx",
-      options: [hookPolicy],
-      code: "export const Page = () => null;\n",
-    },
+    { name: "any filename without a naming policy", ...file("src/project-editor.tsx", []) },
+    { name: "generic names are not banned without a policy", ...file("src/utils.ts", []) },
+    { name: "optional suffixes stack", ...file("tests/noLet.rule.test.ts", [rulesPolicy]) },
+    { name: "optional suffixes are optional", ...file("src/noLet.ts", [rulesPolicy]) },
+    { name: "required prefix present", ...file("src/useProject.ts", [hookPolicy]) },
+    { name: "an allowed framework name skips case and prefix", ...file("src/app/page.tsx", [hookPolicy]) },
+    { name: "required suffix present, with an optional suffix before it", ...file("tests/noLet.rule.test.ts", [testPolicy]) },
+    { name: "required suffix alone", ...file("tests/parseArgs.test.ts", [testPolicy]) },
+    { name: "one of several cases: PascalCase", ...file("src/AdminPanel.tsx", [componentPolicy]) },
+    { name: "one of several cases: kebab-case with its prefix", ...file("src/admin-panel.tsx", [componentPolicy]) },
+    { name: "snake_case with one of several required suffixes", ...file("src/user_account.model.ts", [snakePolicy]) },
   ],
   invalid: [
     {
-      name: "architecture policy: wrong case reports the suffix it removed",
-      filename: "tests/NoLet.rule.test.ts",
-      options: [rulesPolicy],
-      code: "export const cases = [];\n",
-      errors: [{ message: "Filename 'NoLet.rule.test.ts' must use camel case before .rule.test. See rule file-naming." }],
+      name: "wrong case reports the suffixes it removed",
+      ...file("tests/NoLet.rule.test.ts", [rulesPolicy]),
+      errors: [{ message: "Filename 'NoLet.rule.test.ts' must use camelCase before .rule.test. See rule file-naming." }],
     },
     {
-      name: "architecture policy: missing prefix",
-      filename: "src/project.ts",
-      options: [hookPolicy],
-      code: "export const project = {};\n",
+      name: "missing prefix",
+      ...file("src/project.ts", [hookPolicy]),
       errors: [{ message: "Filename 'project.ts' must start with 'use'. See rule file-naming." }],
     },
     {
-      name: "snake_case component with client suffix rules",
-      filename: "src/project_editor.tsx",
-      options: [clientPolicy],
-      code: "export const ProjectEditor = () => null;\n",
-      errors: [{ messageId: "invalidFilename" }],
+      name: "missing required suffix",
+      ...file("tests/fixtures.ts", [testPolicy]),
+      errors: [{ message: "Filename 'fixtures.ts' must end with '.test' before its extension. See rule file-naming." }],
     },
     {
-      name: "kebab-case component with client suffix rules",
-      filename: "src/project-editor.tsx",
-      options: [clientPolicy],
-      code: "export const ProjectEditor = () => null;\n",
-      errors: [{ messageId: "invalidFilename" }],
+      name: "a known suffix outside the list does not count",
+      ...file("tests/noLet.spec.ts", [testPolicy]),
+      errors: [{ message: "Filename 'noLet.spec.ts' must end with '.test' before its extension. See rule file-naming." }],
     },
     {
-      name: "generic utils filename with client banned list",
-      filename: "src/utils.ts",
-      options: [clientPolicy],
-      code: "export const identity = <Value>(value: Value) => value;\n",
-      errors: [{ messageId: "bannedFilename" }],
+      name: "none of several cases",
+      ...file("src/admin_panel.tsx", [componentPolicy]),
+      errors: [{ message: "Filename 'admin_panel.tsx' must use PascalCase or kebab-case. See rule file-naming." }],
+    },
+    {
+      name: "none of several prefixes",
+      ...file("src/UserPanel.tsx", [componentPolicy]),
+      errors: [{ message: "Filename 'UserPanel.tsx' must start with 'Admin' or 'admin-'. See rule file-naming." }],
+    },
+    {
+      name: "kebab-case is not snake_case",
+      ...file("src/user-account.view.ts", [snakePolicy]),
+      errors: [{ message: "Filename 'user-account.view.ts' must use snake_case before .view. See rule file-naming." }],
     },
   ],
 });

@@ -23,18 +23,20 @@ const targetIssues = (context, node, target) => {
         return [issueAt(context, node, `Import target escapes architecture root: ${target}`)];
     if (classified === undefined)
         return [issueAt(context, node, `Import target is not governed source: ${relativePath(context.root, actual)}`)];
-    if (context.file.policy.imports.internal.includes(classified.type))
+    if (context.file.policy.dependencies.internal.includes(classified.layer))
         return [];
-    return [issueAt(context, node, `File type ${context.file.type} may not import ${classified.type}: ${classified.relative}`)];
+    return [issueAt(context, node, `Layer ${context.file.layer} may not import ${classified.layer}: ${classified.relative}`)];
 };
+/** Built-ins are permitted as node: specifiers, whichever way the import spells them. */
 const builtinIssues = (context, node, specifier) => {
-    if (matches(specifier.replace(/^node:/, ""), context.file.policy.imports.builtins))
+    const prefixed = `node:${specifier.replace(/^node:/, "")}`;
+    if (matches(prefixed, context.file.policy.dependencies.external))
         return [];
-    return [issueAt(context, node, `Built-in import is not permitted: ${specifier}`)];
+    return [issueAt(context, node, `External import is not permitted: ${prefixed}`)];
 };
 const assetIssues = (context, node, specifier, asset) => {
     const actual = realpathSync(asset);
-    const isPermitted = inside(context.root, actual) && matches(relativePath(context.root, actual), context.file.policy.imports.assets);
+    const isPermitted = inside(context.root, actual) && matches(relativePath(context.root, actual), context.file.policy.dependencies.assets);
     return isPermitted ? [] : [issueAt(context, node, `Asset import is not permitted: ${specifier}`)];
 };
 const moduleIssues = (context, node, specifier, isLocal) => {
@@ -50,7 +52,7 @@ const moduleIssues = (context, node, specifier, isLocal) => {
     if (declarations.length === 0) {
         return [issueAt(context, node, `Unresolved external import: ${specifier} (project ${relativePath(context.root, context.project.configFileName)})`)];
     }
-    if (matches(specifier, context.file.policy.imports.external))
+    if (matches(specifier, context.file.policy.dependencies.external))
         return [];
     return [issueAt(context, node, `External import is not permitted: ${specifier}`)];
 };
@@ -126,7 +128,7 @@ const tripleSlashIssues = (context) => {
         return [issueAt(context, source, `Unresolved reference path: ${reference.fileName}`)];
     });
     const typeIssues = source.typeReferenceDirectives
-        .filter((reference) => !matches(reference.fileName, file.policy.imports.external))
+        .filter((reference) => !matches(reference.fileName, file.policy.dependencies.external))
         .map((reference) => issueAt(context, source, `Type reference is not permitted: ${reference.fileName}`));
     return [...pathIssues, ...typeIssues];
 };

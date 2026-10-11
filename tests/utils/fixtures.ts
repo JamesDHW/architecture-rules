@@ -6,7 +6,7 @@ import { expect, onTestFinished } from "vitest";
 import { openProjects, type Projects } from "../../src/analysis/projects.js";
 import type { Architecture } from "../../src/config/types.js";
 import { ArchitectureError } from "../../src/errors/architectureError.js";
-import { buildTsconfig } from "../../src/generateTsconfig.js";
+import { presetCompilerOptions } from "./preset.js";
 
 /** A fresh directory, removed when the current test finishes. */
 export const temporaryRoot = (prefix: string): string => {
@@ -24,9 +24,9 @@ export const writeFiles = (root: string, files: Readonly<Record<string, string>>
   }
 };
 
-/** The package's required compiler options plus the given project settings, as tsconfig JSON. */
+/** The preset's compiler options plus the given project settings, as tsconfig JSON. */
 export const tsconfigJson = (compilerOptions: Readonly<Record<string, unknown>>, scope: Readonly<Record<string, unknown>>): string => {
-  return JSON.stringify({ compilerOptions: { ...buildTsconfig().compilerOptions, ...compilerOptions }, ...scope });
+  return JSON.stringify({ compilerOptions: { ...presetCompilerOptions(), ...compilerOptions }, ...scope });
 };
 
 /** Opens the fixture's TypeScript projects and closes them when the current test finishes. */

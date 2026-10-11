@@ -26,7 +26,7 @@ const lint = (code: string) => new Linter().verify(code, {
 
 describe("domain-owned-dispatch compatibility", () => {
   it("is enabled by default", () => {
-    const architecture = defineArchitecture({ projects: { tsconfigs: ["tsconfig.json"] }, fileTypes: { app: { description: "Application", files: ["src/**"] } } });
+    const architecture = defineArchitecture({ projects: { tsconfigs: ["tsconfig.json"] }, layers: { app: { description: "Application", files: ["src/**"] } } });
     expect(architecture.defaults.rules["domain-owned-dispatch"]?.severity).toBe("error");
   });
 

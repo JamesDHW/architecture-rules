@@ -4,10 +4,10 @@ import { defineRule } from "../core/defineRule.js";
 import { withPlaceholders } from "./messagePlaceholders.js";
 
 const DESCRIPTION = `
-Import only capabilities allowed for the importing file's architectural type.
-Internal edges are checked against resolved target types, external packages
-against explicit specifier patterns, built-ins against normalized names, and
-assets against explicit paths. Omission grants no permission. Re-exports and
+Import only what the importing file's layer lists in its dependencies.
+Internal edges are checked against the resolved target's layer, packages and
+node: built-ins against the external specifier patterns, and assets against
+explicit paths. Omission grants no permission. Re-exports and
 type-only imports are dependencies too. Nonliteral module loading requires a
 reasoned exception. Dynamic runtime loaders/eval and transitive function purity
 are not proved by this check. The architecture runner supplies resolved edge

@@ -13,52 +13,86 @@ import { fileNamingRule } from "../src/rules/fileNaming.rule.js";
 import { allowedImportsRule } from "../src/rules/allowedImports.rule.js";
 
 const appPolicy = (architecture: Architecture): EffectivePolicy => {
-  const policy = architecture.fileTypes.app?.policy;
-  return policy ?? expect.unreachable("the app file type is defined");
+  const policy = architecture.layers.app?.policy;
+  return policy ?? expect.unreachable("the app layer is defined");
 };
 
-const base = { projects: { tsconfigs: ["tsconfig.json"] }, fileTypes: { app: { description: "Application", files: ["src/**"] } } };
+const app = { description: "Application", files: ["src/**"] };
+const base = { projects: { tsconfigs: ["tsconfig.json"] }, layers: { app } };
+
+const issuesOf = (input: unknown): readonly string[] => {
+  const result = normalizeArchitecture(input);
+  return result instanceof ArchitectureError ? result.issues : [];
+};
 
 describe("architecture configuration", () => {
-  it("has conservative imports and no naming assumptions", () => {
+  it("denies every dependency by default and makes no naming assumptions", () => {
     const a = defineArchitecture(base);
     expect(a.defaults.naming).toBeUndefined();
-    expect(a.fileTypes.app?.policy.imports).toEqual({ internal: [], external: [], builtins: [], assets: [] });
+    expect(appPolicy(a).dependencies).toEqual({ internal: [], external: [], assets: [] });
+    expect(appPolicy(a).origins.dependencies).toBe("deny by default");
     expect(Object.isFrozen(a)).toBe(true);
   });
   it("preserves options with severity and replaces explicit objects", () => {
-    const a = defineArchitecture({ ...base, defaults: { rules: { "max-file-lines": ["error", { max: 250, skipComments: false }] }, imports: { internal: ["app"] } }, fileTypes: { app: { ...base.fileTypes.app, rules: { "max-file-lines": { severity: "warn", reason: "Migration" } } } } });
-    expect(a.fileTypes.app?.policy.rules["max-file-lines"]).toMatchObject({ severity: "warn", options: [{ max: 250, skipComments: false }], origin: "fileTypes.app", reason: "Migration" });
-    expect(a.fileTypes.app?.policy.imports.internal).toEqual(["app"]);
-    const b = defineArchitecture({ ...base, defaults: { rules: { "max-file-lines": ["error", { max: 250, skipComments: false }] }, imports: { internal: ["app"] } }, fileTypes: { app: { ...base.fileTypes.app, imports: {}, rules: { "max-file-lines": { options: { max: 100 }, reason: "Focused files" } } } } });
-    expect(b.fileTypes.app?.policy.rules["max-file-lines"]?.options).toEqual([{ max: 100 }]);
-    expect(b.fileTypes.app?.policy.imports.internal).toEqual([]);
+    const projectWide = { rules: { "max-file-lines": ["error", { max: 250, skipComments: false }] } } as const;
+    const a = defineArchitecture({
+      ...base, ...projectWide,
+      layers: { app: { ...app, dependencies: { internal: ["app"] }, rules: { "max-file-lines": { severity: "warn", reason: "Migration" } } } },
+    });
+    expect(a.layers.app?.policy.rules["max-file-lines"]).toMatchObject({ severity: "warn", options: [{ max: 250, skipComments: false }], origin: "layers.app", reason: "Migration" });
+    expect(appPolicy(a).dependencies.internal).toEqual(["app"]);
+    expect(appPolicy(a).origins.dependencies).toBe("layers.app");
+    const b = defineArchitecture({ ...base, ...projectWide, layers: { app: { ...app, rules: { "max-file-lines": { options: { max: 100 }, reason: "Focused files" } } } } });
+    expect(b.layers.app?.policy.rules["max-file-lines"]?.options).toEqual([{ max: 100 }]);
+    expect(appPolicy(b).dependencies.internal).toEqual([]);
   });
   it.each([
     { ...base, extra: true },
     { ...base, projects: { tsconfigs: [] } },
+    { ...base, projects: ["tsconfig.json"] },
+    { ...base, projects: { tsconfigs: ["tsconfig.json"], references: "all" } },
+    { ...base, typescript: { projects: ["tsconfig.json"] } },
     { ...base, files: { toolingFiles: ["src/**"] } },
-    { ...base, files: { generated: [{ files: ["dist/**"], reason: " " }] } },
-    { ...base, defaults: { naming: { case: "kebab" } } },
-    { ...base, defaults: { imports: { internal: ["unknown"] } } },
-    { ...base, defaults: { rules: { unknown: "error" } } },
-    { ...base, defaults: { rules: { "max-file-lines": ["error", { max: "bad" }] } } },
-    { ...base, defaults: { rules: { "max-file-lines": ["error", { unknown: true }] } } },
-    { ...base, defaults: { rules: { "no-binding-alias": ["error", {}] } } },
-    { ...base, defaults: { rules: { "no-binding-alias": { severity: "off", reason: "" } } } },
-    { ...base, defaults: { rules: { "strict-typescript": "warn" } } },
-    { ...base, fileTypes: { app: { ...base.fileTypes.app, rules: { "strict-typescript": "off" } } } },
-    { ...base, fileTypes: { app: { ...base.fileTypes.app, generated: { reason: " " } } } },
-    { ...base, fileTypes: { app: { ...base.fileTypes.app, generated: { reason: "Codegen", extra: true } } } },
-    { ...base, fileTypes: { app: { ...base.fileTypes.app, generated: { reason: "Codegen" }, rules: { "max-file-lines": "off" } } } },
-    { ...base, defaults: { generated: { reason: "Codegen" } } },
+    { ...base, naming: { case: "kebab" } },
+    { ...base, naming: { case: "camel" } },
+    { ...base, naming: { case: [] } },
+    { ...base, naming: { case: "camelCase", prefix: [] } },
+    { ...base, dependencies: { zod: "Validation." } },
+    { ...base, dependencies: { internal: ["app"] } },
+    { ...base, imports: { layers: ["app"] } },
+    { ...base, layers: { app: { ...app, imports: { layers: ["app"] } } } },
+    { ...base, layers: { app: { ...app, dependencies: { internal: ["unknown"] } } } },
+    { ...base, layers: { app: { ...app, dependencies: { packages: ["zod"] } } } },
+    { ...base, layers: { app: { ...app, dependencies: { external: "zod" } } } },
+    { ...base, rules: { unknown: "error" } },
+    { ...base, rules: { "max-file-lines": ["error", { max: "bad" }] } },
+    { ...base, rules: { "max-file-lines": ["error", { unknown: true }] } },
+    { ...base, rules: { "no-binding-alias": ["error", {}] } },
+    { ...base, rules: { "no-binding-alias": { severity: "off", reason: "" } } },
+    { ...base, rules: { "strict-typescript": "warn" } },
+    { ...base, layers: { app: { ...app, rules: { "strict-typescript": "off" } } } },
+    { ...base, layers: { app: { ...app, generated: { reason: " " } } } },
+    { ...base, layers: { app: { ...app, generated: { reason: "Codegen", extra: true } } } },
+    { ...base, layers: { app: { ...app, generated: { reason: "Codegen" }, rules: { "max-file-lines": "off" } } } },
+    { ...base, generated: { reason: "Codegen" } },
+    { projects: { tsconfigs: ["tsconfig.json"] }, fileTypes: { app } },
   ])("rejects invalid runtime input %#", (input) => expect(normalizeArchitecture(input)).toBeInstanceOf(ArchitectureError));
   it("reports every configuration problem at once, then throws at the API boundary", () => {
-    const input = { ...base, defaults: { naming: { case: "kebab" }, imports: { internal: ["unknown"] } } };
-    const result = normalizeArchitecture(input);
-    expect(result).toBeInstanceOf(ArchitectureError);
-    expect(result instanceof ArchitectureError ? result.issues : []).toEqual(["Invalid defaults.naming.case", "Unknown internal file type: unknown"]);
-    expect(() => orThrow(result)).toThrow("Invalid defaults.naming.case");
+    const input = { ...base, naming: { case: "kebab" }, layers: { app: { ...app, dependencies: { internal: ["unknown"] } } } };
+    expect(issuesOf(input)).toEqual([
+      "naming.case must be camelCase, PascalCase, kebab-case, snake_case or a list of them",
+      "layers.app.dependencies.internal: unknown layer 'unknown'",
+    ]);
+    expect(() => orThrow(normalizeArchitecture(input))).toThrow("naming.case must be camelCase");
+  });
+  it("writes Node built-ins one way, with the node: prefix", () => {
+    const withExternal = (external: readonly string[]): unknown => ({ ...base, layers: { app: { ...app, dependencies: { external } } } });
+    expect(issuesOf(withExternal(["react", "react/jsx-runtime", "@tanstack/react-router/**", "node:fs", "node:fs/promises", "node:*"]))).toEqual([]);
+    expect(issuesOf(withExternal(["fs", "fs/promises", "node:nope"]))).toEqual([
+      "layers.app.dependencies.external: write the Node built-in 'fs' as 'node:fs'",
+      "layers.app.dependencies.external: write the Node built-in 'fs/promises' as 'node:fs/promises'",
+      "layers.app.dependencies.external: 'node:nope' is not a Node built-in",
+    ]);
   });
   it("validates all existing default lint configurations against pinned schemas", () => {
     const defaults = defaultRules();
@@ -68,18 +102,18 @@ describe("architecture configuration", () => {
       expect(validateOptions(rule.id, defaults[rule.id]?.options ?? [])).toEqual([]);
     }
   });
-  it("classifies paths independently of naming and never merges types", () => {
-    const a = defineArchitecture({ ...base, defaults: { naming: { case: "pascal" } }, fileTypes: { app: { ...base.fileTypes.app, exclude: ["**/*.test.ts"] }, tests: { description: "Tests", files: ["**/*.test.ts"] } } });
+  it("classifies paths independently of naming and never merges layers", () => {
+    const a = defineArchitecture({ ...base, naming: { case: "PascalCase" }, layers: { app: { ...app, exclude: ["**/*.test.ts"] }, tests: { description: "Tests", files: ["**/*.test.ts"] } } });
     expect(classify(a, "src/abc.ts")).toEqual(["app"]);
     expect(classify(a, "src/abc.test.ts")).toEqual(["tests"]);
-    const overlap = defineArchitecture({ ...base, fileTypes: { app: base.fileTypes.app, second: base.fileTypes.app } });
+    const overlap = defineArchitecture({ ...base, layers: { app, second: app } });
     expect(classify(overlap, "src/abc.ts")).toEqual(["app", "second"]);
   });
   it("enforces names after selecting files", () => {
-    expect(namingError("src/abc.ts", { case: "pascal" })).toContain("pascal");
-    expect(namingError("src/Abc.d.ts", { case: "pascal" })).toBeUndefined();
-    expect(namingError("src/Abc.test.ts", { case: "pascal" })).toBeDefined();
-    expect(namingError("src/Abc.test.ts", { case: "pascal", suffixes: [".test"] })).toBeUndefined();
+    expect(namingError("src/abc.ts", { case: "PascalCase" })).toContain("PascalCase");
+    expect(namingError("src/Abc.d.ts", { case: "PascalCase" })).toBeUndefined();
+    expect(namingError("src/Abc.test.ts", { case: "PascalCase" })).toBeDefined();
+    expect(namingError("src/Abc.test.ts", { case: "PascalCase", suffixes: [".test"] })).toBeUndefined();
   });
   it("bridges source diagnostics into ordinary lint suppressions", () => {
     const verify = (code: string) => new Linter().verify(code, {
@@ -89,25 +123,25 @@ describe("architecture configuration", () => {
     expect(verify("// comment\nimport './x.js';")).toHaveLength(1);
     expect(verify("// eslint-disable-next-line architecture/allowed-imports -- external boundary\nimport './x.js';")).toEqual([]);
   });
-  it("records why a file type is generated", () => {
-    const a = defineArchitecture({ ...base, fileTypes: { app: { ...base.fileTypes.app, generated: { reason: "Written by the router plugin" } } } });
-    expect(a.fileTypes.app?.policy.generated).toEqual({ reason: "Written by the router plugin" });
-    expect(defineArchitecture(base).fileTypes.app?.policy.generated).toBeUndefined();
+  it("records why a layer is generated", () => {
+    const a = defineArchitecture({ ...base, layers: { app: { ...app, generated: { reason: "Written by the router plugin" } } } });
+    expect(a.layers.app?.policy.generated).toEqual({ reason: "Written by the router plugin" });
+    expect(defineArchitecture(base).layers.app?.policy.generated).toBeUndefined();
   });
   it("lets configuration files use a default export", () => {
     const policy = appPolicy(defineArchitecture(base));
     const config = compileOxlintConfig([
-      { path: "/project/vite.config.ts", relative: "vite.config.ts", type: "app", policy },
-      { path: "/project/src/config.ts", relative: "src/config.ts", type: "app", policy },
+      { path: "/project/vite.config.ts", relative: "vite.config.ts", layer: "app", policy },
+      { path: "/project/src/config.ts", relative: "src/config.ts", layer: "app", policy },
     ], []);
     expect(config.overrides?.[0]?.rules?.["import/no-default-export"]).toBe("off");
     expect(config.overrides?.[1]?.rules?.["import/no-default-export"]).toEqual(["error"]);
   });
   it("compiles only one effective policy per selected file", () => {
-    const a = defineArchitecture({ ...base, defaults: { naming: { case: "pascal" } } });
+    const a = defineArchitecture({ ...base, naming: { case: "PascalCase" } });
     const policy = appPolicy(a);
-    const config = compileOxlintConfig([{ path: "/project/src/abc.ts", relative: "src/abc.ts", type: "app", policy }], []);
+    const config = compileOxlintConfig([{ path: "/project/src/abc.ts", relative: "src/abc.ts", layer: "app", policy }], []);
     expect(config.overrides).toHaveLength(1);
-    expect(config.overrides?.[0]?.rules?.["architecture/file-naming"]).toEqual(["error", { architecture: { case: "pascal" } }]);
+    expect(config.overrides?.[0]?.rules?.["architecture/file-naming"]).toEqual(["error", { architecture: { case: "PascalCase" } }]);
   });
 });

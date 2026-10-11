@@ -8,7 +8,7 @@ export type Issue = {
 export type ClassifiedFile = {
     readonly path: string;
     readonly relative: string;
-    readonly type: string;
+    readonly layer: string;
     readonly policy: EffectivePolicy;
 };
 export type Inventory = {

@@ -8,8 +8,8 @@ export declare const fileInventoryRule: {
 };
 export declare const fileClassificationRule: {
     readonly id: "file-classification";
-    readonly title: "Assign each source file exactly one architectural type";
-    readonly description: "Select by root-relative path patterns minus explicit per-type exclusions. Zero or multiple matching types are errors. Naming validates after selection and never changes membership. Defaults are inherited policy, not another file type. Actual overlaps are checked on every run, not inferred by merging glob overrides.";
+    readonly title: "Assign each source file exactly one layer";
+    readonly description: "Select by root-relative path patterns minus explicit per-layer exclusions. Zero or multiple matching layers are errors. Naming validates after selection and never changes membership. Project-wide settings are inherited policy, not another layer. Actual overlaps are checked on every run, not inferred by merging glob overrides.";
     readonly enforcement: {
         readonly type: "architecture";
     };

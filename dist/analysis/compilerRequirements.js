@@ -15,7 +15,7 @@ const ruleIssues = (rule, project, options) => {
         ...mismatches.map(([key, expected]) => ({
             ruleId: rule.id,
             file: project,
-            message: `Expected effective compilerOptions.${key} = ${JSON.stringify(expected)}; received ${describeValue(options[key])}. Extend architecture-rules/tsconfig.base.json or set it explicitly.`,
+            message: `Expected effective compilerOptions.${key} = ${JSON.stringify(expected)}; received ${describeValue(options[key])}. Extend architecture-rules/tsconfig or set it explicitly.`,
         })),
         ...weakened.map((key) => ({ ruleId: rule.id, file: project, message: `Explicit ${key}: false weakens strict mode.` })),
     ];
