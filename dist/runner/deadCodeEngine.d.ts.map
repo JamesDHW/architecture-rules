@@ -1,0 +1,1 @@
+{"version":3,"file":"deadCodeEngine.d.ts","sourceRoot":"","sources":["../../src/runner/deadCodeEngine.ts"],"names":[],"mappings":"AAKA,OAAO,EAAE,iBAAiB,EAAE,MAAM,gCAAgC,CAAC;AACnE,OAAO,EAAgB,KAAK,MAAM,EAAE,MAAM,sBAAsB,CAAC;AAgBjE,qGAAqG;AACrG,eAAO,MAAM,GAAG,SAAgB,MAAM,cAAc,MAAM,cAAc,OAAO,KAAG,OAAO,CAAC,SAAS,MAAM,EAAE,GAAG,iBAAiB,CAO9H,CAAC"}

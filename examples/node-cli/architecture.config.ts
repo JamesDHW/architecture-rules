@@ -16,9 +16,10 @@ export default defineArchitecture({
       files: ["src/adapters/**/*.ts"],
       dependencies: { internal: ["domain", "adapter"], external: ["node:fs/promises", "node:path", "node:child_process"] },
     },
-    entry: {
+    cli: {
       description: "CLI input parsing and composition.",
       files: ["src/main.ts"],
+      entry: { reason: "package.json's bin runs this file." },
       dependencies: { internal: ["domain", "adapter"], external: ["node:util"] },
     },
   },

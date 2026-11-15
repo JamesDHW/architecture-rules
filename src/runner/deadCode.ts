@@ -1,8 +1,5 @@
-import { spawn, type ChildProcess } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { createRequire } from "node:module";
-import { dirname, join } from "node:path";
-import { text } from "node:stream/consumers";
+import { join } from "node:path";
 
 import type { ClassifiedFile } from "../analysis/inventory.js";
 import { matches } from "../analysis/paths.js";
@@ -12,31 +9,9 @@ import { ArchitectureError } from "../errors/architectureError.js";
 import { afterCleanup } from "../errors/results.js";
 import { tryCatch, tryCatchAsync } from "../errors/tryCatch.js";
 import { compileDeadCodeConfig, isEntryFile, type DeadCodeConfig } from "./compileDeadCodeConfig.js";
-import { devDependencyMessage, exportRules, message, parseReports, projectRules, ruleByIssueType, type Report } from "./deadCodeReports.js";
+import { run } from "./deadCodeEngine.js";
+import { devDependencyMessage, exportRules, message, projectRules, ruleByIssueType, type Report } from "./deadCodeReports.js";
 import type { Finding } from "./findings.js";
-
-const requireFromPackage = createRequire(import.meta.url);
-
-/** The engine's command; its package exports no package.json, so it is found from its main module in dist/. */
-const engine = (): string => join(dirname(dirname(requireFromPackage.resolve("knip"))), "bin/knip.js");
-
-const exitCode = async (child: ChildProcess): Promise<number | ArchitectureError> => new Promise((finish) => {
-  child.on("error", (error) => {
-    finish(new ArchitectureError([`The dead-code analysis could not start: ${error.message}`], { cause: error }));
-  });
-  child.on("close", (code) => {
-    finish(code ?? 1);
-  });
-});
-
-const run = async (root: string, configPath: string, production: boolean): Promise<readonly Report[] | ArchitectureError> => {
-  const args = ["--config", configPath, "--reporter", "json", "--no-progress", "--no-config-hints", "--no-exit-code", ...(production ? ["--production", "--strict"] : [])];
-  const child = spawn(process.execPath, [engine(), ...args], { cwd: root, stdio: ["ignore", "pipe", "pipe"] });
-  const [output, errors, code] = await Promise.all([text(child.stdout), text(child.stderr), exitCode(child)]);
-  if (code instanceof ArchitectureError) return code;
-  if (code !== 0) return new ArchitectureError([`The dead-code analysis exited with code ${code}: ${errors.trim().slice(0, 500)}`]);
-  return parseReports(output);
-};
 
 type Context = {
   readonly architecture: Architecture;
@@ -111,9 +86,13 @@ const allowList = (setting: EffectiveRule | undefined): readonly string[] => {
   return isUnknownArray(allow) ? allow.filter(isString) : [];
 };
 
+/** This package is used by architecture.config.ts and its own command, which the analysis does not see. */
+const checkerPackage = "architecture-rules";
+
 const isAllowed = (context: Context, entry: Classified): boolean => {
   if (!projectRules.has(entry.ruleId)) return false;
-  return matches(entry.report.name, allowList(context.architecture.defaults.rules[entry.ruleId]));
+  const isChecker = entry.ruleId === "unused-dependencies" && entry.report.name === checkerPackage;
+  return isChecker || matches(entry.report.name, allowList(context.architecture.defaults.rules[entry.ruleId]));
 };
 
 /** An allow-list entry that matched nothing is dead configuration too. */

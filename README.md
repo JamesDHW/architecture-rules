@@ -1,6 +1,6 @@
 # architecture-rules
 
-Write down how your TypeScript project is built (its layers, what each may depend on, and its coding rules) in one `architecture.config.ts`, and have TypeScript and Oxlint check every file against it, deterministically.
+Write down how your TypeScript project is built (its layers, what each may depend on, where it starts, and its coding rules) in one `architecture.config.ts`, and have one command check every file against it, deterministically: structure, lint rules, compiler errors and dead code. The editor shows exactly the same findings.
 
 Requires **Node.js 24+**.
 
@@ -11,13 +11,15 @@ from the outside in, in the order you make decisions on a new project:
 
 1. **Stack**: the language and runtime. Architecture rules assumes TS as the stack.
 2. **Packages**: the third-party packages the project uses. `package.json` already lists them, so the configuration does not repeat that list.
-3. **Layers**: the kinds of file the codebase contains and where they live. Every source file belongs to exactly one layer.
+3. **Layers**: the kinds of file the codebase contains and where they live. Every source file belongs to exactly one layer. A layer can be an **entry** (something outside the program loads it) or **development** only (it never ships).
 4. **Dependencies**: what each layer may import: other layers (`internal`), and packages and Node built-ins (`external`). Anything not listed is denied.
 5. **Rules**: per-file rules that narrow how code inside a layer may be written.
 
 The per-file rules take their cue from Go: where TypeScript offers several ways to express the same logic, pick one and enforce it. No `else`, no `let`, no unnamed compound conditions, one way to branch over a union. Two files doing similar work should look alike, so a reader (human or agent) spends their attention on the business logic, not on the author's style.
 
-TypeScript and Oxlint check every decision automatically instead of leaving it to review. Each rule carries its own reasoning, so an agent that hits a violation learns why the rule exists, not just how to silence it. Exceptions are local and explicit, and each one needs a written reason.
+`architecture-check` checks every decision automatically instead of leaving it to review. Each rule carries its own reasoning, so an agent that hits a violation learns why the rule exists, not just how to silence it. Exceptions are local and explicit, and each one needs a written reason.
+
+Nothing is left over either: every file must be reachable from an entry, every export imported, every package used, and every line of the configuration itself (each dependency grant, each pattern, each allowance) must still be needed.
 
 ## Quick start
 
@@ -38,6 +40,12 @@ export default defineArchitecture({
 
   // 3. Layers, each with 4. the dependencies it may have.
   layers: {
+    app: {
+      description: "Starts the program.",
+      files: ["src/main.ts"],
+      entry: { reason: "package.json's bin runs this file." },
+      dependencies: { internal: ["domain", "adapter"] },
+    },
     domain: {
       description: "Business decisions and models. No I/O.",
       files: ["src/domain/**/*.ts"],
@@ -46,7 +54,14 @@ export default defineArchitecture({
     adapter: {
       description: "Talks to external systems.",
       files: ["src/adapters/**/*.ts"],
-      dependencies: { internal: ["domain", "adapter"], external: ["zod", "node:fs/promises"] },
+      dependencies: { internal: ["domain"], external: ["zod", "node:fs/promises"] },
+    },
+    tests: {
+      description: "One test file per subject.",
+      files: ["tests/**/*.test.ts"],
+      entry: { reason: "The test runner loads every test file." },
+      development: true,
+      dependencies: { internal: ["domain", "adapter"], external: ["vitest"] },
     },
   },
 
@@ -82,7 +97,7 @@ Starting points for other project shapes are in `examples/` (a React SPA, a Node
 Add something like this to your `AGENTS.md` or `CLAUDE.md`:
 
 ```md
-Before changing code, run `pnpm exec architecture-check describe` to see the layers, what each may import, and which layers may use each package. After changing code, run `pnpm exec architecture-check` and fix every finding. Do not edit architecture.config.ts or add suppressions without asking.
+Before changing code, run `pnpm exec architecture-check describe` to see the layers, what each may import, and which layers may use each package. After changing code, run `pnpm exec architecture-check` and fix every finding. Do not edit architecture.config.ts or add exceptions without asking.
 ```
 
 `describe` reads only the configuration, so it is fast. `explain <file>` shows the full effective policy for one file, including every rule setting and its origin.
@@ -171,7 +186,24 @@ routeTree: {
 },
 ```
 
-A generated layer is still classified, named, import-checked and type-checked. It is never linted, its suppression comments are not checked, and it takes no `rules`.
+A generated layer is still classified, named, import-checked and type-checked. It is never linted, its exception comments are not checked, and it takes no `rules`. Its unused exports are not reported (generators emit exports nobody calls), but a generated file that nothing imports is.
+
+**Entries** are where the program is entered from outside: a bundler, a router, a test runner, a package consumer. Everything else is used only if something imports it, so an entry is where dead code can hide, and it needs a reason:
+
+```ts
+route: {
+  description: "One file per URL.",
+  files: ["src/routes/**/*.tsx"],
+  entry: { reason: "The router loads every route file.", exports: ["Route"] },
+  dependencies: { internal: ["component", "domain"], external: ["@tanstack/react-router"] },
+},
+```
+
+- `files` (optional): only these files of the layer are entries; every file of the layer by default.
+- `exports` (optional): the exports something outside the program uses, by name, or `"all"` for a public API such as a library's index. By default none: being loaded is not being imported, so any export of an entry file is reported as unused.
+- `package.json`'s `main`, `exports` and `bin` are not entries by themselves; mark the layer that holds them.
+
+**Development layers** (`development: true`) hold code that never ships: tests, stories, scripts, tool configuration. They may use devDependencies, and they keep no production code alive: a file or export only a development layer uses is reported by `production-reachability`. Tool configuration such as `vite.config.ts` must be in a tsconfig and a layer, like any other source; otherwise the packages it imports look unused.
 
 ### 4. Dependencies
 
@@ -219,20 +251,50 @@ rules: {
 
 Settings apply in this order: the rule's default, then the project-wide `rules`, then the layer's `rules`, then a reasoned line exception. Rule IDs and options are type-checked, and validated again at runtime; an invalid setting is an error, never ignored. A severity-only change keeps inherited options; explicit options replace them. Compiler rules can only be set project-wide, to `"error"` or `"off"`. The structural checks (inventory, classification, project membership, compiler checking) cannot be turned off.
 
-**Line exceptions** use Oxlint's syntax, with named rules and a reason:
+**Line exceptions** name architecture rule ids and give a reason, on the line above or at the end of the line:
 
 ```ts
-// oxlint-disable-next-line architecture/allowed-imports -- The framework loads a configured module name.
+// architecture-disable-next-line allowed-imports -- The framework loads a configured module name.
 const plugin = await import(moduleName);
+const data = response.data; // architecture-disable-line generic-name-denylist -- The API names this field data.
 ```
 
-File-wide disables, inline rule configuration and exceptions without a reason are rejected, and unused exceptions are errors.
+File-wide exceptions, exceptions without a reason, unknown rule ids and other tools' disable or configuration comments are rejected before anything is linted. An exception that covers no finding is an error. Structural, configuration and compiler checks cannot be excepted. `--fix` never rewrites a line an exception covers, and converts reasoned disable comments from earlier versions (`// oxlint-disable-next-line architecture/no-let -- …`) into exceptions.
+
+### Dead code and dead configuration
+
+These rules are on by default, all at `error`, so nothing unused survives. They run over the whole program after the lint and compiler stages:
+
+| Rule | Fails when |
+| --- | --- |
+| `unused-files` | A file in the TypeScript programs is not reachable by imports from any entry. |
+| `unused-exports`, `unused-types` | An export nothing imports, including one used only inside its own file, and entry exports their layer does not name. |
+| `duplicate-exports` | The same value is exported under two names. |
+| `production-reachability` | A file or export of a production layer is used only by development layers. |
+| `unused-dependencies` | A package in `package.json` that no file imports, no script runs and no tool configuration uses. |
+| `unlisted-dependencies` | A package that is imported but not declared, or a devDependency that a production layer imports. |
+| `unlisted-binaries` | A script runs a command no declared package provides. |
+| `unresolved-imports` | The dead-code analysis cannot resolve an import TypeScript resolves, so its view of what is used is incomplete. |
+| `unused-permissions` | A layer grants an internal layer, external specifier or asset that none of its imports use. |
+| `unmatched-patterns` | A layer's `files`, `exclude` or `entry.files` pattern matches no source file. |
+| `competing-configuration` | Another linter's or dead-code tool's configuration is in the root (see below). |
+| `typescript-version` | The project's own TypeScript is not the checker's version, so editors would report different compiler errors. |
+
+File-level dead-code rules can be set per layer; dependency and configuration rules only project-wide. There are no ignore globs. An unused export that something outside the program really reads takes a line exception; a package used without being imported is allowed by name, with a reason, and an allowance nothing needs is itself reported:
+
+```ts
+rules: {
+  "unused-dependencies": { options: { allow: ["sharp"] }, reason: "The image service loads sharp at runtime." },
+}
+```
+
+Dead-code findings are never fixed automatically: deleting code is a decision. The dead-code stage reads `package.json` in the architecture root; without one it warns and skips.
 
 ## CLI
 
 ```sh
 architecture-check                                # check the project
-architecture-check --fix                          # apply the lint fixes Oxlint supports, then check again
+architecture-check --fix                          # apply the lint fixes that are safe, then check again
 architecture-check explain src/domain/Project.ts  # the effective policy for one file, as JSON
 architecture-check describe                       # a plain-text summary of the architecture
 architecture-check describe --json                # the same, as JSON
@@ -241,15 +303,48 @@ architecture-check --file src/domain/Project.ts    # lint and report only this f
 architecture-check --json                         # every finding, and what to write instead, as one JSON document
 architecture-check report > architecture-report.md  # Markdown: findings by rule, exceptions, overrides and layers
 architecture-check --config ./architecture.config.ts
+architecture-check lsp                            # the language server editors start
 ```
 
-A check runs in three stages: structure (inventory, classification, compiler settings, suppressions), then Oxlint with each file's policy, then TypeScript's diagnostics. Structural failures stop the run before any fix is applied. `--fix` never changes the configuration, tsconfigs, filenames or `package.json`. `describe` reports import cycles between layers and lists layers so each comes after the layers it imports.
+A check runs in four stages: structure (inventory, classification, compiler settings, exceptions, configuration), then lint with each file's policy, then TypeScript's diagnostics, then dead code. Structural failures stop the run before any fix is applied. `--fix` never changes the configuration, tsconfigs, filenames or `package.json`, and never deletes code. `describe` reports import cycles between layers and lists layers so each comes after the layers it imports.
+
+The output groups findings by file and ends with a summary:
+
+```text
+architecture-check · 2 projects · 412 files · 9 layers
+
+src/domain/order.ts
+  12:5  error    no-let          Declare this with const and compute a new value instead of reassigning. See rule no-let.
+  40:14 error    unused-exports  `formatOrder` is exported, but nothing imports it.
+
+✗ 2 errors in 1 file
+  by rule:   no-let 1 · unused-exports 1
+  by layer:  domain 2
+  stages:    structure ✓ · lint ✗ · types ✓ · dead code ✗ · 2.4s
+
+How to fix:
+  …
+```
+
+`--json` prints the same findings, the guidance and the summary as one document.
+
+## In the editor
+
+`architecture-check lsp` is a language server: on every save, and when files change on disk, it runs exactly the check the command runs and publishes its findings, with the same rule ids, messages, severities and positions, each linked to its rule's page. A configuration that does not load is shown on `architecture.config.ts`.
+
+For VS Code, `editors/vscode` is an extension that starts the workspace's own `architecture-check lsp`; see its README to install it. Other editors can start the server the same way.
+
+Findings reflect saved files, which is what makes them match the command. Compiler errors also come from the editor's own TypeScript, which matches as long as the editor uses the project's TypeScript (see `typescript-version`).
+
+### If the project already has a linter or a dead-code tool
+
+The check never reads another tool's configuration: it runs its own pinned engines with configuration compiled from `architecture.config.ts`, so an existing setup cannot change its result. But two sources of truth disagree, and editors show the other tool's warnings, so `competing-configuration` reports another linter's or dead-code tool's configuration in the root (ESLint, Biome's linter, `.oxlintrc.json`, `knip.json` and similar, or their `package.json` keys). Move the settings you still need into `architecture.config.ts` and delete the file, and turn the other tool's editor extension off for the workspace. During a migration, turn the rule off with a reason. Formatters are not affected.
 
 ## What it does not check
 
 - **Feature boundaries.** Layers are horizontal; nothing yet stops one feature from importing another feature's internals within the same layer.
 - **Purity and effects.** Calls are presumed pure; the rules check syntax, not what a function does at runtime.
-- **Installed packages.** `external` governs what may be imported, not what is in `package.json`. An import TypeScript cannot resolve is still an error.
+- **Framework-loaded code beyond entries.** The dead-code analysis knows how common tools load their configuration, and may treat files such a tool loads as used even when no layer marks them as entries. JSDoc `@public`, `@beta` and `@alias` tags also keep an export from being reported.
 - **Runtime loading.** `eval`, computed module names and other runtime loaders are not followed.
 
 ## Upgrading from earlier versions
@@ -259,13 +354,17 @@ A check runs in three stages: structure (inventory, classification, compiler set
 - `defaults.naming` and `defaults.rules` moved to the top level. `defaults.imports` is gone: every layer declares its own dependencies.
 - Naming cases are spelled out (`"camelCase"`, `"PascalCase"`); `"pascalOrCamel"` becomes `["PascalCase", "camelCase"]`. Suffixes now stack.
 - Extend `architecture-rules/tsconfig` instead of `architecture-rules/tsconfig.base.json`.
+- Exception comments are now `// architecture-disable-next-line <rule-id> -- <reason>`. Run `architecture-check --fix` once to convert reasoned `oxlint-disable`/`eslint-disable` comments.
+- Mark entry layers (`entry`) and development layers (`development: true`); until you do, the dead-code rules report every file nothing reaches.
+- Expect findings for grants, patterns and packages that are no longer used; remove them.
+- `--format json` is now `--json`, and the text output is grouped by file with a summary.
 
 ## Development
 
 ```sh
 pnpm run build             # compile src/ to dist/
 pnpm run typecheck
-pnpm test                  # ARCHITECTURE_NATIVE_TESTS=1 adds the end-to-end Oxlint smoke test
+pnpm test                  # ARCHITECTURE_NATIVE_TESTS=1 adds the end-to-end tests that run the native engines
 pnpm run test:architecture
 pnpm check                 # build, typecheck and test
 pnpm run architecture      # build, then check this repository against its own architecture
@@ -274,7 +373,7 @@ pnpm run describe          # build, then describe this repository's architecture
 
 pnpm links a package's commands only into projects that depend on it, so this repository lists itself as a dev dependency (`"architecture-rules": "link:."`). After `pnpm install`, `pnpm exec architecture-check` works here as it does in any project, running the committed `dist/`. The two scripts above rebuild first; arguments pass through (`pnpm run describe --mermaid`).
 
-This repository follows its own rules; `architecture.config.ts` at the root is both its configuration and a worked example. TypeScript's pinned 7.x API is used behind the analysis layer, so upgrading TypeScript needs the project-resolution tests to pass. Native Oxlint tests need enough virtual address space for Oxlint's buffers; an allocation failure there is an environment problem, not a pass. `dist/` is committed so Git installs work without a build step; rebuild it with your changes.
+This repository follows its own rules; `architecture.config.ts` at the root is both its configuration and a worked example. TypeScript's pinned 7.x API is used behind the analysis layer, so upgrading TypeScript needs the project-resolution tests to pass. TypeScript, the lint engines and the dead-code engine are pinned to exact versions and move together. The native tests need enough virtual address space for the lint engine's buffers; an allocation failure there is an environment problem, not a pass. `dist/` is committed so Git installs work without a build step; rebuild it with your changes.
 
 ### Generated files and the pre-commit hook
 

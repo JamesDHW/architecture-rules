@@ -9,7 +9,7 @@ import { openFixtureProjects, temporaryRoot, tsconfigJson, writeFiles } from "./
 const fixture = (rules: ProjectRules = {}) => {
   const root = temporaryRoot("architecture-dead-code-");
   writeFiles(root, {
-    "package.json": JSON.stringify({ name: "fixture", private: true, type: "module", dependencies: { "left-pad": "1.0.0" } }),
+    "package.json": JSON.stringify({ name: "fixture", private: true, type: "module", dependencies: { "left-pad": "1.0.0" }, devDependencies: { "architecture-rules": "1.0.0" } }),
     "tsconfig.json": tsconfigJson({ target: "ES2022", module: "ESNext", moduleResolution: "Bundler" }, { include: ["src/**/*.ts", "tests/**/*.ts"] }),
     "src/main.ts": "import { helper } from './domain/helper.js';\nexport const started = helper();\n",
     "src/domain/helper.ts": "export const helper = (): number => 1;\nexport const unusedHelper = (): number => 2;\nexport type Unused = string;\n",

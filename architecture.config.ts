@@ -5,13 +5,6 @@ export default defineArchitecture({
 
   naming: { case: "camelCase" },
 
-  rules: {
-    "unused-dependencies": {
-      options: { allow: ["architecture-rules"] },
-      reason: "The package links itself so pnpm exec architecture-check runs the committed dist/ here as in any project.",
-    },
-  },
-
   layers: {
     core: {
       description: "Rule definition primitives and type guards shared by every layer.",
@@ -102,7 +95,7 @@ export default defineArchitecture({
       development: true,
       dependencies: {
         internal: ["testSupport", "analysis", "config", "core", "errors"],
-        external: ["oxlint/plugins-dev", "vitest", "node:fs", "node:os", "node:path"],
+        external: ["oxlint/plugins-dev", "vitest", "node:child_process", "node:fs", "node:os", "node:path", "node:url"],
       },
     },
     typeTests: {

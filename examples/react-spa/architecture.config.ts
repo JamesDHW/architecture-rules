@@ -34,15 +34,25 @@ export default defineArchitecture({
       files: ["src/features/*/adapters/**/*.ts"],
       dependencies: { internal: ["domain", "contracts"] },
     },
-    entry: {
+    app: {
       description: "Application composition.",
       files: ["src/main.tsx"],
+      entry: { reason: "index.html loads this file." },
       dependencies: { internal: ["component", "controller", "adapter"], external: ["react", "react-dom/client"] },
     },
     tooling: {
       description: "Bundler configuration.",
       files: ["vite.config.ts"],
+      entry: { reason: "Vite loads its configuration from the default export.", exports: ["default"] },
+      development: true,
       dependencies: { external: ["vite", "@vitejs/plugin-react", "node:path", "node:url"] },
+    },
+    tests: {
+      description: "One test file per subject.",
+      files: ["tests/**/*.test.ts"],
+      entry: { reason: "Vitest runs every test file." },
+      development: true,
+      dependencies: { internal: ["domain", "contracts", "controller"], external: ["vitest"] },
     },
   },
 });
