@@ -12,6 +12,6 @@ export const withPlaceholders = (
   descriptor: Rule.ReportDescriptor,
   placeholders: MessagePlaceholders,
 ): Rule.ReportDescriptor => {
-  // oxlint-disable-next-line eslint/id-denylist -- ESLint's report descriptor API requires the placeholder field to be named data.
+  // architecture-disable-next-line generic-name-denylist -- ESLint's report descriptor API requires the placeholder field to be named data.
   return { ...descriptor, data: placeholders };
 };

@@ -26,10 +26,10 @@ I prefer the exact condition to be visible at the point of use rather than requi
 
 Compare explicitly: name.length > 0, count !== 0, project !== undefined.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line typescript/strict-boolean-expressions -- <the concrete reason this line needs it>
+// architecture-disable-next-line explicit-conditions -- <the concrete reason this line needs it>
 ```

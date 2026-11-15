@@ -12,10 +12,10 @@ Runtime collections do not guarantee that an index or key exists.
 
 Use .at(index), so a missing element is part of the result's type.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line unicorn/prefer-at -- <the concrete reason this line needs it>
+// architecture-disable-next-line prefer-at -- <the concrete reason this line needs it>
 ```

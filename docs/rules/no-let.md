@@ -17,12 +17,12 @@ State that must outlive a function call lives in a *.state.ts module (see rule n
 
 Declare with const and compute a new value; keep long-lived state in a *.state.ts module.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/no-let -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-let -- <the concrete reason this line needs it>
 ```
 
 ## Workarounds to avoid

@@ -24,12 +24,12 @@ Independent conditional effects are not duplicate outcomes: both may execute, an
 
 Combine adjacent guards that return the same value into one named condition.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/one-path-one-result -- <the concrete reason this line needs it>
+// architecture-disable-next-line one-path-one-result -- <the concrete reason this line needs it>
 ```
 
 ## Examples

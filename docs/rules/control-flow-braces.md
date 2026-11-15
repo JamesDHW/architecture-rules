@@ -32,12 +32,12 @@ Compact guards make terminal checks easy to scan. Braces around other bodies mak
 
 Add braces around the body; only a single-line terminal guard such as `if (isDone) return result;` may omit them.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/control-flow-braces -- <the concrete reason this line needs it>
+// architecture-disable-next-line control-flow-braces -- <the concrete reason this line needs it>
 ```
 
 ## Examples

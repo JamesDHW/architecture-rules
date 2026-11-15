@@ -23,12 +23,12 @@ The check is syntactic: it follows containers created with [], {}, new Map, new 
 
 Build a new value inside the function, or move long-lived state into a *.state.ts module.
 
-## When to suppress
+## When to make an exception
 
 A third-party API hands you a callback that must record into state you created; prefer a *.state.ts module first.
 
 ```ts
-// oxlint-disable-next-line architecture/no-captured-mutation -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-captured-mutation -- <the concrete reason this line needs it>
 ```
 
 ## Examples

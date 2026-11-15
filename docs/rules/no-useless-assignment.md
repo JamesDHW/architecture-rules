@@ -12,10 +12,10 @@ Return or pass the value at the point it is known.
 
 Use or return the value where it is computed instead of storing it for later.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line eslint/no-useless-assignment -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-useless-assignment -- <the concrete reason this line needs it>
 ```

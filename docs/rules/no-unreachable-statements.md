@@ -12,10 +12,10 @@ Good: publishProject(); return; Bad: return; publishProject(); Unreachable work 
 
 Move or delete the code after the return, throw or break.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line eslint/no-unreachable -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-unreachable-statements -- <the concrete reason this line needs it>
 ```

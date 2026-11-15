@@ -35,12 +35,12 @@ A predicate name communicates domain intention; the narrow structural exception 
 
 Name the compound condition and test the name: const canEdit = isOwner || isAdmin;
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/named-predicates -- <the concrete reason this line needs it>
+// architecture-disable-next-line named-predicates -- <the concrete reason this line needs it>
 ```
 
 ## Workarounds to avoid

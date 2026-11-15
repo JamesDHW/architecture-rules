@@ -12,12 +12,12 @@ A named divisibility predicate states the intention and can be reused in excepti
 
 Wrap the remainder test in a named predicate such as isDivisibleBy(value, divisor).
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/named-divisibility -- <the concrete reason this line needs it>
+// architecture-disable-next-line named-divisibility -- <the concrete reason this line needs it>
 ```
 
 ## Examples

@@ -1,10 +1,14 @@
 <!-- Generated from the rule definitions and test cases in src/rules by pnpm build. Do not edit. -->
 
-# Keep lint exceptions narrow and explained
+# Keep exceptions narrow and explained
 
 `reasoned-suppressions` · Structural check; lint comments cannot suppress it
 
-Use named-rule disable-line or disable-next-line comments with a nonempty -- reason. Do not use file-wide disables or inline rule reconfiguration to change architecture policy. Structural checks cannot be suppressed by lint comments. The runtime also reports unused directives as errors.
+Make an exception for one line with `// architecture-disable-next-line <rule-id> -- <reason>` above it, or `// architecture-disable-line <rule-id> -- <reason>` at its end. Name architecture rule ids and give a nonempty reason. File-wide exceptions, exceptions without a reason and the underlying engines' own disable or configuration comments are rejected. Structural and compiler checks cannot be excepted. An exception that covers no finding is an error.
+
+## What to write instead
+
+Fix the finding; if you can't, write `// architecture-disable-next-line <rule-id> -- <the concrete reason>` above the line.
 
 ## Workarounds to avoid
 
@@ -13,7 +17,7 @@ Code like this satisfies the rule's wording while missing its point.
 ### A reason that names no cost
 
 ```ts
-// oxlint-disable-next-line architecture/no-let -- needed
+// architecture-disable-next-line no-let -- needed
 let retryCount = 0;
 ```
 

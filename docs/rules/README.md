@@ -92,7 +92,7 @@ Each page explains one rule: why it exists, what to write instead, when a suppre
 | [`project-membership`](project-membership.md) | Govern all local TypeScript program sources | Structural check; lint comments cannot suppress it |  |
 | [`pure-conditions`](pure-conditions.md) | Keep conditions free of explicit effects | Lint rule | error by default |
 | [`readonly-type-properties`](readonly-type-properties.md) | Declare data as recursively readonly | Lint rule | error by default |
-| [`reasoned-suppressions`](reasoned-suppressions.md) | Keep lint exceptions narrow and explained | Structural check; lint comments cannot suppress it |  |
+| [`reasoned-suppressions`](reasoned-suppressions.md) | Keep exceptions narrow and explained | Structural check; lint comments cannot suppress it |  |
 | [`reduce-simple-folds`](reduce-simple-folds.md) | Use reduce only for simple folds | Lint rule, built on `unicorn/no-array-reduce` | error by default, with options `[{"allowSimpleOperations":true}]` |
 | [`rules-of-hooks`](rules-of-hooks.md) | Follow the Rules of Hooks | Lint rule, built on `react/rules-of-hooks` | error by default |
 | [`scoped-case-declarations`](scoped-case-declarations.md) | Scope lexical declarations within switch cases | Lint rule, built on `eslint/no-case-declarations` | error by default |

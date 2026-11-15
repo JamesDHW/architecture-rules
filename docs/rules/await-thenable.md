@@ -10,10 +10,10 @@ Awaiting a non-promise is either a mistake or hides that the callee is synchrono
 
 Remove the await: the value is not a promise.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line typescript/await-thenable -- <the concrete reason this line needs it>
+// architecture-disable-next-line await-thenable -- <the concrete reason this line needs it>
 ```

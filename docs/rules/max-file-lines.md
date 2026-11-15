@@ -12,10 +12,10 @@ A bounded file can be understood without navigating a large collection of unrela
 
 Split the file by responsibility: move one cohesive concept into its own file.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line eslint/max-lines -- <the concrete reason this line needs it>
+// architecture-disable-next-line max-file-lines -- <the concrete reason this line needs it>
 ```

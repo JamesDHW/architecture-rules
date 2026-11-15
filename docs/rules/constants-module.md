@@ -12,12 +12,12 @@ A consistent suffix makes policy values easy to locate and keeps executable modu
 
 Move the SCREAMING_CASE constant into a sibling *.constants.ts module and import it.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/constants-module -- <the concrete reason this line needs it>
+// architecture-disable-next-line constants-module -- <the concrete reason this line needs it>
 ```
 
 ## Examples

@@ -10,10 +10,10 @@ Do not reassign bindings or introduce function-scoped var. Immutable const bindi
 
 Declare the binding with const and compute new values instead of reassigning.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line eslint/no-var -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-var -- <the concrete reason this line needs it>
 ```

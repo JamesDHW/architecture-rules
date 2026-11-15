@@ -10,10 +10,10 @@ Effect and memoization dependency lists that omit reactive values hide stale clo
 
 List every value the callback uses in its dependency array.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line react/exhaustive-deps -- <the concrete reason this line needs it>
+// architecture-disable-next-line exhaustive-deps -- <the concrete reason this line needs it>
 ```

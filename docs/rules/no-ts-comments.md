@@ -12,10 +12,10 @@ Escape hatches move type errors away from their cause and make readers trust cla
 
 Fix the type error, or validate the value, instead of silencing the compiler.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line typescript/ban-ts-comment -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-ts-comments -- <the concrete reason this line needs it>
 ```

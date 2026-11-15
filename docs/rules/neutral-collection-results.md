@@ -18,10 +18,10 @@ Native enforcement covers recognized useless length checks, not every adjacent r
 
 Drop the emptiness check: map, filter and similar operations already return an empty result.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line unicorn/no-useless-length-check -- <the concrete reason this line needs it>
+// architecture-disable-next-line neutral-collection-results -- <the concrete reason this line needs it>
 ```

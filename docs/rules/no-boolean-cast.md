@@ -12,10 +12,10 @@ Compare the value according to the intended condition. Do not coerce with !! or 
 
 Compare explicitly instead of using !! or Boolean(): projects.length > 0.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line eslint/no-implicit-coercion -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-boolean-cast -- <the concrete reason this line needs it>
 ```

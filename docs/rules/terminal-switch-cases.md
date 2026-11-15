@@ -37,12 +37,12 @@ This syntactic rule checks the final statement, including a final nested block. 
 
 Return from every case; move shared follow-up work into a helper the case returns.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/terminal-switch-cases -- <the concrete reason this line needs it>
+// architecture-disable-next-line terminal-switch-cases -- <the concrete reason this line needs it>
 ```
 
 ## Examples

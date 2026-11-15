@@ -17,12 +17,12 @@ A component is a PascalCase binding to a function that is typed as FC or Functio
 
 Destructure the props in the parameter list: ({ title, onClose }) =>.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/destructured-props -- <the concrete reason this line needs it>
+// architecture-disable-next-line destructured-props -- <the concrete reason this line needs it>
 ```
 
 ## Examples

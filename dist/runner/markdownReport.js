@@ -36,19 +36,19 @@ const layerRows = (architecture, files) => {
 const advisoryLines = () => {
     return rules.filter((rule) => rule.enforcement.type === "advisory").map((rule) => `- \`${rule.id}\`: ${rule.title}`);
 };
-/** A Markdown report of the check: findings by rule, every suppression, configuration overrides and layers. */
-export const renderReport = ({ architecture, files, findings, suppressions }) => {
+/** A Markdown report of the check: findings by rule, every exception, configuration overrides and layers. */
+export const renderReport = ({ architecture, files, findings, exceptions }) => {
     const errorCount = findings.filter((finding) => finding.severity === "error").length;
     const summary = `${files.length} source files in ${Object.keys(architecture.layers).length} layers. `
-        + `${errorCount} errors, ${findings.length - errorCount} warnings, ${suppressions.length} suppressions.`;
-    const suppressionRows = suppressions.map(({ file, line, rules: ruleNames, reason }) => [file, String(line), ruleNames.join(", "), reason]);
+        + `${errorCount} errors, ${findings.length - errorCount} warnings, ${exceptions.length} exceptions.`;
+    const exceptionRows = exceptions.map(({ file, line, rules: ruleNames, reason }) => [file, String(line), ruleNames.join(", "), reason]);
     return [
         "# Architecture report",
         summary,
         "## Findings by rule",
         table(["Rule", "Errors", "Warnings"], findingRows(findings), "None."),
-        "## Suppressions",
-        table(["File", "Line", "Rules", "Reason"], suppressionRows, "None."),
+        "## Exceptions",
+        table(["File", "Line", "Rules", "Reason"], exceptionRows, "None."),
         "## Configuration overrides",
         table(["Where", "Rule", "Setting", "Reason"], overrideRows(architecture), "None."),
         "## Layers",

@@ -16,12 +16,12 @@ A predictable filename tells the reader which concept the module holds.
 
 Rename the file after its one concept, in the case and with a suffix its file type allows.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/file-naming -- <the concrete reason this line needs it>
+// architecture-disable-next-line file-naming -- <the concrete reason this line needs it>
 ```
 
 ## Examples

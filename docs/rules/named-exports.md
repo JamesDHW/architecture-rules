@@ -12,10 +12,10 @@ Named exports keep identifiers consistent between their definitions and imports,
 
 Export by name: export const createProject = …
 
-## When to suppress
+## When to make an exception
 
 A tool or framework loads the module from its default export. Configuration files are already exempt.
 
 ```ts
-// oxlint-disable-next-line import/no-default-export -- <the concrete reason this line needs it>
+// architecture-disable-next-line named-exports -- <the concrete reason this line needs it>
 ```

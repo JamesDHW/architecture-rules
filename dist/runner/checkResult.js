@@ -18,12 +18,12 @@ const stageStatus = (name, findings, ranPastStructure) => {
     return isSkipped ? "skipped" : "passed";
 };
 /** Assembles a check's result; stages after structure are skipped when structural findings stopped the run. */
-export const checkResult = (scope, findings, suppressions, ranPastStructure) => ({
+export const checkResult = (scope, findings, exceptions, ranPastStructure) => ({
     architecture: scope.architecture,
     projects: scope.projects,
     files: scope.files,
     findings,
-    suppressions,
+    exceptions,
     stages: stageNames.map((name) => ({ name, status: stageStatus(name, findings, ranPastStructure) })),
     durationMs: Math.round(performance.now() - scope.started),
 });

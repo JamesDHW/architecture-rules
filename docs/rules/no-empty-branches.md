@@ -18,12 +18,12 @@ Comments do not turn an empty conditional into meaningful executable behavior. D
 
 Delete the empty branch, or return explicitly for an exhaustive no-op case.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/no-empty-branches -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-empty-branches -- <the concrete reason this line needs it>
 ```
 
 ## Examples

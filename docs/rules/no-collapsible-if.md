@@ -26,12 +26,12 @@ An outer gate with multiple distinct inner operations remains allowed. Do not us
 
 Merge the nested ifs into one condition, and name it when it is compound.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/no-collapsible-if -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-collapsible-if -- <the concrete reason this line needs it>
 ```
 
 ## Examples

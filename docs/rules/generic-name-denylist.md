@@ -12,10 +12,10 @@ Specific names carry context into every use and remove the need to inspect a dec
 
 Name the value by its domain role, such as projectSummary instead of data or item.
 
-## When to suppress
+## When to make an exception
 
 An external API forces the name, such as a field called data; suppress at the single place that touches it.
 
 ```ts
-// oxlint-disable-next-line eslint/id-denylist -- <the concrete reason this line needs it>
+// architecture-disable-next-line generic-name-denylist -- <the concrete reason this line needs it>
 ```

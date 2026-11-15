@@ -12,10 +12,10 @@ One default function syntax reduces incidental variation, while arrow functions 
 
 Declare the function as a const arrow function.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line eslint/func-style -- <the concrete reason this line needs it>
+// architecture-disable-next-line prefer-arrow-functions -- <the concrete reason this line needs it>
 ```

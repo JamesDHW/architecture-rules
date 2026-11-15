@@ -27,12 +27,12 @@ Never replace an exit with a mutable control flag. Filtering eagerly evaluates a
 
 Replace break and continue with find, filter, some, or a helper that returns.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/no-loop-jumps -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-loop-jumps -- <the concrete reason this line needs it>
 ```
 
 ## Examples

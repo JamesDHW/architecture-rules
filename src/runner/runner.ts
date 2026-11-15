@@ -1,9 +1,9 @@
-import { realpathSync } from "node:fs";
+import { readFileSync, realpathSync, writeFileSync } from "node:fs";
 
 import { checkImports, type ImportIssue } from "../analysis/imports.js";
 import { inventory, type ClassifiedFile, type Issue } from "../analysis/inventory.js";
 import { openProjects, type Projects } from "../analysis/projects.js";
-import { checkSuppressions, listSuppressions } from "../analysis/suppressions.js";
+import { exceptionMigrations, readExceptions, type LineException, type SourceEdit } from "../analysis/suppressions.js";
 import type { Architecture } from "../config/types.js";
 import { ArchitectureError } from "../errors/architectureError.js";
 import { afterCleanup } from "../errors/results.js";
@@ -11,6 +11,7 @@ import { tryCatch, tryCatchAsync } from "../errors/tryCatch.js";
 import { namingError } from "../rules/namingPolicy.js";
 import { checkResult, type CheckResult, type CheckScope } from "./checkResult.js";
 import { compilerFindings } from "./compilerDiagnostics.js";
+import { applyExceptions, exceptedRulesByFile } from "./exceptions.js";
 import { explainFile } from "./explain.js";
 import { sortFindings, structuralFinding, type Finding } from "./findings.js";
 import { lint } from "./oxlint.js";
@@ -52,16 +53,25 @@ const inScope = (selected: readonly ClassifiedFile[], options: InspectOptions) =
   return (finding: Finding): boolean => options.files === undefined || selectedPaths.has(finding.file);
 };
 
-const collectFindings = async (
-  root: string, opened: Projects, files: readonly ClassifiedFile[], selected: readonly ClassifiedFile[], options: InspectOptions,
-): Promise<readonly Finding[] | ArchitectureError> => {
+type Scoped = { readonly files: readonly ClassifiedFile[]; readonly selected: readonly ClassifiedFile[]; readonly exceptions: readonly LineException[] };
+
+const collectFindings = async (root: string, opened: Projects, scoped: Scoped, options: InspectOptions): Promise<readonly Finding[] | ArchitectureError> => {
+  const { files, selected, exceptions } = scoped;
   const linted = selected.filter((file) => !isGenerated(file));
   const imports = checkImports(root, files, opened.projects);
   const generatedIssues = generatedFileIssues(selected.filter(isGenerated), imports);
-  const lintFindings = await lint(root, linted, imports, opened.projects, options.fix === true);
+  const guard = options.fix === true ? exceptedRulesByFile(exceptions) : undefined;
+  const lintFindings = await lint(root, linted, imports, opened.projects, guard);
   if (lintFindings instanceof ArchitectureError) return lintFindings;
   const compilerErrors = compilerFindings(root, opened.projects).filter(inScope(selected, options));
-  return [...generatedIssues.map(structuralFinding), ...lintFindings, ...compilerErrors];
+  return applyExceptions([...generatedIssues.map(structuralFinding), ...lintFindings, ...compilerErrors], exceptions);
+};
+
+/** Structural issues, and the line exceptions of the linted files, before anything is linted. */
+const structure = (opened: Projects, files: readonly ClassifiedFile[], issues: readonly Issue[]) => {
+  // Generated output is never linted, so its exception comments (often a file-wide disable) are not checked either.
+  const read = readExceptions(files.filter((file) => !isGenerated(file)), opened.projects);
+  return { issues: [...opened.issues, ...issues, ...read.issues], exceptions: read.exceptions };
 };
 
 const inspectOpened = async (
@@ -70,15 +80,33 @@ const inspectOpened = async (
   const tree = inventory(root, architecture, opened.sources);
   const selected = selectFiles(tree.files, options.files);
   if (selected instanceof ArchitectureError) return selected;
-  // Generated output is never linted, so its suppression comments (often a file-wide disable) are not checked either.
-  const linted = tree.files.filter((file) => !isGenerated(file));
-  const structural = [...opened.issues, ...tree.issues, ...checkSuppressions(linted, opened.projects)];
+  const checked = structure(opened, tree.files, tree.issues);
+  const selectedPaths = new Set(selected.map((file) => file.relative));
+  const exceptions = checked.exceptions.filter((exception) => selectedPaths.has(exception.file));
   const scope: CheckScope = { architecture, projects: opened.projects.length, files: selected, started };
-  const suppressions = listSuppressions(selected, opened.projects);
-  if (structural.length > 0) return checkResult(scope, sortFindings(structural.map(structuralFinding)), suppressions, false);
-  const findings = await collectFindings(root, opened, tree.files, selected, options);
+  if (checked.issues.length > 0) return checkResult(scope, sortFindings(checked.issues.map(structuralFinding)), exceptions, false);
+  const findings = await collectFindings(root, opened, { files: tree.files, selected, exceptions }, options);
   if (findings instanceof ArchitectureError) return findings;
-  return checkResult(scope, sortFindings(findings), suppressions, true);
+  return checkResult(scope, sortFindings(findings), exceptions, true);
+};
+
+/** Applies non-overlapping edits to one file: the untouched text between them, with each edit's replacement. */
+const applyEdits = (path: string, edits: readonly SourceEdit[]): void => {
+  const text = readFileSync(path, "utf8");
+  const sorted = edits.toSorted((left, right) => left.start - right.start);
+  const previousEnd = (index: number): number => (index === 0 ? 0 : sorted.at(index - 1)?.end ?? 0);
+  const pieces = sorted.flatMap((edit, index) => [text.slice(previousEnd(index), edit.start), edit.replacement]);
+  writeFileSync(path, [...pieces, text.slice(sorted.at(-1)?.end ?? 0)].join(""));
+};
+
+/** --fix converts reasoned engine disable comments into exceptions before anything else is checked. */
+const migrateExceptions = async (root: string, architecture: Architecture, opened: Projects): Promise<number> => {
+  const tree = inventory(root, architecture, opened.sources);
+  const edits = exceptionMigrations(tree.files.filter((file) => !isGenerated(file)), opened.projects);
+  for (const [path, fileEdits] of Map.groupBy(edits, (edit) => edit.path)) {
+    applyEdits(path, fileEdits);
+  }
+  return edits.length;
 };
 
 const withProjects = async <Result>(
@@ -98,6 +126,10 @@ const withProjects = async <Result>(
 export const inspectArchitecture = async (rootPath: string, architecture: Architecture, options: InspectOptions = {}): Promise<CheckResult | ArchitectureError> => {
   const started = performance.now();
   const root = realpathSync(rootPath);
+  if (options.fix === true) {
+    const migrated = await withProjects(root, architecture, async (opened) => migrateExceptions(root, architecture, opened));
+    if (migrated instanceof ArchitectureError) return migrated;
+  }
   const result = await withProjects(root, architecture, async (opened) => inspectOpened(root, architecture, opened, options, started));
   const isFinal = options.fix !== true || result instanceof ArchitectureError;
   if (isFinal) return result;
@@ -108,9 +140,7 @@ export const inspectArchitecture = async (rootPath: string, architecture: Archit
 const explain = async (root: string, architecture: Architecture, file: string): Promise<number | ArchitectureError> => {
   return withProjects(root, architecture, async (opened) => {
     const tree = inventory(root, architecture, opened.sources);
-    const linted = tree.files.filter((candidate) => !isGenerated(candidate));
-    const structural = [...opened.issues, ...tree.issues, ...checkSuppressions(linted, opened.projects)];
-    return explainFile(root, architecture, opened, tree, structural, file);
+    return explainFile(root, architecture, opened, tree, structure(opened, tree.files, tree.issues).issues, file);
   });
 };
 

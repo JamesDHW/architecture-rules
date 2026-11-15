@@ -79,7 +79,7 @@ const implementation = {
     create(context) {
         const guards = readGuardNames(context.options);
         const [optionIssue] = overlappingGuardIssues(guards);
-        // oxlint-disable-next-line architecture/no-raw-exceptions -- ESLint and Oxlint reject invalid rule options when create() throws.
+        // architecture-disable-next-line no-raw-exceptions -- ESLint and Oxlint reject invalid rule options when create() throws.
         if (optionIssue !== undefined)
             throw new Error(optionIssue);
         const configuredGuards = [...guards.nullish, ...guards.presence].join(", ");

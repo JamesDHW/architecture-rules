@@ -30,7 +30,7 @@ const loadTypeScriptConfigAsModule = (configPath: string, configUrl: string): vo
 };
 
 const importConfig = async (configUrl: string): Promise<unknown> => {
-  // oxlint-disable-next-line architecture/allowed-imports -- Load the user-selected trusted architecture definition.
+  // architecture-disable-next-line allowed-imports -- Load the user-selected trusted architecture definition.
   return import(configUrl);
 };
 

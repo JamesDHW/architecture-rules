@@ -18,12 +18,12 @@ Move effectful acquisition before the decision. Function bodies created in a con
 
 Compute the effect into a const first, then test the const.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/pure-conditions -- <the concrete reason this line needs it>
+// architecture-disable-next-line pure-conditions -- <the concrete reason this line needs it>
 ```
 
 ## Examples

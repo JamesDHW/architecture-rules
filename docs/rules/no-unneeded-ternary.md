@@ -12,10 +12,10 @@ Stopping the flow instead of accumulating conversions prevents unwanted behaviou
 
 Use the condition itself instead of condition ? true : false.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line eslint/no-unneeded-ternary -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-unneeded-ternary -- <the concrete reason this line needs it>
 ```

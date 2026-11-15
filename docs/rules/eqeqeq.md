@@ -10,10 +10,10 @@ Only boolean-typed expressions may be tested directly. Compare values explicitly
 
 Use === or !==.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line eslint/eqeqeq -- <the concrete reason this line needs it>
+// architecture-disable-next-line eqeqeq -- <the concrete reason this line needs it>
 ```

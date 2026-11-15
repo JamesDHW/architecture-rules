@@ -22,12 +22,12 @@ Only const declarations are aliases: reassignment is covered by no-let, no-var a
 
 Use the original name, or compute a genuinely new value; import names as they are exported.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/no-binding-alias -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-binding-alias -- <the concrete reason this line needs it>
 ```
 
 ## Examples

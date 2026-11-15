@@ -12,10 +12,10 @@ A chain of if/else/else if keeps extra conditions in mind, especially when neste
 
 Drop the else after the return and continue the main path.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line eslint/no-else-return -- <the concrete reason this line needs it>
+// architecture-disable-next-line guard-clauses -- <the concrete reason this line needs it>
 ```

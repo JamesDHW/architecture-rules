@@ -26,12 +26,12 @@ Native switch-exhaustiveness enforcement remains responsible for union coverage.
 
 Route by an explicit domain field and let the child reducer own its action union.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/domain-owned-dispatch -- <the concrete reason this line needs it>
+// architecture-disable-next-line domain-owned-dispatch -- <the concrete reason this line needs it>
 ```
 
 ## Examples

@@ -17,4 +17,16 @@ export const diagnosticCode = (lintName) => {
     const [plugin, ...name] = lintName.split("/");
     return `${plugin ?? ""}(${name.join("/")})`;
 };
+/** Lint rules can be excepted on a line; structural and compiler checks always apply. */
+export const isExceptable = (rule) => {
+    switch (rule.enforcement.type) {
+        case "oxlint":
+        case "custom-oxlint":
+            return true;
+        case "typescript":
+        case "advisory":
+        case "architecture":
+            return false;
+    }
+};
 //# sourceMappingURL=lintNames.js.map

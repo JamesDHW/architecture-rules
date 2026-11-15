@@ -12,10 +12,10 @@ Explicit props expose a component's inputs where it is used and prevent unrelate
 
 List the props at the call site instead of spreading an object.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line react/jsx-props-no-spreading -- <the concrete reason this line needs it>
+// architecture-disable-next-line explicit-jsx-props -- <the concrete reason this line needs it>
 ```

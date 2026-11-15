@@ -30,7 +30,7 @@ const result = (findings: readonly Finding[]): CheckResult => ({
   projects: 2,
   files: [file("src/domain/order.ts", "domain"), file("src/routes/about.tsx", "route")],
   findings,
-  suppressions: [],
+  exceptions: [],
   stages: [{ name: "structure", status: "passed" }, { name: "lint", status: findings.length === 0 ? "passed" : "failed" }, { name: "types", status: "passed" }],
   durationMs: 2400,
 });

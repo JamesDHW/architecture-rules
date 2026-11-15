@@ -10,10 +10,10 @@ Case braces are optional for simple returns. Good: case 'success': { const label
 
 Wrap the case body in braces when it declares a binding.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line eslint/no-case-declarations -- <the concrete reason this line needs it>
+// architecture-disable-next-line scoped-case-declarations -- <the concrete reason this line needs it>
 ```

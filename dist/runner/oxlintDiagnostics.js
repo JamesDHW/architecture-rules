@@ -25,13 +25,6 @@ const position = (labels) => {
     const column = span?.["column"];
     return { ...(typeof line === "number" ? { line } : {}), ...(typeof column === "number" ? { column } : {}) };
 };
-/** The engine reports unused disable directives without a rule code; reasoned-suppressions owns them. */
-const unusedDirective = /^Unused \S+-disable directive/;
-const ruleIdFor = (code, message) => {
-    if (unusedDirective.test(message))
-        return "reasoned-suppressions";
-    return ruleIdsByCode.get(code) ?? code;
-};
 const toFinding = (root, diagnostic) => {
     if (!isRecord(diagnostic))
         return undefined;
@@ -43,7 +36,7 @@ const toFinding = (root, diagnostic) => {
     return {
         source: "lint",
         severity: severity === "warning" ? "warning" : "error",
-        ruleId: ruleIdFor(label, message),
+        ruleId: ruleIdsByCode.get(label) ?? label,
         file: relativePath(root, resolve(root, filename)),
         ...position(labels),
         message,

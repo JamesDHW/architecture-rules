@@ -10,7 +10,7 @@ import type { ClassifiedFile } from "../analysis/inventory.js";
 import { ArchitectureError } from "../errors/architectureError.js";
 import { afterCleanup, allOrError } from "../errors/results.js";
 import { tryCatch, tryCatchAsync } from "../errors/tryCatch.js";
-import { compileOxlintConfig } from "./compileOxlintConfig.js";
+import { compileOxlintConfig, type FixGuard } from "./compileOxlintConfig.js";
 import { isError, type Finding } from "./findings.js";
 import { parseOxlintOutput } from "./oxlintDiagnostics.js";
 
@@ -61,7 +61,7 @@ const batches = (files: readonly ClassifiedFile[]): readonly (readonly Classifie
 
 const oxlintArguments = (configPath: string, project: Project, files: readonly ClassifiedFile[], fix: boolean): readonly string[] => [
   "--config", configPath, "--disable-nested-config", "--no-ignore", "--type-aware", "--tsconfig", project.configFileName,
-  "--report-unused-disable-directives-severity", "error", "--format", "json", ...(fix ? ["--fix"] : []), ...files.map((file) => file.path),
+  "--format", "json", ...(fix ? ["--fix"] : []), ...files.map((file) => file.path),
 ];
 
 /** Runs each invocation in turn, so --fix runs never race, and keeps every run's findings. */
@@ -93,15 +93,15 @@ const runOxlint = async (
  * engine's relative globs resolve. The directory is created after inventory and always removed.
  */
 export const lint = async (
-  root: string, files: readonly ClassifiedFile[], imports: readonly ImportIssue[], projects: readonly Project[], fix: boolean,
+  root: string, files: readonly ClassifiedFile[], imports: readonly ImportIssue[], projects: readonly Project[], fix: FixGuard | undefined,
 ): Promise<readonly Finding[] | ArchitectureError> => {
   if (files.length === 0) return [];
   const directory = tryCatch(() => mkdtempSync(join(root, ".architecture-run-")));
   if (directory instanceof ArchitectureError) return directory;
   const configPath = join(directory, "oxlint.json");
   const outcome = await tryCatchAsync(async () => {
-    writeFileSync(configPath, JSON.stringify(compileOxlintConfig(files, imports)));
-    return runOxlint(root, configPath, files, projects, fix);
+    writeFileSync(configPath, JSON.stringify(compileOxlintConfig(files, imports, fix)));
+    return runOxlint(root, configPath, files, projects, fix !== undefined);
   });
   const cleanup = tryCatch(() => {
     rmSync(directory, { recursive: true, force: true });

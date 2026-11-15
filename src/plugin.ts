@@ -13,5 +13,5 @@ const plugin: ESLint.Plugin = {
   rules: customRules,
 };
 
-// oxlint-disable-next-line import/no-default-export -- Oxlint loads a JS plugin from its module's default export.
+// architecture-disable-next-line named-exports -- Oxlint loads a JS plugin from its module's default export.
 export default plugin;

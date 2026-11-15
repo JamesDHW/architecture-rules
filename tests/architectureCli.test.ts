@@ -148,12 +148,12 @@ describe("packaged CLI", () => {
     expect(result.stdout).toContain("docs/rules/file-naming.md");
   });
   it.runIf(process.env.ARCHITECTURE_NATIVE_TESTS === "1")("prints a Markdown report", () => {
-    const root = rootFixture("// oxlint-disable-next-line architecture/no-let -- The fixture needs one suppression.\nlet count = 1;\nexport const value = count;");
+    const root = rootFixture("// architecture-disable-next-line no-let -- The fixture needs one exception.\nlet count = 1;\nexport const value = count;");
     const result = run(["report"], root);
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).toContain("# Architecture report");
     expect(result.stdout).toContain("| file-naming | 1 | 0 |");
-    expect(result.stdout).toContain("The fixture needs one suppression.");
+    expect(result.stdout).toContain("The fixture needs one exception.");
   });
   it.runIf(process.env.ARCHITECTURE_NATIVE_TESTS === "1")("reports Pascal naming through the actual Oxlint runner", () => {
     const root = rootFixture();

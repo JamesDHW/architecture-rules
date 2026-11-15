@@ -12,10 +12,10 @@ A cycle makes neither module independently understandable and obscures initializ
 
 Break the cycle: extract the shared concept into its own module, or inject the dependency.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line import/no-cycle -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-cycle -- <the concrete reason this line needs it>
 ```

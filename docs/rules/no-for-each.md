@@ -12,10 +12,10 @@ The iteration form should reveal whether code directly transforms data, construc
 
 Use map or filter to build values, or for...of to perform effects.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line unicorn/no-array-for-each -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-for-each -- <the concrete reason this line needs it>
 ```

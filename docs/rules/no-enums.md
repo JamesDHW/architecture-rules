@@ -12,12 +12,12 @@ Literal unions work directly as discriminants, preserve exact serializable value
 
 Use a union of string literals instead of an enum.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/no-enums -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-enums -- <the concrete reason this line needs it>
 ```
 
 ## Examples

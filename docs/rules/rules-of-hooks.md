@@ -10,10 +10,10 @@ Hooks must run in the same order on every render. Conditional or nested hook cal
 
 Call hooks unconditionally, at the top level of a component or another hook.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line react/rules-of-hooks -- <the concrete reason this line needs it>
+// architecture-disable-next-line rules-of-hooks -- <the concrete reason this line needs it>
 ```

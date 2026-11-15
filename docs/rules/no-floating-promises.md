@@ -10,12 +10,12 @@ Floating promises hide failures and make asynchronous control flow harder to fol
 
 Await the promise or return it; when you deliberately discard it, handle its failure first.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line typescript/no-floating-promises -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-floating-promises -- <the concrete reason this line needs it>
 ```
 
 ## Workarounds to avoid

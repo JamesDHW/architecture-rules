@@ -19,10 +19,10 @@ Explicit branches remain appropriate when null and undefined mean different thin
 
 Use ?? to default a missing value.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line typescript/prefer-nullish-coalescing -- <the concrete reason this line needs it>
+// architecture-disable-next-line nullish-defaults -- <the concrete reason this line needs it>
 ```

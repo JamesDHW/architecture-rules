@@ -1,6 +1,6 @@
 import type { ArchitectureRule, RuleEvasion } from "../../core/defineRule.js";
 import type { RuleCases } from "../../core/ruleCases.js";
-import { lintRuleName } from "../../rules/lintNames.js";
+import { isExceptable } from "../../rules/lintNames.js";
 import { casesMarkdown } from "./renderCases.js";
 import { descriptionMarkdown, fence, inlineCode } from "./markdown.js";
 import { defaultSetting, enforcementLabel } from "./ruleKind.js";
@@ -11,11 +11,10 @@ const insteadSection = (rule: ArchitectureRule): readonly string[] => {
 };
 
 const suppressionSection = (rule: ArchitectureRule): readonly string[] => {
-  const name = lintRuleName(rule);
-  if (name === undefined) return [];
-  const comment = fence(`// oxlint-disable-next-line ${name} -- <the concrete reason this line needs it>`, "ts");
+  if (!isExceptable(rule)) return [];
+  const comment = fence(`// architecture-disable-next-line ${rule.id} -- <the concrete reason this line needs it>`, "ts");
   const when = rule.suppressWhen ?? "Only when complying would make the code worse, and the reason can be stated concretely.";
-  return ["## When to suppress", when, comment];
+  return ["## When to make an exception", when, comment];
 };
 
 const evasionMarkdown = (evasion: RuleEvasion): string => {

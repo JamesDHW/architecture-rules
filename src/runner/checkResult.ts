@@ -1,5 +1,5 @@
 import type { ClassifiedFile } from "../analysis/inventory.js";
-import type { Suppression } from "../analysis/suppressions.js";
+import type { LineException } from "../analysis/suppressions.js";
 import type { Architecture } from "../config/types.js";
 import { isError, type Finding, type FindingSource } from "./findings.js";
 
@@ -15,7 +15,7 @@ export type CheckResult = {
   /** The classified files in scope: every file, or the --file selection. */
   readonly files: readonly ClassifiedFile[];
   readonly findings: readonly Finding[];
-  readonly suppressions: readonly Suppression[];
+  readonly exceptions: readonly LineException[];
   readonly stages: readonly Stage[];
   readonly durationMs: number;
 };
@@ -50,13 +50,13 @@ const stageStatus = (name: StageName, findings: readonly Finding[], ranPastStruc
 
 /** Assembles a check's result; stages after structure are skipped when structural findings stopped the run. */
 export const checkResult = (
-  scope: CheckScope, findings: readonly Finding[], suppressions: readonly Suppression[], ranPastStructure: boolean,
+  scope: CheckScope, findings: readonly Finding[], exceptions: readonly LineException[], ranPastStructure: boolean,
 ): CheckResult => ({
   architecture: scope.architecture,
   projects: scope.projects,
   files: scope.files,
   findings,
-  suppressions,
+  exceptions,
   stages: stageNames.map((name) => ({ name, status: stageStatus(name, findings, ranPastStructure) })),
   durationMs: Math.round(performance.now() - scope.started),
 });

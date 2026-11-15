@@ -36,12 +36,12 @@ An else branch forces the reader to retain the preceding predicate while followi
 
 Return early for the special case and let the main path continue without else.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/no-else -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-else -- <the concrete reason this line needs it>
 ```
 
 ## Examples

@@ -26,7 +26,7 @@ const toTesterInvalidCase = ({ errors, options, ...rest }: InvalidCase): TesterI
 const testerImplementation = (rule: ArchitectureRule): Parameters<RuleTester["run"]>[1] => {
   const { enforcement } = rule;
   assert(enforcement.type === "custom-oxlint", `${rule.id} must be a custom Oxlint rule`);
-  // oxlint-disable-next-line architecture/no-type-assertions -- Rules are typed as ESLint modules; Oxlint's RuleTester declares a structurally different module type for the same runtime shape.
+  // architecture-disable-next-line no-type-assertions -- Rules are typed as ESLint modules; Oxlint's RuleTester declares a structurally different module type for the same runtime shape.
   return enforcement.implementation as unknown as Parameters<RuleTester["run"]>[1];
 };
 

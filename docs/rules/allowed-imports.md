@@ -10,10 +10,10 @@ Import only what the importing file's layer lists in its dependencies. Internal 
 
 Import only what this file type allows (architecture-check explain <file> lists it): move the code to a file type that may import it, or inject the dependency.
 
-## When to suppress
+## When to make an exception
 
 A module is loaded by a path known only at runtime, such as a plugin named in configuration.
 
 ```ts
-// oxlint-disable-next-line architecture/allowed-imports -- <the concrete reason this line needs it>
+// architecture-disable-next-line allowed-imports -- <the concrete reason this line needs it>
 ```

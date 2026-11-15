@@ -25,12 +25,12 @@ Bodies of functions created inside a branch execute later and are not checked as
 
 Use an if with return, or a named function, instead of a nested or effectful ternary.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/simple-ternaries -- <the concrete reason this line needs it>
+// architecture-disable-next-line simple-ternaries -- <the concrete reason this line needs it>
 ```
 
 ## Examples

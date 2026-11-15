@@ -12,10 +12,10 @@ One type-definition syntax removes an arbitrary choice and composes consistently
 
 Declare the shape with type instead of interface.
 
-## When to suppress
+## When to make an exception
 
 Module augmentation of a third-party interface, which only an interface can do.
 
 ```ts
-// oxlint-disable-next-line typescript/consistent-type-definitions -- <the concrete reason this line needs it>
+// architecture-disable-next-line type-aliases -- <the concrete reason this line needs it>
 ```

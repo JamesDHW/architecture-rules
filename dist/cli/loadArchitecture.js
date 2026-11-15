@@ -23,7 +23,7 @@ const loadTypeScriptConfigAsModule = (configPath, configUrl) => {
     });
 };
 const importConfig = async (configUrl) => {
-    // oxlint-disable-next-line architecture/allowed-imports -- Load the user-selected trusted architecture definition.
+    // architecture-disable-next-line allowed-imports -- Load the user-selected trusted architecture definition.
     return import(configUrl);
 };
 /** Loads and validates the default export of architecture.config.ts. */

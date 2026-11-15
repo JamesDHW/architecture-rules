@@ -20,3 +20,16 @@ export const diagnosticCode = (lintName: string): string => {
   const [plugin, ...name] = lintName.split("/");
   return `${plugin ?? ""}(${name.join("/")})`;
 };
+
+/** Lint rules can be excepted on a line; structural and compiler checks always apply. */
+export const isExceptable = (rule: ArchitectureRule): boolean => {
+  switch (rule.enforcement.type) {
+    case "oxlint":
+    case "custom-oxlint":
+      return true;
+    case "typescript":
+    case "advisory":
+    case "architecture":
+      return false;
+  }
+};

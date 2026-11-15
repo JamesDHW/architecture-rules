@@ -18,10 +18,10 @@ Native enforcement rejects discarded expressions. Ordinary calls in consumed exp
 
 Use an if statement for a conditional effect instead of an && or ternary expression.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line eslint/no-unused-expressions -- <the concrete reason this line needs it>
+// architecture-disable-next-line explicit-conditional-effects -- <the concrete reason this line needs it>
 ```

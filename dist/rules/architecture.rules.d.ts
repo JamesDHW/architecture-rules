@@ -32,11 +32,12 @@ export declare const compilerCheckingRule: {
 };
 export declare const reasonedSuppressionsRule: {
     readonly id: "reasoned-suppressions";
-    readonly title: "Keep lint exceptions narrow and explained";
-    readonly description: "Use named-rule disable-line or disable-next-line comments with a nonempty -- reason. Do not use file-wide disables or inline rule reconfiguration to change architecture policy. Structural checks cannot be suppressed by lint comments. The runtime also reports unused directives as errors.";
+    readonly title: "Keep exceptions narrow and explained";
+    readonly description: "Make an exception for one line with `// architecture-disable-next-line <rule-id> -- <reason>` above it, or `// architecture-disable-line <rule-id> -- <reason>` at its end. Name architecture rule ids and give a nonempty reason. File-wide exceptions, exceptions without a reason and the underlying engines' own disable or configuration comments are rejected. Structural and compiler checks cannot be excepted. An exception that covers no finding is an error.";
+    readonly instead: "Fix the finding; if you can't, write `// architecture-disable-next-line <rule-id> -- <the concrete reason>` above the line.";
     readonly evasions: readonly [{
         readonly name: "A reason that names no cost";
-        readonly code: "// oxlint-disable-next-line architecture/no-let -- needed\nlet retryCount = 0;";
+        readonly code: "// architecture-disable-next-line no-let -- needed\nlet retryCount = 0;";
         readonly why: "Any non-empty reason passes. Say concretely what complying would cost on this line, so a reviewer can judge it.";
     }];
     readonly enforcement: {

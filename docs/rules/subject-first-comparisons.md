@@ -18,10 +18,10 @@ range notation is an intentional exception.
 
 Put the value being tested first: project.status === "archived".
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line eslint/yoda -- <the concrete reason this line needs it>
+// architecture-disable-next-line subject-first-comparisons -- <the concrete reason this line needs it>
 ```

@@ -12,10 +12,10 @@ Explicit boundary types make public contracts visible without burdening small lo
 
 Add an explicit return type to the exported function.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line typescript/explicit-module-boundary-types -- <the concrete reason this line needs it>
+// architecture-disable-next-line explicit-exported-return-types -- <the concrete reason this line needs it>
 ```

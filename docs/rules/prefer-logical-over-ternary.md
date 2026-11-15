@@ -12,10 +12,10 @@ A ternary of the form a ? a : b or a ? b : a is a disguised || or &&.
 
 Use a || b instead of a ? a : b.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line unicorn/prefer-logical-operator-over-ternary -- <the concrete reason this line needs it>
+// architecture-disable-next-line prefer-logical-over-ternary -- <the concrete reason this line needs it>
 ```

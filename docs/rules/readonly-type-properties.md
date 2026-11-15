@@ -12,12 +12,12 @@ Readonly types prevent mutation through this contract and tell readers that cons
 
 Mark every property and index signature readonly.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/readonly-type-properties -- <the concrete reason this line needs it>
+// architecture-disable-next-line readonly-type-properties -- <the concrete reason this line needs it>
 ```
 
 ## Examples

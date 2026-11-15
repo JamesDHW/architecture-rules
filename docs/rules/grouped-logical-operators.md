@@ -19,12 +19,12 @@ named predicate implementations as well as at their use sites.
 
 Parenthesize each && group inside an ||: isAdmin || (isOwner && isDraft).
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/grouped-logical-operators -- <the concrete reason this line needs it>
+// architecture-disable-next-line grouped-logical-operators -- <the concrete reason this line needs it>
 ```
 
 ## Examples

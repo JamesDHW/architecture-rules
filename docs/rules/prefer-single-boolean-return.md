@@ -12,12 +12,12 @@ Early returns that exit with true or false remain allowed when later paths retur
 
 Return the condition itself instead of if (condition) return true; return false;
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/prefer-single-boolean-return -- <the concrete reason this line needs it>
+// architecture-disable-next-line prefer-single-boolean-return -- <the concrete reason this line needs it>
 ```
 
 ## Examples

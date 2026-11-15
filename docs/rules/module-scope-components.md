@@ -12,10 +12,10 @@ Nested component declarations recreate component identity during rendering.
 
 Declare the component or hook at module scope and pass values in as props.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line react/no-unstable-nested-components -- <the concrete reason this line needs it>
+// architecture-disable-next-line module-scope-components -- <the concrete reason this line needs it>
 ```

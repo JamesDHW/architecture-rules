@@ -30,19 +30,21 @@ describe("Import and suppression checks on TypeScript programs", () => {
     expect(messages.map((issue) => issue.line)).toEqual([1, 2, 3]);
   });
   it("does not confuse comment-like strings with suppression directives", () => {
-    const root = projectFixture({ "src/domain/model.ts": `export const text = "// oxlint-disable";
-// oxlint-disable-next-line architecture/no-binding-alias -- Required public compatibility name.
+    const root = projectFixture({ "src/domain/model.ts": `export const text = "// architecture-disable";
+// architecture-disable-next-line no-binding-alias -- Required public compatibility name.
 export const other = text;` });
     const a = twoLayerArchitecture(); const opened = openFixtureProjects(root, a);
     expect(checkSuppressions(inventory(root, a, opened.sources).files, opened.projects)).toEqual([]);
   });
-  it("rejects missing reasons and inline severity reconfiguration", () => {
-    const root = projectFixture({ "src/domain/model.ts": `// oxlint-disable-next-line architecture/no-binding-alias
+  it("rejects missing reasons, file-wide exceptions and engine directives", () => {
+    const root = projectFixture({ "src/domain/model.ts": `// architecture-disable-next-line no-binding-alias
 export const value = 1;
+/* architecture-disable */
 /* eslint architecture/no-binding-alias: off */
+// oxlint-disable-next-line architecture/no-binding-alias -- Reasoned, but in the engine's syntax.
 export const other = value;` });
     const a = twoLayerArchitecture(); const opened = openFixtureProjects(root, a);
-    expect(checkSuppressions(inventory(root, a, opened.sources).files, opened.projects)).toHaveLength(2);
+    expect(checkSuppressions(inventory(root, a, opened.sources).files, opened.projects).map((issue) => issue.line)).toEqual([1, 3, 4, 5]);
   });
   it("checks built-ins as node: specifiers, however the import spells them, without local @types packages", () => {
     const root = projectFixture({

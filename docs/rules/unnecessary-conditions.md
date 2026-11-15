@@ -28,10 +28,10 @@ Redundant conditions obscure contracts and suggest unsupported uncertainty. Type
 
 Remove the check the types already rule out; accept untrusted input as unknown and validate it at the boundary.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line typescript/no-unnecessary-condition -- <the concrete reason this line needs it>
+// architecture-disable-next-line unnecessary-conditions -- <the concrete reason this line needs it>
 ```

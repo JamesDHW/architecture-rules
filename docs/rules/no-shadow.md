@@ -10,10 +10,10 @@ Do not declare a name that hides one from an enclosing scope, including an impor
 
 Rename the inner binding so it doesn't hide the outer one.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line eslint/no-shadow -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-shadow -- <the concrete reason this line needs it>
 ```

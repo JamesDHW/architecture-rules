@@ -12,12 +12,12 @@ This syntax check does not prove a closed union or stable property reads. Value-
 
 Use a switch on the value, or a readonly record when each case only maps to a value.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/prefer-switch -- <the concrete reason this line needs it>
+// architecture-disable-next-line prefer-switch -- <the concrete reason this line needs it>
 ```
 
 ## Examples

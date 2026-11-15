@@ -4,7 +4,7 @@ const reducer = (body: string) => `const reduce = (state, action) => { ${body} }
 
 const dispatch = (body: string) => reducer(`switch (action.type) { ${body} }`);
 
-// oxlint-disable-next-line eslint/id-denylist -- RuleTester matches message placeholders through a field named data.
+// architecture-disable-next-line generic-name-denylist -- RuleTester matches message placeholders through a field named data.
 const routingError = (reducerName: string) => ({ messageId: "domainRouting", data: { reducer: reducerName } });
 
 const errors = [routingError("reduceAdmin")];

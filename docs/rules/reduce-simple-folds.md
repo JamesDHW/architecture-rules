@@ -12,10 +12,10 @@ General accumulators force readers to simulate each iteration and track the accu
 
 Use map, filter, Object.fromEntries or a named helper; keep reduce for sums, minimums and maximums.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line unicorn/no-array-reduce -- <the concrete reason this line needs it>
+// architecture-disable-next-line reduce-simple-folds -- <the concrete reason this line needs it>
 ```

@@ -16,10 +16,10 @@ Use !predicate for the opposite strict-boolean case. Preserve explicit compariso
 
 Test the boolean directly (if (isReady)); keep === true only for a nullable boolean.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line typescript/no-unnecessary-boolean-literal-compare -- <the concrete reason this line needs it>
+// architecture-disable-next-line direct-boolean-conditions -- <the concrete reason this line needs it>
 ```

@@ -12,10 +12,10 @@ async/await presents asynchronous control flow in the same readable sequence as 
 
 Use await instead of .then, .catch or .finally; use Promise.all for intentional concurrency.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line promise/prefer-await-to-then -- <the concrete reason this line needs it>
+// architecture-disable-next-line async-await -- <the concrete reason this line needs it>
 ```

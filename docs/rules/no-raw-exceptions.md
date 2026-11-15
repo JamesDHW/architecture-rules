@@ -19,12 +19,12 @@ A single required API case outside the adapter can use a reasoned line suppressi
 
 Return an error value; wrap a call that can throw or reject in tryCatch or tryCatchAsync, and keep raw try/throw in the error adapter.
 
-## When to suppress
+## When to make an exception
 
 A framework requires a throw, such as a router redirect, at the one place it is required.
 
 ```ts
-// oxlint-disable-next-line architecture/no-raw-exceptions -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-raw-exceptions -- <the concrete reason this line needs it>
 ```
 
 ## Workarounds to avoid

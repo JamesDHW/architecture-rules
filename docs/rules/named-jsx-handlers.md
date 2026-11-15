@@ -14,12 +14,12 @@ Named handlers keep JSX focused on describing the interface and give behavior a 
 
 Pass a named handler, or bind one with plain values: onClick={handleRemoveClick(row.id)}.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/named-jsx-handlers -- <the concrete reason this line needs it>
+// architecture-disable-next-line named-jsx-handlers -- <the concrete reason this line needs it>
 ```
 
 ## Workarounds to avoid

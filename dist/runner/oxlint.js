@@ -52,7 +52,7 @@ const batches = (files) => {
 };
 const oxlintArguments = (configPath, project, files, fix) => [
     "--config", configPath, "--disable-nested-config", "--no-ignore", "--type-aware", "--tsconfig", project.configFileName,
-    "--report-unused-disable-directives-severity", "error", "--format", "json", ...(fix ? ["--fix"] : []), ...files.map((file) => file.path),
+    "--format", "json", ...(fix ? ["--fix"] : []), ...files.map((file) => file.path),
 ];
 /** Runs each invocation in turn, so --fix runs never race, and keeps every run's findings. */
 const runInTurn = async (root, invocations, done) => {
@@ -84,8 +84,8 @@ export const lint = async (root, files, imports, projects, fix) => {
         return directory;
     const configPath = join(directory, "oxlint.json");
     const outcome = await tryCatchAsync(async () => {
-        writeFileSync(configPath, JSON.stringify(compileOxlintConfig(files, imports)));
-        return runOxlint(root, configPath, files, projects, fix);
+        writeFileSync(configPath, JSON.stringify(compileOxlintConfig(files, imports, fix)));
+        return runOxlint(root, configPath, files, projects, fix !== undefined);
     });
     const cleanup = tryCatch(() => {
         rmSync(directory, { recursive: true, force: true });

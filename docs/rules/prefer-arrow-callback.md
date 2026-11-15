@@ -10,10 +10,10 @@ Use arrow functions for callbacks and closures. One default function syntax redu
 
 Pass an arrow function as the callback.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line eslint/prefer-arrow-callback -- <the concrete reason this line needs it>
+// architecture-disable-next-line prefer-arrow-callback -- <the concrete reason this line needs it>
 ```

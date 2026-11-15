@@ -14,7 +14,7 @@ const lintRuleName = (rule) => {
             return undefined;
     }
 };
-const policyRules = (file) => Object.fromEntries(rules.flatMap((rule) => {
+const policyRules = (file, unfixable) => Object.fromEntries(rules.flatMap((rule) => {
     const name = lintRuleName(rule);
     const setting = file.policy.rules[rule.id];
     const isConfigured = name !== undefined && setting !== undefined;
@@ -22,10 +22,12 @@ const policyRules = (file) => Object.fromEntries(rules.flatMap((rule) => {
         return [];
     // Tools load configuration files such as vite.config.ts from their default export.
     const isExemptExport = rule.id === "named-exports" && configurationFile(file.path);
-    return [[name, isExemptExport ? "off" : [setting.severity, ...setting.options]]];
+    const isOff = isExemptExport || unfixable.has(rule.id);
+    return [[name, isOff ? "off" : [setting.severity, ...setting.options]]];
 }));
-const fileRules = (file, imports) => ({
-    ...policyRules(file),
+const noRules = new Set();
+const fileRules = (file, imports, guard) => ({
+    ...policyRules(file, guard.get(file.relative) ?? noRules),
     "architecture/file-naming": file.policy.naming === undefined ? "off" : ["error", { architecture: file.policy.naming }],
     "architecture/allowed-imports": ["error", {
             issues: imports.filter((issue) => issue.file === file.relative).map(({ line, column, message }) => ({ line, column, message })),
@@ -35,11 +37,11 @@ const fileRules = (file, imports) => ({
 const exactSelector = (path) => posix(path).replace(/[[\]*?{}()!]/g, (character) => `[${character}]`);
 /** Compiles disjoint policies for the runner's child-directory config (pinned Oxlint path semantics).
  * Generated files never reach this point; the runner checks only their names and imports. */
-export const compileOxlintConfig = (files, imports) => ({
+export const compileOxlintConfig = (files, imports, guard = new Map()) => ({
     categories: { correctness: "off" },
     plugins: ["eslint", "typescript", "unicorn", "oxc", "import", "react", "jsx-a11y", "promise"],
     jsPlugins: [{ name: "architecture", specifier: fileURLToPath(new URL("../plugin.js", import.meta.url)) }],
     options: { typeAware: true },
-    overrides: files.map((file) => ({ files: [exactSelector(file.path)], rules: fileRules(file, imports) })),
+    overrides: files.map((file) => ({ files: [exactSelector(file.path)], rules: fileRules(file, imports, guard) })),
 });
 //# sourceMappingURL=compileOxlintConfig.js.map

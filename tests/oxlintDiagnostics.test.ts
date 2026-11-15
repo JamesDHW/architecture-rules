@@ -29,11 +29,6 @@ describe("parseOxlintOutput", () => {
     ]);
   });
 
-  it("attributes unused disable directives to reasoned-suppressions", () => {
-    const findings = parseOxlintOutput("/project", output(diagnostic(undefined, "Unused oxlint-disable directive (no problems were reported from architecture/no-let).")));
-    expect(findings).toEqual([expect.objectContaining({ ruleId: "reasoned-suppressions" })]);
-  });
-
   it("keeps the code of a rule it does not know", () => {
     expect(parseOxlintOutput("/project", output(diagnostic("eslint(no-debugger)", "Unexpected debugger")))).toEqual([expect.objectContaining({ ruleId: "eslint(no-debugger)" })]);
   });

@@ -17,12 +17,12 @@ Bad:  const failures = []; for (const check of checks) { failures.push(await run
 
 Build a new array with map, filter, flatMap, a spread, toSorted or Array.fromAsync instead of changing one in place.
 
-## When to suppress
+## When to make an exception
 
 In-place change is measurably faster on a hot path; name the measurement in the reason.
 
 ```ts
-// oxlint-disable-next-line architecture/no-array-mutation -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-array-mutation -- <the concrete reason this line needs it>
 ```
 
 ## Examples

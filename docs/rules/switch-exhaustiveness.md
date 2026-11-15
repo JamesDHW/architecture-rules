@@ -31,10 +31,10 @@ Exhaustiveness turns additions to a state model into useful compiler errors at e
 
 Handle every variant and end with default: return value satisfies never.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line typescript/switch-exhaustiveness-check -- <the concrete reason this line needs it>
+// architecture-disable-next-line switch-exhaustiveness -- <the concrete reason this line needs it>
 ```

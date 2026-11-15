@@ -12,12 +12,12 @@ A deeply ascending path obscures the dependency's ownership and is fragile under
 
 Import through a module alias (package exports or a #subpath import) instead of ../../../.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/no-deep-relative-imports -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-deep-relative-imports -- <the concrete reason this line needs it>
 ```
 
 ## Examples

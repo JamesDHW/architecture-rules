@@ -12,10 +12,10 @@ Escape hatches move type errors away from their cause and make readers trust cla
 
 Handle the missing case with a guard or ?? instead of asserting with !.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line typescript/no-non-null-assertion -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-non-null-assertion -- <the concrete reason this line needs it>
 ```

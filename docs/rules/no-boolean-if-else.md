@@ -12,12 +12,12 @@ Stopping the flow instead of accumulating flag assignments prevents unwanted beh
 
 Pass the boolean in directly: setVisible(isOpen), not if (isOpen) setVisible(true) else setVisible(false).
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line architecture/no-boolean-if-else -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-boolean-if-else -- <the concrete reason this line needs it>
 ```
 
 ## Examples

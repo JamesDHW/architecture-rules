@@ -10,12 +10,12 @@ Promises used as booleans or passed where a callback must finish synchronously a
 
 Await the promise and test its result; don't pass an async function where a synchronous callback is expected.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line typescript/no-misused-promises -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-misused-promises -- <the concrete reason this line needs it>
 ```
 
 ## Workarounds to avoid

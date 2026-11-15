@@ -10,7 +10,7 @@ type FindingPosition = {
 
 type ByMessageId = {
   readonly messageId: string;
-  // oxlint-disable-next-line eslint/id-denylist -- RuleTester matches message placeholders through a field named data.
+  // architecture-disable-next-line generic-name-denylist -- RuleTester matches message placeholders through a field named data.
   readonly data?: Readonly<Record<string, string>>;
 };
 

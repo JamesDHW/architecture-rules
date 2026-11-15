@@ -10,10 +10,10 @@ Give each case a distinct value. Good: case 'idle': return ready; case 'loading'
 
 Remove or merge the repeated case value.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line eslint/no-duplicate-case -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-duplicate-switch-cases -- <the concrete reason this line needs it>
 ```

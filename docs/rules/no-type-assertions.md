@@ -14,12 +14,12 @@ Escape hatches move type errors away from their cause and make readers trust cla
 
 Validate or narrow the value with a type guard, a schema parse or satisfies, instead of asserting its type.
 
-## When to suppress
+## When to make an exception
 
 Attaching a brand to a value that is already validated, or bridging two third-party types that are the same at runtime.
 
 ```ts
-// oxlint-disable-next-line architecture/no-type-assertions -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-type-assertions -- <the concrete reason this line needs it>
 ```
 
 ## Workarounds to avoid

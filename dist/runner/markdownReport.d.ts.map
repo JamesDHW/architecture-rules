@@ -1,1 +1,1 @@
-{"version":3,"file":"markdownReport.d.ts","sourceRoot":"","sources":["../../src/runner/markdownReport.ts"],"names":[],"mappings":"AAGA,OAAO,KAAK,EAAE,WAAW,EAAE,MAAM,kBAAkB,CAAC;AAgDpD,+GAA+G;AAC/G,eAAO,MAAM,YAAY,oDAAqD,WAAW,KAAG,MAmB3F,CAAC"}
+{"version":3,"file":"markdownReport.d.ts","sourceRoot":"","sources":["../../src/runner/markdownReport.ts"],"names":[],"mappings":"AAGA,OAAO,KAAK,EAAE,WAAW,EAAE,MAAM,kBAAkB,CAAC;AAgDpD,6GAA6G;AAC7G,eAAO,MAAM,YAAY,kDAAmD,WAAW,KAAG,MAmBzF,CAAC"}

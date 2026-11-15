@@ -12,10 +12,10 @@ Escape hatches move type errors away from their cause and make readers trust cla
 
 Validate or narrow the any value to the parameter's type before passing it.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line typescript/no-unsafe-argument -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-unsafe-argument -- <the concrete reason this line needs it>
 ```

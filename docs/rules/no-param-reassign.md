@@ -10,10 +10,10 @@ Do not mutate inputs, shared state, or previously observable values. Local mutat
 
 Return a new value instead of reassigning or changing a parameter.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line eslint/no-param-reassign -- <the concrete reason this line needs it>
+// architecture-disable-next-line no-param-reassign -- <the concrete reason this line needs it>
 ```

@@ -10,10 +10,10 @@ List items need a stable key so React can reconcile identity across renders. Mis
 
 Give each list item a key from its stable domain id.
 
-## When to suppress
+## When to make an exception
 
 Only when complying would make the code worse, and the reason can be stated concretely.
 
 ```ts
-// oxlint-disable-next-line react/jsx-key -- <the concrete reason this line needs it>
+// architecture-disable-next-line jsx-key -- <the concrete reason this line needs it>
 ```
