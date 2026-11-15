@@ -23,6 +23,23 @@ const pathCharactersPerRun = process.platform === "win32" ? 24_000 : 200_000;
 const requireFromPackage = createRequire(import.meta.url);
 const oxlint = join(dirname(requireFromPackage.resolve("oxlint/package.json")), "bin/oxlint");
 
+/**
+ * The type-aware engine's native binary, from this package's own dependency. The lint engine otherwise looks for it
+ * in the project's node_modules/.bin, where package managers such as pnpm do not link a dependency's dependencies.
+ */
+const typeAwareEngine = (): string | undefined => {
+  const fromEngine = tryCatch(() => createRequire(requireFromPackage.resolve("oxlint-tsgolint/package.json")));
+  if (fromEngine instanceof ArchitectureError) return undefined;
+  const executable = `@oxlint-tsgolint/${process.platform}-${process.arch}/tsgolint${process.platform === "win32" ? ".exe" : ""}`;
+  const resolved = tryCatch(() => fromEngine.resolve(executable));
+  return resolved instanceof ArchitectureError ? undefined : resolved;
+};
+
+const engineEnvironment = (): NodeJS.ProcessEnv => {
+  const binary = process.env.OXLINT_TSGOLINT_PATH ?? typeAwareEngine();
+  return binary === undefined ? process.env : { ...process.env, OXLINT_TSGOLINT_PATH: binary };
+};
+
 const exitCode = async (child: ChildProcess): Promise<number | ArchitectureError> => new Promise((finish) => {
   child.on("error", (error) => {
     finish(new ArchitectureError([`The lint engine could not start: ${error.message}`], { cause: error }));
@@ -39,7 +56,7 @@ const failureDetail = (errors: string): string => {
 
 /** Runs the lint engine once and returns its findings. A non-zero exit without an error finding means the engine itself failed. */
 const execute = async (root: string, args: readonly string[]): Promise<readonly Finding[] | ArchitectureError> => {
-  const child = spawn(process.execPath, [oxlint, ...args], { cwd: root, stdio: ["ignore", "pipe", "pipe"] });
+  const child = spawn(process.execPath, [oxlint, ...args], { cwd: root, stdio: ["ignore", "pipe", "pipe"], env: engineEnvironment() });
   const [output, errors, code] = await Promise.all([text(child.stdout), text(child.stderr), exitCode(child)]);
   if (code instanceof ArchitectureError) return code;
   const findings = parseOxlintOutput(root, output);

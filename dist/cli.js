@@ -6,16 +6,19 @@ import { allOrError } from "./errors/results.js";
 import { tryCatch, tryCatchAsync } from "./errors/tryCatch.js";
 import { checkArchitecture } from "./runner/runner.js";
 import { describeCommand } from "./cli/describeCommand.js";
-import { configPathFor, loadArchitecture } from "./cli/loadArchitecture.js";
+import { configPathFor, loadArchitecture } from "./config/loadArchitecture.js";
 import { parseArgs } from "./cli/parseArgs.js";
+import { startServer } from "./editor/server.js";
 const help = `Usage: architecture-check [--config path] [--fix] [--json] [--file path]... [project-dir]
        architecture-check explain <file> [--config path]
        architecture-check describe [--json | --mermaid] [--config path] [project-dir]
        architecture-check report [--config path] [project-dir]
+       architecture-check lsp
 
 --file      Lint and report only this file (repeatable); the whole project is still analyzed.
 --json      Print every finding, and what to write instead, as one JSON document.
 report      Prints a Markdown report: findings by rule, exceptions, configuration overrides and layers.
+lsp         Runs the language server editors use: the same findings as the check, on every save.
 
 Requires architecture.config.ts (or architecture.config.mts) exporting defineArchitecture(...).
 Checks the configured TypeScript programs, rooted at the configuration's directory.
@@ -44,7 +47,7 @@ const selectedFiles = (paths) => {
 const check = async (args) => {
     if (args.describe !== undefined)
         return describeCommand(args, args.describe);
-    const configPath = configPathFor(args);
+    const configPath = configPathFor(args.target, args.config);
     const architecture = await loadArchitecture(configPath);
     if (architecture instanceof ArchitectureError)
         return architecture;
@@ -66,6 +69,8 @@ const main = async () => {
             return printHelp();
         case "error":
             return printUsageError(args.message);
+        case "lsp":
+            return startServer();
         case "run":
             return run(args);
     }

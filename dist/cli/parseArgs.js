@@ -63,6 +63,10 @@ const reportArgs = ([target, ...extra], options) => {
         return failure(reportUsage);
     return { kind: "run", target: target ?? ".", fix: false, format: "report", ...configOption(options) };
 };
+const lspArgs = (rest, options) => {
+    const isLspUsage = rest.length === 0 && !hasCheckOnlyOptions(options) && options.format === undefined && options.config === undefined;
+    return isLspUsage ? { kind: "lsp" } : failure("Usage: architecture-check lsp");
+};
 const checkArgs = (options) => {
     const [target, extra] = options.positionals;
     if (options.format === "mermaid")
@@ -82,6 +86,8 @@ const toRunArgs = (options) => {
             return describeArgs(rest, options);
         case "report":
             return reportArgs(rest, options);
+        case "lsp":
+            return lspArgs(rest, options);
         case undefined:
         default:
             return checkArgs(options);

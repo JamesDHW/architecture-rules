@@ -18,6 +18,7 @@ export type RunArgs = {
 export type CliArgs =
   | { readonly kind: "help" }
   | { readonly kind: "error"; readonly message: string }
+  | { readonly kind: "lsp" }
   | RunArgs;
 
 type ParseError = Extract<CliArgs, { readonly kind: "error" }>;
@@ -100,6 +101,11 @@ const reportArgs = ([target, ...extra]: readonly string[], options: Options): Cl
   return { kind: "run", target: target ?? ".", fix: false, format: "report", ...configOption(options) };
 };
 
+const lspArgs = (rest: readonly string[], options: Options): CliArgs => {
+  const isLspUsage = rest.length === 0 && !hasCheckOnlyOptions(options) && options.format === undefined && options.config === undefined;
+  return isLspUsage ? { kind: "lsp" } : failure("Usage: architecture-check lsp");
+};
+
 const checkArgs = (options: Options): CliArgs => {
   const [target, extra] = options.positionals;
   if (options.format === "mermaid") return failure("--mermaid only applies to describe");
@@ -118,6 +124,8 @@ const toRunArgs = (options: Options): CliArgs => {
       return describeArgs(rest, options);
     case "report":
       return reportArgs(rest, options);
+    case "lsp":
+      return lspArgs(rest, options);
     case undefined:
     default:
       return checkArgs(options);

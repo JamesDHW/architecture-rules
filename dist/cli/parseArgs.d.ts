@@ -17,6 +17,8 @@ export type CliArgs = {
 } | {
     readonly kind: "error";
     readonly message: string;
+} | {
+    readonly kind: "lsp";
 } | RunArgs;
 export declare const parseArgs: (argv: readonly string[]) => CliArgs;
 export {};

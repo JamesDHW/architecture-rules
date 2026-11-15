@@ -2,7 +2,7 @@ import { relative } from "node:path";
 
 import { ArchitectureError } from "../errors/architectureError.js";
 import { describeArchitecture, type ArchitectureDescription } from "./architectureDescription.js";
-import { configPathFor, loadArchitecture } from "./loadArchitecture.js";
+import { configPathFor, loadArchitecture } from "../config/loadArchitecture.js";
 import type { DescribeFormat, RunArgs } from "./parseArgs.js";
 import { renderMermaid, renderText } from "./renderDescription.js";
 
@@ -19,7 +19,7 @@ const render = (description: ArchitectureDescription, format: DescribeFormat): s
 
 /** Prints the architecture from configuration alone; no TypeScript program is opened, so it is fast. */
 export const describeCommand = async (args: RunArgs, format: DescribeFormat): Promise<number | ArchitectureError> => {
-  const configPath = configPathFor(args);
+  const configPath = configPathFor(args.target, args.config);
   const architecture = await loadArchitecture(configPath);
   if (architecture instanceof ArchitectureError) return architecture;
   process.stdout.write(render(describeArchitecture(architecture, relative(process.cwd(), configPath)), format));

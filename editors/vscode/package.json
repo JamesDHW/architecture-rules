@@ -1,0 +1,28 @@
+{
+  "name": "architecture-rules-vscode",
+  "displayName": "Architecture Rules",
+  "description": "Shows architecture-check's findings in the editor: the same rules, messages and positions as the command.",
+  "version": "0.0.0",
+  "private": true,
+  "publisher": "jamesdhw",
+  "license": "ISC",
+  "engines": { "vscode": "^1.91.0" },
+  "categories": ["Linters"],
+  "activationEvents": ["workspaceContains:architecture.config.ts", "workspaceContains:architecture.config.mts"],
+  "main": "./extension.cjs",
+  "contributes": {
+    "configuration": {
+      "title": "Architecture Rules",
+      "properties": {
+        "architectureRules.command": {
+          "type": "string",
+          "default": "",
+          "description": "Path to architecture-check. Empty: the workspace's node_modules/.bin/architecture-check."
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "vscode-languageclient": "11.0.0"
+  }
+}

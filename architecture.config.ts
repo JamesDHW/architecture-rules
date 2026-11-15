@@ -41,7 +41,7 @@ export default defineArchitecture({
       naming: { case: "camelCase", suffixes: [".constants", ".state"] },
       dependencies: {
         internal: ["config", "rules", "core", "errors"],
-        external: ["eslint", "oxlint", "picomatch", "node:fs", "node:module", "node:path"],
+        external: ["eslint", "oxlint", "picomatch", "node:fs", "node:module", "node:path", "node:url"],
       },
     },
     analysis: {
@@ -60,14 +60,23 @@ export default defineArchitecture({
         external: ["oxlint", "typescript/unstable/**", "node:child_process", "node:fs", "node:module", "node:path", "node:stream/consumers", "node:url"],
       },
     },
+    editor: {
+      description: "Language server: publishes the check's findings to editors.",
+      files: ["src/editor/**/*.ts"],
+      naming: { case: "camelCase", suffixes: [".state"] },
+      dependencies: {
+        internal: ["editor", "runner", "config", "rules", "core", "errors"],
+        external: ["node:path", "node:url"],
+      },
+    },
     cli: {
       description: "Command-line entry point, argument parsing, the describe command and build scripts.",
       files: ["src/cli.ts", "src/cli/**/*.ts", "src/generateRuleDocs.ts"],
       entry: { files: ["src/cli.ts", "src/generateRuleDocs.ts"], reason: "package.json's bin runs the CLI; the build runs the rule-docs generator." },
       naming: { case: "camelCase", suffixes: [".constants"] },
       dependencies: {
-        internal: ["cli", "runner", "config", "rules", "core", "errors"],
-        external: ["node:fs", "node:fs/promises", "node:module", "node:path", "node:url"],
+        internal: ["cli", "editor", "runner", "config", "rules", "core", "errors"],
+        external: ["node:fs", "node:fs/promises", "node:path", "node:url"],
       },
     },
     api: {
@@ -83,7 +92,7 @@ export default defineArchitecture({
       development: true,
       naming: { case: "camelCase", requiredSuffix: ".test", suffixes: [".rule"] },
       dependencies: {
-        internal: ["testSupport", "api", "cli", "runner", "analysis", "config", "rules", "core", "errors"],
+        internal: ["testSupport", "api", "cli", "editor", "runner", "analysis", "config", "rules", "core", "errors"],
         external: ["eslint", "vitest", "node:child_process", "node:fs", "node:module", "node:path", "node:url"],
       },
     },
