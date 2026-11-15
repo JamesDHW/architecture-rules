@@ -3,6 +3,7 @@ export declare const noDeepRelativeImportsRule: {
     readonly id: "no-deep-relative-imports";
     readonly title: "Warn on deeply ascending relative imports";
     readonly description: string;
+    readonly instead: "Import through a module alias (package exports or a #subpath import) instead of ../../../.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "warn";

@@ -50,6 +50,7 @@ export const noCollapsibleIfRule = defineRule({
     id: "no-collapsible-if",
     title: "Do not nest a sole if inside another if",
     description: DESCRIPTION,
+    instead: "Merge the nested ifs into one condition, and name it when it is compound.",
     enforcement: {
         type: "custom-oxlint",
         configuration: "error",

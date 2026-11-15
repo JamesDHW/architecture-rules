@@ -87,6 +87,20 @@ Before changing code, run `pnpm exec architecture-check describe` to see the lay
 
 `describe` reads only the configuration, so it is fast. `explain <file>` shows the full effective policy for one file, including every rule setting and its origin.
 
+After the findings, the checker prints a **How to fix** section: for each rule that fired, the rule's own "write this instead" line and the path to its page in `docs/rules/`. The guidance comes from the rule definition, not from whoever reads the output.
+
+## Rule documentation
+
+[`docs/rules/`](docs/rules/README.md) has one generated page per rule, built from the rule's `defineRule(...)` definition and its test cases:
+
+- `description`: what the rule asks for, with good and bad lines.
+- `instead`: one line saying what to write instead. The checker prints it next to findings.
+- `suppressWhen`: when a reasoned exception is acceptable, with a ready-made exception comment.
+- `evasions`: workarounds that satisfy the rule's wording but miss its point. Each names the rule that reports it, or says that review has to catch it. Tests check both claims.
+- Examples: the `valid` and `invalid` cases from `src/rules/cases/*.cases.ts`, the same cases the rule tests run.
+
+Do not edit `docs/rules/` by hand; `pnpm run build` rewrites it.
+
 ## Configuration
 
 ### 1. Stack: `projects`
@@ -223,6 +237,9 @@ architecture-check explain src/domain/Project.ts  # the effective policy for one
 architecture-check describe                       # a plain-text summary of the architecture
 architecture-check describe --json                # the same, as JSON
 architecture-check describe --mermaid             # the layer import graph as a Mermaid flowchart
+architecture-check --file src/domain/Project.ts    # lint and report only this file (repeatable); the project is still analyzed
+architecture-check --json                         # every finding, and what to write instead, as one JSON document
+architecture-check report > architecture-report.md  # Markdown: findings by rule, exceptions, overrides and layers
 architecture-check --config ./architecture.config.ts
 ```
 
@@ -258,3 +275,13 @@ pnpm run describe          # build, then describe this repository's architecture
 pnpm links a package's commands only into projects that depend on it, so this repository lists itself as a dev dependency (`"architecture-rules": "link:."`). After `pnpm install`, `pnpm exec architecture-check` works here as it does in any project, running the committed `dist/`. The two scripts above rebuild first; arguments pass through (`pnpm run describe --mermaid`).
 
 This repository follows its own rules; `architecture.config.ts` at the root is both its configuration and a worked example. TypeScript's pinned 7.x API is used behind the analysis layer, so upgrading TypeScript needs the project-resolution tests to pass. Native Oxlint tests need enough virtual address space for Oxlint's buffers; an allocation failure there is an environment problem, not a pass. `dist/` is committed so Git installs work without a build step; rebuild it with your changes.
+
+### Generated files and the pre-commit hook
+
+`dist/` and `docs/rules/` are committed, because Git installations do not run a build. `pnpm run build` deletes `dist/`, compiles, and regenerates `docs/rules/`. Enable the pre-commit hook once per clone:
+
+```sh
+git config core.hooksPath .githooks
+```
+
+The hook runs the build and stops the commit if any generated file differs from what is staged. Stage the rebuilt files and commit again.

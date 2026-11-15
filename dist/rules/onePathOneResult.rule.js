@@ -61,6 +61,7 @@ export const onePathOneResultRule = defineRule({
     id: "one-path-one-result",
     title: "Combine adjacent guards with the same terminal outcome",
     description: DESCRIPTION,
+    instead: "Combine adjacent guards that return the same value into one named condition.",
     enforcement: {
         type: "custom-oxlint",
         configuration: "warn",

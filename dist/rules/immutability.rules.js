@@ -6,6 +6,7 @@ export const preferConstRule = defineNativeOxlintRule({
 Do not reassign bindings. Callers can understand an immutable transformation
 without tracking changes over time.
   `.trim(),
+    instead: "Declare the binding with const.",
     rule: "prefer-const",
     configuration: "error",
 });
@@ -16,6 +17,7 @@ export const noVarRule = defineNativeOxlintRule({
 Do not reassign bindings or introduce function-scoped var. Immutable const
 bindings make data flow easier to follow.
   `.trim(),
+    instead: "Declare the binding with const and compute new values instead of reassigning.",
     rule: "no-var",
     configuration: "error",
 });
@@ -27,6 +29,7 @@ Do not mutate inputs, shared state, or previously observable values. Local
 mutation may construct a fresh, unaliased result inside a focused helper when
 that is clearer than an immutable accumulator.
   `.trim(),
+    instead: "Return a new value instead of reassigning or changing a parameter.",
     rule: "no-param-reassign",
     configuration: ["error", { props: true }],
 });
@@ -40,6 +43,7 @@ the flow rely on state that a later change can corrupt.
 
 Return or pass the value at the point it is known.
   `.trim(),
+    instead: "Use or return the value where it is computed instead of storing it for later.",
     rule: "no-useless-assignment",
     configuration: "error",
 });

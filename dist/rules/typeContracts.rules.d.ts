@@ -1,4 +1,8 @@
 export declare const explicitExportedReturnTypesRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "explicit-exported-return-types";
     readonly title: string;
     readonly description: string;
@@ -16,6 +20,10 @@ export declare const explicitExportedReturnTypesRule: {
     };
 };
 export declare const typeAliasesRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "type-aliases";
     readonly title: string;
     readonly description: string;
@@ -26,6 +34,10 @@ export declare const typeAliasesRule: {
     };
 };
 export declare const switchExhaustivenessRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "switch-exhaustiveness";
     readonly title: string;
     readonly description: string;

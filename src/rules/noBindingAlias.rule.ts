@@ -73,6 +73,7 @@ export const noBindingAliasRule = defineRule({
   id: "no-binding-alias",
   title: "Do not rename values through aliases",
   description: DESCRIPTION,
+  instead: "Use the original name, or compute a genuinely new value; import names as they are exported.",
   enforcement: {
     type: "custom-oxlint",
     configuration: "error",

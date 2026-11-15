@@ -44,11 +44,30 @@ describe("parseArgs", () => {
     expect(parseArgs(["describe", "--json", "../app"])).toEqual({ kind: "run", target: "../app", fix: false, describe: "json" });
     expect(parseArgs(["describe", "--mermaid", "--config", "a.config.ts"])).toEqual({ kind: "run", target: ".", fix: false, describe: "mermaid", config: "a.config.ts" });
   });
-  it("rejects formats outside describe and conflicting formats", () => {
-    expect(parseArgs(["--json"])).toEqual({ kind: "error", message: "--json and --mermaid only apply to describe" });
+  it("rejects --mermaid outside describe and conflicting formats", () => {
+    expect(parseArgs(["--mermaid"])).toEqual({ kind: "error", message: "--mermaid only applies to describe" });
     expect(parseArgs(["describe", "--json", "--mermaid"])).toEqual({ kind: "error", message: "Choose one of --json and --mermaid" });
     expect(parseArgs(["describe", "--fix"]).kind).toBe("error");
     expect(parseArgs(["explain", "src/a.ts", "--json"]).kind).toBe("error");
+  });
+
+  it("accepts JSON output and repeated --file selections", () => {
+    expect(parseArgs(["--json", "--file", "src/a.ts", "--file", "src/b.ts"])).toEqual({
+      kind: "run",
+      target: ".",
+      fix: false,
+      format: "json",
+      files: ["src/a.ts", "src/b.ts"],
+    });
+    expect(parseArgs(["--format", "json"]).kind).toBe("error");
+    expect(parseArgs(["--file"]).kind).toBe("error");
+  });
+
+  it("accepts report with an optional project directory", () => {
+    expect(parseArgs(["report"])).toEqual({ kind: "run", target: ".", fix: false, format: "report" });
+    expect(parseArgs(["report", "../app", "--config", "a.config.ts"])).toEqual({ kind: "run", target: "../app", fix: false, format: "report", config: "a.config.ts" });
+    expect(parseArgs(["report", "--fix"]).kind).toBe("error");
+    expect(parseArgs(["report", "--json"]).kind).toBe("error");
   });
 
 });

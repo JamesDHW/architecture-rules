@@ -25,7 +25,7 @@ export default defineArchitecture({
     rules: {
       description: "Canonical rule definitions and their lint implementations.",
       files: ["src/rules/**/*.ts"],
-      naming: { case: "camelCase", suffixes: [".rule", ".rules", ".constants"] },
+      naming: { case: "camelCase", suffixes: [".rule", ".rules", ".constants", ".cases"] },
       dependencies: { internal: ["rules", "core"], external: ["eslint", "oxlint", "picomatch", "node:path"] },
     },
     config: {
@@ -50,15 +50,16 @@ export default defineArchitecture({
       files: ["src/runner/**/*.ts"],
       dependencies: {
         internal: ["runner", "analysis", "config", "rules", "core", "errors"],
-        external: ["oxlint", "typescript/unstable/**", "node:child_process", "node:fs", "node:module", "node:path", "node:url"],
+        external: ["oxlint", "typescript/unstable/**", "node:child_process", "node:fs", "node:module", "node:path", "node:stream/consumers", "node:url"],
       },
     },
     cli: {
-      description: "Command-line entry point, argument parsing and the describe command.",
-      files: ["src/cli.ts", "src/cli/**/*.ts"],
+      description: "Command-line entry point, argument parsing, the describe command and build scripts.",
+      files: ["src/cli.ts", "src/cli/**/*.ts", "src/generateRuleDocs.ts"],
+      naming: { case: "camelCase", suffixes: [".constants"] },
       dependencies: {
         internal: ["cli", "runner", "config", "rules", "core", "errors"],
-        external: ["node:fs", "node:module", "node:path", "node:url"],
+        external: ["node:fs", "node:fs/promises", "node:module", "node:path", "node:url"],
       },
     },
     api: {

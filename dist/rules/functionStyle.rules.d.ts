@@ -1,4 +1,8 @@
 export declare const preferArrowFunctionsRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "prefer-arrow-functions";
     readonly title: string;
     readonly description: string;
@@ -15,6 +19,10 @@ export declare const preferArrowFunctionsRule: {
     };
 };
 export declare const preferArrowCallbackRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "prefer-arrow-callback";
     readonly title: string;
     readonly description: string;

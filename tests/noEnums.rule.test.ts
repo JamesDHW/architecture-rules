@@ -1,18 +1,5 @@
 import { noEnumsRule } from "../src/rules/noEnums.rule.js";
 import { runCustomRule } from "./utils/runCustomRule.js";
+import { noEnumsCases } from "../src/rules/cases/noEnums.cases.js";
 
-runCustomRule(noEnumsRule, {
-  valid: [
-    {
-      name: "literal union",
-      code: 'type ProjectStatus = "draft" | "active" | "archived";\n',
-    },
-  ],
-  invalid: [
-    {
-      name: "enum declaration",
-      code: "enum ProjectStatus { Draft, Active }\n",
-      errors: [{ messageId: "noEnums" }],
-    },
-  ],
-});
+runCustomRule(noEnumsRule, noEnumsCases);

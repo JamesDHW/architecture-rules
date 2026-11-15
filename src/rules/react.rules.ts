@@ -11,6 +11,7 @@ pass-through primitive whose explicit purpose is forwarding native attributes.
 Explicit props expose a component's inputs where it is used and prevent
 unrelated object fields from silently becoming part of the call.
   `.trim(),
+  instead: "List the props at the call site instead of spreading an object.",
   rule: "react/jsx-props-no-spreading",
   configuration: ["error", { html: "ignore", custom: "enforce" }],
 });
@@ -25,6 +26,7 @@ inputs.
 
 Nested component declarations recreate component identity during rendering.
   `.trim(),
+  instead: "Declare the component or hook at module scope and pass values in as props.",
   rule: "react/no-unstable-nested-components",
   configuration: "error",
 });
@@ -36,6 +38,7 @@ export const rulesOfHooksRule = defineNativeOxlintRule({
 Hooks must run in the same order on every render. Conditional or nested hook
 calls create state that cannot be understood or reproduced reliably.
   `.trim(),
+  instead: "Call hooks unconditionally, at the top level of a component or another hook.",
   rule: "react/rules-of-hooks",
   configuration: "error",
 });
@@ -47,6 +50,7 @@ export const exhaustiveDepsRule = defineNativeOxlintRule({
 Effect and memoization dependency lists that omit reactive values hide stale
 closures and missed updates. List every value the callback closes over.
   `.trim(),
+  instead: "List every value the callback uses in its dependency array.",
   rule: "react/exhaustive-deps",
   configuration: "error",
 });
@@ -58,6 +62,7 @@ export const jsxKeyRule = defineNativeOxlintRule({
 List items need a stable key so React can reconcile identity across renders.
 Missing or index keys cause subtle state bugs when the list changes.
   `.trim(),
+  instead: "Give each list item a key from its stable domain id.",
   rule: "react/jsx-key",
   configuration: "error",
 });

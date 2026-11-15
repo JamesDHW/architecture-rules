@@ -10,6 +10,7 @@ them.
 One default function syntax reduces incidental variation, while arrow functions
 also make lexical this behavior consistent and explicit.
   `.trim(),
+    instead: "Declare the function as a const arrow function.",
     rule: "func-style",
     configuration: ["error", "expression"],
 });
@@ -21,6 +22,7 @@ Use arrow functions for callbacks and closures. One default function syntax
 reduces incidental variation, while arrow functions also make lexical this
 behavior consistent and explicit.
   `.trim(),
+    instead: "Pass an arrow function as the callback.",
     rule: "prefer-arrow-callback",
     configuration: "error",
 });

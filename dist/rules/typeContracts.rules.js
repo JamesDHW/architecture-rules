@@ -9,6 +9,7 @@ TypeScript to infer return types for private helpers and inline callbacks.
 Explicit boundary types make public contracts visible without burdening small
 local functions.
   `.trim(),
+    instead: "Add an explicit return type to the exported function.",
     rule: "typescript/explicit-module-boundary-types",
     configuration: ["error", { allowTypedFunctionExpressions: true }],
 });
@@ -23,6 +24,8 @@ declaration or module augmentation.
 One type-definition syntax removes an arbitrary choice and composes
 consistently with unions.
   `.trim(),
+    instead: "Declare the shape with type instead of interface.",
+    suppressWhen: "Module augmentation of a third-party interface, which only an interface can do.",
     rule: "typescript/consistent-type-definitions",
     configuration: ["error", "type"],
 });
@@ -59,6 +62,7 @@ contract; those parts remain review obligations checked with TypeScript.
 Exhaustiveness turns additions to a state model into useful compiler errors at
 every affected decision point.
   `.trim(),
+    instead: "Handle every variant and end with default: return value satisfies never.",
     rule: "typescript/switch-exhaustiveness-check",
     configuration: [
         "error",

@@ -12,6 +12,8 @@ load their configuration from the default export.
 Named exports keep identifiers consistent between their definitions and
 imports, which makes references easier to search, navigate, and refactor.
   `.trim(),
+  instead: "Export by name: export const createProject = …",
+  suppressWhen: "A tool or framework loads the module from its default export. Configuration files are already exempt.",
   rule: "import/no-default-export",
   configuration: "error",
 });
@@ -27,6 +29,7 @@ injected capability rather than retaining the cycle.
 A cycle makes neither module independently understandable and obscures
 initialization order.
   `.trim(),
+  instead: "Break the cycle: extract the shared concept into its own module, or inject the dependency.",
   rule: "import/no-cycle",
   configuration: "error",
 });

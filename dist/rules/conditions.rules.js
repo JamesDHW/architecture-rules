@@ -12,6 +12,7 @@ A chain of if/else/else if keeps extra conditions in mind, especially when
 nested. Reserving conditional blocks for special cases emphasises the
 nominal path and makes it easier to evolve.
   `.trim(),
+    instead: "Drop the else after the return and continue the main path.",
     rule: "no-else-return",
     configuration: ["off", { allowElseIf: false }],
 });
@@ -33,6 +34,7 @@ things. Empty-string fallback is a named policy, not implicit truthiness.
 Native enforcement may not recognize project-specific guard calls; review
 those redundant helper-based ternaries against the same policy.
   `.trim(),
+    instead: "Use ?? to default a missing value.",
     rule: "typescript/prefer-nullish-coalescing",
     configuration: "error",
 });
@@ -44,6 +46,7 @@ Only boolean-typed expressions may be tested directly. Compare values
 explicitly according to the intended condition rather than relying on
 JavaScript coercion.
   `.trim(),
+    instead: "Use === or !==.",
     rule: "eqeqeq",
     configuration: "error",
 });
@@ -58,6 +61,7 @@ unwanted results.
 Compare the value according to the intended condition. Do not coerce with
 !! or Boolean().
   `.trim(),
+    instead: "Compare explicitly instead of using !! or Boolean(): projects.length > 0.",
     rule: "no-implicit-coercion",
     configuration: [
         "error",
@@ -74,6 +78,7 @@ that only produces true or false from a condition is a detour.
 Stopping the flow instead of accumulating conversions prevents unwanted
 behaviour during a change.
   `.trim(),
+    instead: "Use the condition itself instead of condition ? true : false.",
     rule: "no-unneeded-ternary",
     configuration: "error",
 });
@@ -86,6 +91,7 @@ its branches. Prefer the logical operator so the combination is visible.
 
 A ternary of the form a ? a : b or a ? b : a is a disguised || or &&.
   `.trim(),
+    instead: "Use a || b instead of a ? a : b.",
     rule: "unicorn/prefer-logical-operator-over-ternary",
     configuration: "error",
 });

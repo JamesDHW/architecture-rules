@@ -32,6 +32,7 @@ export const noEnumsRule = defineRule({
     id: "no-enums",
     title: "Use literal unions instead of enums",
     description: DESCRIPTION,
+    instead: "Use a union of string literals instead of an enum.",
     enforcement: {
         type: "custom-oxlint",
         configuration: "error",

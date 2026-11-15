@@ -1,0 +1,1 @@
+{"version":3,"file":"noFinally.cases.js","sourceRoot":"","sources":["../../../src/rules/cases/noFinally.cases.ts"],"names":[],"mappings":"AAEA,MAAM,CAAC,MAAM,cAAc,GAAyB;IAClD;QACE,KAAK,EAAE,CAAC,kEAAkE,CAAC;QAC3E,OAAO,EAAE;YACP;gBACE,IAAI,EAAE,oDAAoD;gBAC1D,MAAM,EAAE,CAAC,EAAE,SAAS,EAAE,SAAS,EAAE,CAAC;aACnC;SACF;KACF;CACF,CAAC"}

@@ -1,5 +1,6 @@
 const explainUsage = "Usage: architecture-check explain <file> [--config path]";
 const describeUsage = "Usage: architecture-check describe [--json | --mermaid] [--config path] [project-dir]";
+const reportUsage = "Usage: architecture-check report [--config path] [project-dir]";
 const failure = (message) => ({ kind: "error", message });
 const isOptionValue = (value) => value !== undefined && !value.startsWith("-");
 const parseConfig = (argv, options) => {
@@ -15,6 +16,12 @@ const parseFormat = (argv, options, format) => {
         return failure("Choose one of --json and --mermaid");
     return parseOptions(argv, { ...options, format });
 };
+const parseFile = (argv, options) => {
+    const [path, ...rest] = argv;
+    if (!isOptionValue(path))
+        return failure("--file requires a path");
+    return parseOptions(rest, { ...options, files: [...options.files, path] });
+};
 const parseOptions = (argv, options) => {
     const [arg, ...rest] = argv;
     switch (arg) {
@@ -28,13 +35,16 @@ const parseOptions = (argv, options) => {
             return parseFormat(rest, options, "json");
         case "--mermaid":
             return parseFormat(rest, options, "mermaid");
+        case "--file":
+            return parseFile(rest, options);
         default:
             return arg.startsWith("-") ? failure(`Unknown option: ${arg}`) : parseOptions(rest, { ...options, positionals: [...options.positionals, arg] });
     }
 };
 const configOption = ({ config }) => config === undefined ? {} : { config };
+const hasCheckOnlyOptions = (options) => options.fix || options.files.length > 0;
 const isExplainTarget = (file, extra, options) => {
-    return file !== undefined && extra.length === 0 && !options.fix && options.format === undefined;
+    return file !== undefined && extra.length === 0 && !hasCheckOnlyOptions(options) && options.format === undefined;
 };
 const explainArgs = ([file, ...extra], options) => {
     if (!isExplainTarget(file, extra, options))
@@ -42,18 +52,26 @@ const explainArgs = ([file, ...extra], options) => {
     return { kind: "run", target: ".", fix: false, explain: file, ...configOption(options) };
 };
 const describeArgs = ([target, ...extra], options) => {
-    const isDescribeUsage = extra.length === 0 && !options.fix;
+    const isDescribeUsage = extra.length === 0 && !hasCheckOnlyOptions(options);
     if (!isDescribeUsage)
         return failure(describeUsage);
     return { kind: "run", target: target ?? ".", fix: false, describe: options.format ?? "text", ...configOption(options) };
 };
+const reportArgs = ([target, ...extra], options) => {
+    const isReportUsage = extra.length === 0 && !hasCheckOnlyOptions(options) && options.format === undefined;
+    if (!isReportUsage)
+        return failure(reportUsage);
+    return { kind: "run", target: target ?? ".", fix: false, format: "report", ...configOption(options) };
+};
 const checkArgs = (options) => {
     const [target, extra] = options.positionals;
-    if (options.format !== undefined)
-        return failure("--json and --mermaid only apply to describe");
+    if (options.format === "mermaid")
+        return failure("--mermaid only applies to describe");
     if (extra !== undefined)
         return failure("Expected at most one path argument.");
-    return { kind: "run", target: target ?? ".", fix: options.fix, ...configOption(options) };
+    const format = options.format === undefined ? {} : { format: options.format };
+    const files = options.files.length === 0 ? {} : { files: options.files };
+    return { kind: "run", target: target ?? ".", fix: options.fix, ...configOption(options), ...format, ...files };
 };
 const toRunArgs = (options) => {
     const [command, ...rest] = options.positionals;
@@ -62,6 +80,8 @@ const toRunArgs = (options) => {
             return explainArgs(rest, options);
         case "describe":
             return describeArgs(rest, options);
+        case "report":
+            return reportArgs(rest, options);
         case undefined:
         default:
             return checkArgs(options);
@@ -71,7 +91,7 @@ export const parseArgs = (argv) => {
     const wantsHelp = argv.includes("--help") || argv.includes("-h");
     if (wantsHelp)
         return { kind: "help" };
-    const options = parseOptions(argv, { positionals: [], fix: false });
+    const options = parseOptions(argv, { positionals: [], fix: false, files: [] });
     return "kind" in options ? options : toRunArgs(options);
 };
 //# sourceMappingURL=parseArgs.js.map

@@ -9,6 +9,7 @@ export declare const fileNamingRule: {
     readonly options: import("../core/defineRule.js").RuleOptions<[FileNamingOptions?]>;
     readonly title: "Name files after one primary concept";
     readonly description: string;
+    readonly instead: "Rename the file after its one concept, in the case and with a suffix its file type allows.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";

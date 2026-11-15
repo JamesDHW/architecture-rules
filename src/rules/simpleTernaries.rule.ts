@@ -103,5 +103,6 @@ export const simpleTernariesRule = defineRule({
   id: "simple-ternaries",
   title: "Keep ternaries simple and side-effect-free",
   description: DESCRIPTION,
+  instead: "Use an if with return, or a named function, instead of a nested or effectful ternary.",
   enforcement: { type: "custom-oxlint", configuration: "error", implementation },
 });

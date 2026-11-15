@@ -83,6 +83,15 @@ export const noTypeAssertionsRule = defineRule({
   id: "no-type-assertions",
   title: "Do not use unchecked type assertions",
   description: DESCRIPTION,
+  instead: "Validate or narrow the value with a type guard, a schema parse or satisfies, instead of asserting its type.",
+  suppressWhen: "Attaching a brand to a value that is already validated, or bridging two third-party types that are the same at runtime.",
+  evasions: [
+    {
+      name: "A type guard that only claims the type",
+      code: "const isProject = (value: unknown): value is Project => typeof value === \"object\";",
+      why: "The predicate asserts the type without checking its fields, so the cast has only moved. Check every field the type promises, or parse the value with a schema.",
+    },
+  ],
   enforcement: {
     type: "custom-oxlint",
     configuration: "error",

@@ -6,6 +6,7 @@ import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { defineArchitecture } from "../src/config/defineArchitecture.js";
+import { fileNamingRule } from "../src/rules/fileNaming.rule.js";
 import { compileOxlintConfig } from "../src/runner/compileOxlintConfig.js";
 import { temporaryRoot, tsconfigJson, writeFiles } from "./utils/fixtures.js";
 
@@ -136,6 +137,23 @@ describe("packaged CLI", () => {
     const result = spawnSync(process.execPath, [binary, "--config", configPath, "--no-ignore", path], { cwd: root, encoding: "utf8" });
     expect(result.status, result.stderr).toBe(1);
     expect(result.stdout).toContain("no-debugger");
+  });
+  it.runIf(process.env.ARCHITECTURE_NATIVE_TESTS === "1")("prints findings and what to write instead as JSON", () => {
+    const root = rootFixture();
+    const result = run(["--json", "--file", "src/abc.ts"], root);
+    expect(result.status, result.stderr).toBe(1);
+    const parsed = parseOutput(result.stdout);
+    expect(parsed).toMatchObject({ findings: [{ source: "lint", ruleId: "file-naming", file: "src/abc.ts" }] });
+    expect(parsed).toHaveProperty(["rules", 0, "instead"], fileNamingRule.instead);
+    expect(result.stdout).toContain("docs/rules/file-naming.md");
+  });
+  it.runIf(process.env.ARCHITECTURE_NATIVE_TESTS === "1")("prints a Markdown report", () => {
+    const root = rootFixture("// oxlint-disable-next-line architecture/no-let -- The fixture needs one suppression.\nlet count = 1;\nexport const value = count;");
+    const result = run(["report"], root);
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain("# Architecture report");
+    expect(result.stdout).toContain("| file-naming | 1 | 0 |");
+    expect(result.stdout).toContain("The fixture needs one suppression.");
   });
   it.runIf(process.env.ARCHITECTURE_NATIVE_TESTS === "1")("reports Pascal naming through the actual Oxlint runner", () => {
     const root = rootFixture();

@@ -74,6 +74,7 @@ export const controlFlowBracesRule = defineRule({
   id: "control-flow-braces",
   title: "Use braces except for single-line terminal guards",
   description: DESCRIPTION,
+  instead: "Add braces around the body; only a single-line terminal guard such as `if (isDone) return result;` may omit them.",
   enforcement: {
     type: "custom-oxlint",
     configuration: "error",

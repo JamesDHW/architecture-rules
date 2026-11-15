@@ -1,4 +1,8 @@
 export declare const asyncAwaitRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "async-await";
     readonly title: string;
     readonly description: string;
@@ -11,6 +15,10 @@ export declare const asyncAwaitRule: {
     };
 };
 export declare const noFloatingPromisesRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-floating-promises";
     readonly title: string;
     readonly description: string;
@@ -49,6 +57,10 @@ export declare const noFloatingPromisesRule: {
     };
 };
 export declare const noMisusedPromisesRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-misused-promises";
     readonly title: string;
     readonly description: string;
@@ -70,6 +82,10 @@ export declare const noMisusedPromisesRule: {
     };
 };
 export declare const awaitThenableRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "await-thenable";
     readonly title: string;
     readonly description: string;

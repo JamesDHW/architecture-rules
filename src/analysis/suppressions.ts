@@ -41,21 +41,43 @@ const isUnreasonedDirective = (text: string): boolean => lintDirective.test(text
 
 const lineOf = (text: string, offset: number): number => text.slice(0, offset).split("\n").length;
 
-const fileSuppressionIssues = (file: ClassifiedFile, projects: readonly Project[]): readonly Issue[] => {
+type DirectiveComment = { readonly file: string; readonly line: number; readonly text: string };
+
+/** Every lint directive comment in the file: the text after // or /*, with its line. */
+const directiveComments = (file: ClassifiedFile, projects: readonly Project[]): readonly DirectiveComment[] => {
   const source = projects.map((project) => project.program.getSourceFile(file.path)).find(isPresent);
   if (source === undefined) return [];
   const comments = new Map(descendants(source).flatMap((node) => nodeComments(source, node)));
   return [...comments]
-    .filter((span) => isUnreasonedDirective(commentText(source, span)))
-    .map(([start]) => ({
-      ruleId: "reasoned-suppressions",
-      file: file.relative,
-      line: lineOf(source.text, start),
-      message: "Only named-rule disable-line/disable-next-line comments with a '-- reason' are permitted; inline rule reconfiguration and broad disables are not.",
-    }));
+    .map((span) => ({ file: file.relative, line: lineOf(source.text, span[0]), text: commentText(source, span) }))
+    .filter((comment) => lintDirective.test(comment.text));
 };
+
+const unreasonedIssue = (comment: DirectiveComment): Issue => ({
+  ruleId: "reasoned-suppressions",
+  file: comment.file,
+  line: comment.line,
+  message: "Only named-rule disable-line/disable-next-line comments with a '-- reason' are permitted; inline rule reconfiguration and broad disables are not.",
+});
 
 /** Policy validation happens before lint, so a broad disable cannot disable this check. */
 export const checkSuppressions = (files: readonly ClassifiedFile[], projects: readonly Project[]): readonly Issue[] => {
-  return files.flatMap((file) => fileSuppressionIssues(file, projects));
+  return files.flatMap((file) => directiveComments(file, projects).filter((comment) => isUnreasonedDirective(comment.text)).map(unreasonedIssue));
+};
+
+/** A reasoned line suppression: where it is, which rules it turns off and why. */
+export type Suppression = { readonly file: string; readonly line: number; readonly rules: readonly string[]; readonly reason: string };
+
+const reasonedParts = /^(?:eslint|oxlint)-disable-(?:next-line|line)\s+(.+?)\s+--\s+(.+)$/s;
+
+const toSuppression = (comment: DirectiveComment): readonly Suppression[] => {
+  const parts = reasonedParts.exec(comment.text);
+  if (parts === null) return [];
+  const [, ruleList = "", reason = ""] = parts;
+  return [{ file: comment.file, line: comment.line, rules: ruleList.split(",").map((rule) => rule.trim()), reason: reason.trim() }];
+};
+
+/** Every reasoned suppression in the files, for the report. */
+export const listSuppressions = (files: readonly ClassifiedFile[], projects: readonly Project[]): readonly Suppression[] => {
+  return files.flatMap((file) => directiveComments(file, projects).flatMap(toSuppression));
 };

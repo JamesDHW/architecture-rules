@@ -1,0 +1,20 @@
+/** The name the Oxlint config and suppression comments use for a lint rule, such as architecture/no-let; undefined when the rule is not a lint rule. */
+export const lintRuleName = (rule) => {
+    const { enforcement } = rule;
+    switch (enforcement.type) {
+        case "oxlint":
+            return enforcement.rule.includes("/") ? enforcement.rule : `eslint/${enforcement.rule}`;
+        case "custom-oxlint":
+            return `architecture/${rule.id}`;
+        case "typescript":
+        case "advisory":
+        case "architecture":
+            return undefined;
+    }
+};
+/** How Oxlint labels a lint rule's findings: architecture/no-let becomes architecture(no-let). */
+export const diagnosticCode = (lintName) => {
+    const [plugin, ...name] = lintName.split("/");
+    return `${plugin ?? ""}(${name.join("/")})`;
+};
+//# sourceMappingURL=lintNames.js.map

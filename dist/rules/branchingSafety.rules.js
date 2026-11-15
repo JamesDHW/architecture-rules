@@ -17,6 +17,7 @@ An unused callback return does not justify hiding effects in a logical
 expression. Review that case against this policy even if lint cannot infer
 that a caller discards the result. Directives such as "use client" remain valid.
 `.trim(),
+    instead: "Use an if statement for a conditional effect instead of an && or ternary expression.",
     rule: "no-unused-expressions",
     configuration: ["error", { allowShortCircuit: false, allowTernary: false, allowTaggedTemplates: true, enforceForJSX: true, ignoreDirectives: true }],
 });
@@ -32,6 +33,7 @@ recognizes literals, not whether arbitrary identifiers are semantic constants.
 Subject-first comparisons read as a question about the domain value; readable
 range notation is an intentional exception.
 `.trim(),
+    instead: "Put the value being tested first: project.status === \"archived\".",
     rule: "yoda",
     configuration: ["error", "never", { exceptRange: true }],
 });
@@ -61,6 +63,7 @@ Bad: Array.isArray(value) && value.every((entry) => typeof entry === "string")
 Redundant conditions obscure contracts and suggest unsupported uncertainty.
 Type proofs rely on accurate declarations; they do not validate runtime input.
 `.trim(),
+    instead: "Remove the check the types already rule out; accept untrusted input as unknown and validate it at the boundary.",
     rule: "typescript/no-unnecessary-condition",
     configuration: ["error", { checkTypePredicates: true, allowConstantLoopConditions: "never" }],
 });
@@ -77,6 +80,7 @@ comparisons for nullable booleans; replacing them with truthiness can lose
 null/undefined distinctions. Negated exceptional guards remain preferred over
 inverting the function to put its successful path inside a positive condition.
 `.trim(),
+    instead: "Test the boolean directly (if (isReady)); keep === true only for a nullable boolean.",
     rule: "typescript/no-unnecessary-boolean-literal-compare",
     configuration: ["error", { allowComparingNullableBooleansToTrue: true, allowComparingNullableBooleansToFalse: true }],
 });
@@ -84,6 +88,7 @@ export const noDuplicateSwitchCasesRule = defineNativeOxlintRule({
     id: "no-duplicate-switch-cases",
     title: "Do not repeat switch case values",
     description: "Give each case a distinct value. Good: case 'idle': return ready; case 'loading': return pending; Bad: two case 'idle' labels. A repeated case cannot select its later branch.",
+    instead: "Remove or merge the repeated case value.",
     rule: "no-duplicate-case",
     configuration: "error",
 });
@@ -91,6 +96,7 @@ export const noUnreachableStatementsRule = defineNativeOxlintRule({
     id: "no-unreachable-statements",
     title: "Remove unreachable statements after terminal exits",
     description: "Good: publishProject(); return; Bad: return; publishProject(); Unreachable work misrepresents the operation and often exposes an incorrectly placed exit.",
+    instead: "Move or delete the code after the return, throw or break.",
     rule: "no-unreachable",
     configuration: "error",
 });
@@ -98,6 +104,7 @@ export const scopedCaseDeclarationsRule = defineNativeOxlintRule({
     id: "scoped-case-declarations",
     title: "Scope lexical declarations within switch cases",
     description: "Case braces are optional for simple returns. Good: case 'success': { const label = formatProject(project); return label; } Bad: the same lexical declaration in an unbraced case. Braces keep lexical bindings from leaking into other cases' shared scope.",
+    instead: "Wrap the case body in braces when it declares a binding.",
     rule: "no-case-declarations",
     configuration: "error",
 });
@@ -115,6 +122,7 @@ return pattern or arbitrary helper. Additional cases remain review obligations.
 It is a syntax convention for standard collection methods, not proof that a
 custom object with a map/filter method implements Array semantics.
 `.trim(),
+    instead: "Drop the emptiness check: map, filter and similar operations already return an empty result.",
     rule: "unicorn/no-useless-length-check",
     configuration: "error",
 });

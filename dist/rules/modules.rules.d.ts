@@ -1,4 +1,8 @@
 export declare const namedExportsRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "named-exports";
     readonly title: string;
     readonly description: string;
@@ -9,6 +13,10 @@ export declare const namedExportsRule: {
     };
 };
 export declare const noCycleRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-cycle";
     readonly title: string;
     readonly description: string;

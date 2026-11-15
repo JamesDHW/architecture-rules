@@ -1,4 +1,8 @@
 export declare const explicitJsxPropsRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "explicit-jsx-props";
     readonly title: string;
     readonly description: string;
@@ -14,6 +18,10 @@ export declare const explicitJsxPropsRule: {
     };
 };
 export declare const moduleScopeComponentsRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "module-scope-components";
     readonly title: string;
     readonly description: string;
@@ -28,6 +36,10 @@ export declare const moduleScopeComponentsRule: {
     };
 };
 export declare const rulesOfHooksRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "rules-of-hooks";
     readonly title: string;
     readonly description: string;
@@ -38,6 +50,10 @@ export declare const rulesOfHooksRule: {
     };
 };
 export declare const exhaustiveDepsRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "exhaustive-deps";
     readonly title: string;
     readonly description: string;
@@ -50,6 +66,10 @@ export declare const exhaustiveDepsRule: {
     };
 };
 export declare const jsxKeyRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "jsx-key";
     readonly title: string;
     readonly description: string;

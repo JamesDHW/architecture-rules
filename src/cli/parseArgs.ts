@@ -1,5 +1,8 @@
 export type DescribeFormat = "text" | "json" | "mermaid";
 
+/** How a check prints its findings; omitted on RunArgs for the default text output. */
+export type OutputFormat = "json" | "report";
+
 export type RunArgs = {
   readonly kind: "run";
   readonly target: string;
@@ -7,6 +10,9 @@ export type RunArgs = {
   readonly config?: string;
   readonly explain?: string;
   readonly describe?: DescribeFormat;
+  readonly format?: OutputFormat;
+  /** Lint and report only these files; the whole project is still analyzed. */
+  readonly files?: readonly string[];
 };
 
 export type CliArgs =
@@ -15,10 +21,17 @@ export type CliArgs =
   | RunArgs;
 
 type ParseError = Extract<CliArgs, { readonly kind: "error" }>;
-type Options = { readonly positionals: readonly string[]; readonly fix: boolean; readonly config?: string; readonly format?: "json" | "mermaid" };
+type Options = {
+  readonly positionals: readonly string[];
+  readonly fix: boolean;
+  readonly config?: string;
+  readonly format?: "json" | "mermaid";
+  readonly files: readonly string[];
+};
 
 const explainUsage = "Usage: architecture-check explain <file> [--config path]";
 const describeUsage = "Usage: architecture-check describe [--json | --mermaid] [--config path] [project-dir]";
+const reportUsage = "Usage: architecture-check report [--config path] [project-dir]";
 
 const failure = (message: string): ParseError => ({ kind: "error", message });
 
@@ -36,6 +49,12 @@ const parseFormat = (argv: readonly string[], options: Options, format: "json" |
   return parseOptions(argv, { ...options, format });
 };
 
+const parseFile = (argv: readonly string[], options: Options): Options | ParseError => {
+  const [path, ...rest] = argv;
+  if (!isOptionValue(path)) return failure("--file requires a path");
+  return parseOptions(rest, { ...options, files: [...options.files, path] });
+};
+
 const parseOptions = (argv: readonly string[], options: Options): Options | ParseError => {
   const [arg, ...rest] = argv;
   switch (arg) {
@@ -49,6 +68,8 @@ const parseOptions = (argv: readonly string[], options: Options): Options | Pars
       return parseFormat(rest, options, "json");
     case "--mermaid":
       return parseFormat(rest, options, "mermaid");
+    case "--file":
+      return parseFile(rest, options);
     default:
       return arg.startsWith("-") ? failure(`Unknown option: ${arg}`) : parseOptions(rest, { ...options, positionals: [...options.positionals, arg] });
   }
@@ -56,8 +77,10 @@ const parseOptions = (argv: readonly string[], options: Options): Options | Pars
 
 const configOption = ({ config }: Options): { readonly config?: string } => config === undefined ? {} : { config };
 
+const hasCheckOnlyOptions = (options: Options): boolean => options.fix || options.files.length > 0;
+
 const isExplainTarget = (file: string | undefined, extra: readonly string[], options: Options): file is string => {
-  return file !== undefined && extra.length === 0 && !options.fix && options.format === undefined;
+  return file !== undefined && extra.length === 0 && !hasCheckOnlyOptions(options) && options.format === undefined;
 };
 
 const explainArgs = ([file, ...extra]: readonly string[], options: Options): CliArgs => {
@@ -66,16 +89,24 @@ const explainArgs = ([file, ...extra]: readonly string[], options: Options): Cli
 };
 
 const describeArgs = ([target, ...extra]: readonly string[], options: Options): CliArgs => {
-  const isDescribeUsage = extra.length === 0 && !options.fix;
+  const isDescribeUsage = extra.length === 0 && !hasCheckOnlyOptions(options);
   if (!isDescribeUsage) return failure(describeUsage);
   return { kind: "run", target: target ?? ".", fix: false, describe: options.format ?? "text", ...configOption(options) };
 };
 
+const reportArgs = ([target, ...extra]: readonly string[], options: Options): CliArgs => {
+  const isReportUsage = extra.length === 0 && !hasCheckOnlyOptions(options) && options.format === undefined;
+  if (!isReportUsage) return failure(reportUsage);
+  return { kind: "run", target: target ?? ".", fix: false, format: "report", ...configOption(options) };
+};
+
 const checkArgs = (options: Options): CliArgs => {
   const [target, extra] = options.positionals;
-  if (options.format !== undefined) return failure("--json and --mermaid only apply to describe");
+  if (options.format === "mermaid") return failure("--mermaid only applies to describe");
   if (extra !== undefined) return failure("Expected at most one path argument.");
-  return { kind: "run", target: target ?? ".", fix: options.fix, ...configOption(options) };
+  const format = options.format === undefined ? {} : { format: options.format };
+  const files = options.files.length === 0 ? {} : { files: options.files };
+  return { kind: "run", target: target ?? ".", fix: options.fix, ...configOption(options), ...format, ...files };
 };
 
 const toRunArgs = (options: Options): CliArgs => {
@@ -85,6 +116,8 @@ const toRunArgs = (options: Options): CliArgs => {
       return explainArgs(rest, options);
     case "describe":
       return describeArgs(rest, options);
+    case "report":
+      return reportArgs(rest, options);
     case undefined:
     default:
       return checkArgs(options);
@@ -94,6 +127,6 @@ const toRunArgs = (options: Options): CliArgs => {
 export const parseArgs = (argv: readonly string[]): CliArgs => {
   const wantsHelp = argv.includes("--help") || argv.includes("-h");
   if (wantsHelp) return { kind: "help" };
-  const options = parseOptions(argv, { positionals: [], fix: false });
+  const options = parseOptions(argv, { positionals: [], fix: false, files: [] });
   return "kind" in options ? options : toRunArgs(options);
 };

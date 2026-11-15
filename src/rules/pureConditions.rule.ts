@@ -73,6 +73,7 @@ export const pureConditionsRule = defineRule({
   id: "pure-conditions",
   title: "Keep conditions free of explicit effects",
   description: DESCRIPTION,
+  instead: "Compute the effect into a const first, then test the const.",
   enforcement: {
     type: "custom-oxlint",
     configuration: "error",

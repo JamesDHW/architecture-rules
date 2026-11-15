@@ -29,22 +29,36 @@ const commentText = (source, [start, end]) => {
 };
 const isUnreasonedDirective = (text) => lintDirective.test(text) && !reasonedLineDirective.test(text);
 const lineOf = (text, offset) => text.slice(0, offset).split("\n").length;
-const fileSuppressionIssues = (file, projects) => {
+/** Every lint directive comment in the file: the text after // or /*, with its line. */
+const directiveComments = (file, projects) => {
     const source = projects.map((project) => project.program.getSourceFile(file.path)).find(isPresent);
     if (source === undefined)
         return [];
     const comments = new Map(descendants(source).flatMap((node) => nodeComments(source, node)));
     return [...comments]
-        .filter((span) => isUnreasonedDirective(commentText(source, span)))
-        .map(([start]) => ({
-        ruleId: "reasoned-suppressions",
-        file: file.relative,
-        line: lineOf(source.text, start),
-        message: "Only named-rule disable-line/disable-next-line comments with a '-- reason' are permitted; inline rule reconfiguration and broad disables are not.",
-    }));
+        .map((span) => ({ file: file.relative, line: lineOf(source.text, span[0]), text: commentText(source, span) }))
+        .filter((comment) => lintDirective.test(comment.text));
 };
+const unreasonedIssue = (comment) => ({
+    ruleId: "reasoned-suppressions",
+    file: comment.file,
+    line: comment.line,
+    message: "Only named-rule disable-line/disable-next-line comments with a '-- reason' are permitted; inline rule reconfiguration and broad disables are not.",
+});
 /** Policy validation happens before lint, so a broad disable cannot disable this check. */
 export const checkSuppressions = (files, projects) => {
-    return files.flatMap((file) => fileSuppressionIssues(file, projects));
+    return files.flatMap((file) => directiveComments(file, projects).filter((comment) => isUnreasonedDirective(comment.text)).map(unreasonedIssue));
+};
+const reasonedParts = /^(?:eslint|oxlint)-disable-(?:next-line|line)\s+(.+?)\s+--\s+(.+)$/s;
+const toSuppression = (comment) => {
+    const parts = reasonedParts.exec(comment.text);
+    if (parts === null)
+        return [];
+    const [, ruleList = "", reason = ""] = parts;
+    return [{ file: comment.file, line: comment.line, rules: ruleList.split(",").map((rule) => rule.trim()), reason: reason.trim() }];
+};
+/** Every reasoned suppression in the files, for the report. */
+export const listSuppressions = (files, projects) => {
+    return files.flatMap((file) => directiveComments(file, projects).flatMap(toSuppression));
 };
 //# sourceMappingURL=suppressions.js.map

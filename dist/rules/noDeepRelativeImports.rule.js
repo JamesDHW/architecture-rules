@@ -51,6 +51,7 @@ export const noDeepRelativeImportsRule = defineRule({
     id: "no-deep-relative-imports",
     title: "Warn on deeply ascending relative imports",
     description: DESCRIPTION,
+    instead: "Import through a module alias (package exports or a #subpath import) instead of ../../../.",
     enforcement: {
         type: "custom-oxlint",
         configuration: "warn",

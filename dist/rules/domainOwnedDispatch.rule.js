@@ -135,6 +135,7 @@ export const domainOwnedDispatchRule = defineRule({
     id: "domain-owned-dispatch",
     title: "Dispatch domain actions through their owning reducer",
     description: DESCRIPTION,
+    instead: "Route by an explicit domain field and let the child reducer own its action union.",
     enforcement: { type: "custom-oxlint", configuration: "error", implementation },
 });
 //# sourceMappingURL=domainOwnedDispatch.rule.js.map

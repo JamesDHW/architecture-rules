@@ -1,4 +1,6 @@
 export type DescribeFormat = "text" | "json" | "mermaid";
+/** How a check prints its findings; omitted on RunArgs for the default text output. */
+export type OutputFormat = "json" | "report";
 export type RunArgs = {
     readonly kind: "run";
     readonly target: string;
@@ -6,6 +8,9 @@ export type RunArgs = {
     readonly config?: string;
     readonly explain?: string;
     readonly describe?: DescribeFormat;
+    readonly format?: OutputFormat;
+    /** Lint and report only these files; the whole project is still analyzed. */
+    readonly files?: readonly string[];
 };
 export type CliArgs = {
     readonly kind: "help";

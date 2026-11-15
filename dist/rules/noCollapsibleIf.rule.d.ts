@@ -3,6 +3,7 @@ export declare const noCollapsibleIfRule: {
     readonly id: "no-collapsible-if";
     readonly title: "Do not nest a sole if inside another if";
     readonly description: string;
+    readonly instead: "Merge the nested ifs into one condition, and name it when it is compound.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";

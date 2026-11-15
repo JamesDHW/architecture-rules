@@ -10,6 +10,8 @@ placeholders such as data, item, obj, arr, or tmp.
 Specific names carry context into every use and remove the need to inspect a
 declaration to infer what a generic placeholder represents.
   `.trim(),
+  instead: "Name the value by its domain role, such as projectSummary instead of data or item.",
+  suppressWhen: "An external API forces the name, such as a field called data; suppress at the single place that touches it.",
   rule: "id-denylist",
   configuration: ["error", "data", "item", "obj", "arr", "tmp"],
 });
@@ -23,6 +25,7 @@ import. A destructured prop named like an imported style or helper silently
 replaces it inside the component, and both are often strings, so TypeScript
 cannot tell.
   `.trim(),
+  instead: "Rename the inner binding so it doesn't hide the outer one.",
   rule: "no-shadow",
   configuration: "error",
 });

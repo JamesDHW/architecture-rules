@@ -1,4 +1,8 @@
 export declare const reduceSimpleFoldsRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "reduce-simple-folds";
     readonly title: string;
     readonly description: string;
@@ -11,6 +15,10 @@ export declare const reduceSimpleFoldsRule: {
     };
 };
 export declare const noForEachRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "no-for-each";
     readonly title: string;
     readonly description: string;
@@ -21,6 +29,10 @@ export declare const noForEachRule: {
     };
 };
 export declare const preferAtRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
     readonly id: "prefer-at";
     readonly title: string;
     readonly description: string;

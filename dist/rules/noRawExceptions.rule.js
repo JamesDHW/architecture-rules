@@ -30,6 +30,15 @@ export const noRawExceptionsRule = defineRule({
     id: "no-raw-exceptions",
     title: "Confine raw exceptions to explicit adapters",
     description: DESCRIPTION,
+    instead: "Return an error value; wrap a call that can throw or reject in tryCatch or tryCatchAsync, and keep raw try/throw in the error adapter.",
+    suppressWhen: "A framework requires a throw, such as a router redirect, at the one place it is required.",
+    evasions: [
+        {
+            name: "Leaving a rejecting call unwrapped",
+            code: "const loadProject = async (projectId: string): Promise<Project | ProjectError> => {\n  const response = await httpClient.get(`/projects/${projectId}`);\n  return parseProject(response.body);\n};",
+            why: "There is no try or throw to report, so the rule passes, but a network failure rejects past every caller that branches on returned errors. Wrap the call: await tryCatchAsync(() => httpClient.get(url)).",
+        },
+    ],
     enforcement: { type: "custom-oxlint", configuration: "error", implementation },
 });
 //# sourceMappingURL=noRawExceptions.rule.js.map

@@ -1,0 +1,1 @@
+{"version":3,"file":"markdown.d.ts","sourceRoot":"","sources":["../../../src/cli/ruleDocs/markdown.ts"],"names":[],"mappings":"AAAA,2BAA2B;AAC3B,eAAO,MAAM,KAAK,SAAU,MAAM,oBAAc,MAAoD,CAAC;AAErG,0DAA0D;AAC1D,eAAO,MAAM,UAAU,SAAU,MAAM,KAAG,MAAoE,CAAC;AAE/G,iEAAiE;AACjE,eAAO,MAAM,SAAS,SAAU,MAAM,KAAG,MAA2D,CAAC;AAgBrG,iDAAiD;AACjD,eAAO,MAAM,mBAAmB,gBAAiB,MAAM,KAAG,MAA0E,CAAC"}
