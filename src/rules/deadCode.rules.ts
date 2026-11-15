@@ -61,9 +61,11 @@ export const productionReachabilityRule = defineRule({
   id: "production-reachability",
   title: "Ship only code production uses",
   description: `
-A file or export in a production layer must be used by production code, not
-only by development layers (tests, stories, scripts, tool configuration). Code
-that only tests call is dead in production: it is tested, so it looks alive.
+A file or export in a production layer must be used from a production entry,
+not only by development code: development layers, and the tests, package.json
+scripts and tool configuration the dead-code analysis recognises. Code that
+only tests call is dead in production: it is tested, so it looks alive. Code a
+script runs in production is an entry: mark its layer as one.
   `.trim(),
   instead: "Delete the code and its tests, move it into a development layer, or use it from production code.",
   suppressWhen: "Production deliberately keeps this export for development use, such as a test seam the build strips.",

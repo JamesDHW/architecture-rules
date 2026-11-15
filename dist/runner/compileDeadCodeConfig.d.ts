@@ -1,14 +1,17 @@
 import type { ClassifiedFile } from "../analysis/inventory.js";
-/** Whether the file is an entry: its layer is marked entry, and the entry's files (all, by default) include it. */
-export declare const isEntryFile: (file: ClassifiedFile) => boolean;
-export type DeadCodeConfig = {
+type WorkspaceConfig = {
     readonly entry: readonly string[];
     readonly project: readonly string[];
-    readonly includeEntryExports: boolean;
+};
+export type DeadCodeConfig = {
+    readonly workspaces: Readonly<Record<string, WorkspaceConfig>>;
+    readonly includeEntryExports: true;
 };
 /**
- * The dead-code engine's configuration, compiled from the inventory: TypeScript decides which files exist, and
- * layer entries decide where reachability starts. With countEntryExports, exports of entry files are reported too.
+ * The dead-code engine's configuration, compiled from the inventory: TypeScript decides which files exist, layer
+ * entries (and architecture.config.ts, which the checker loads) decide where reachability starts, and each file is
+ * configured in its own workspace package. Entry exports count as unused unless the layer names them public.
  */
-export declare const compileDeadCodeConfig: (files: readonly ClassifiedFile[], countEntryExports: boolean) => DeadCodeConfig;
+export declare const compileDeadCodeConfig: (files: readonly ClassifiedFile[], workspaces: readonly string[], configFile: string) => DeadCodeConfig;
+export {};
 //# sourceMappingURL=compileDeadCodeConfig.d.ts.map

@@ -4,7 +4,7 @@
 
 `production-reachability` · Dead-code check · error by default
 
-A file or export in a production layer must be used by production code, not only by development layers (tests, stories, scripts, tool configuration). Code that only tests call is dead in production: it is tested, so it looks alive.
+A file or export in a production layer must be used from a production entry, not only by development code: development layers, and the tests, package.json scripts and tool configuration the dead-code analysis recognises. Code that only tests call is dead in production: it is tested, so it looks alive. Code a script runs in production is an entry: mark its layer as one.
 
 ## What to write instead
 

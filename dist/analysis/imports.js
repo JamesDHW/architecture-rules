@@ -1,10 +1,11 @@
 import { existsSync, realpathSync } from "node:fs";
 import { isBuiltin } from "node:module";
 import { dirname, resolve } from "node:path";
-import { isCallExpression, isExportDeclaration, isExternalModuleReference, isIdentifier, isImportDeclaration, isImportTypeNode, isLiteralTypeNode, isNoSubstitutionTemplateLiteral, isStringLiteral, isVariableDeclaration, SyntaxKind, } from "typescript/unstable/ast";
+import { isCallExpression, isExportDeclaration, isExternalModuleReference, isImportDeclaration, isImportTypeNode, isLiteralTypeNode, isNoSubstitutionTemplateLiteral, isStringLiteral, SyntaxKind, } from "typescript/unstable/ast";
 import { infrastructure, inside, matches, relativePath, sourceFile } from "./paths.js";
+import { jsxRuntimeUses } from "./jsxRuntime.js";
+import { isModuleRequire } from "./requireCalls.js";
 import { descendants } from "./syntaxTree.js";
-const nodeModuleSpecifiers = ["node:module", "module"];
 const issueAt = (context, node, message) => {
     const start = node.getStart(context.source);
     const prefix = context.source.text.slice(0, start);
@@ -73,38 +74,6 @@ const specifierIssues = (context, node) => {
         return assetIssues(context, node, specifier, asset);
     return moduleIssues(context, node, specifier, isLocal);
 };
-/** Walks up from a declaration to the import that brought its value in, when there is one. */
-const isNodeModuleImport = (node) => {
-    if (node === undefined)
-        return false;
-    if (isImportDeclaration(node))
-        return isStringLiteral(node.moduleSpecifier) && nodeModuleSpecifiers.includes(node.moduleSpecifier.text);
-    return node.kind !== SyntaxKind.SourceFile && isNodeModuleImport(node.parent);
-};
-const isVariable = (node) => node !== undefined && isVariableDeclaration(node);
-const isCall = (node) => node !== undefined && isCallExpression(node);
-/** The function a declaration's initializer calls, when it is a call of a plain identifier. */
-const initializerFactory = (declaration) => {
-    const initializer = isVariable(declaration) ? declaration.initializer : undefined;
-    if (!isCall(initializer))
-        return undefined;
-    return isIdentifier(initializer.expression) ? initializer.expression : undefined;
-};
-/** A local require created with createRequire from node:module loads modules like the global one. */
-const isCreatedRequire = (project, declaration) => {
-    const factory = initializerFactory(declaration);
-    if (factory === undefined)
-        return false;
-    return project.checker.getSymbolAtLocation(factory)?.declarations.some((handle) => isNodeModuleImport(handle.resolve(project))) ?? false;
-};
-const isModuleRequire = (project, call) => {
-    const callee = call.expression;
-    const callsRequire = isIdentifier(callee) && callee.text === "require";
-    if (!callsRequire)
-        return false;
-    const localDefinitions = project.checker.getSymbolAtLocation(callee)?.declarations.filter((declaration) => !infrastructure(declaration.path)) ?? [];
-    return localDefinitions.length === 0 || localDefinitions.some((declaration) => isCreatedRequire(project, declaration.resolve(project)));
-};
 const callReferences = (project, call) => {
     const target = call.arguments.at(0) ?? call;
     const loadsModule = call.expression.kind === SyntaxKind.ImportKeyword || isModuleRequire(project, call);
@@ -142,7 +111,7 @@ const fileImportIssues = (root, file, project, byPath) => {
         return [];
     const context = { root, file, project, source, byPath };
     const references = descendants(source).flatMap((node) => moduleReferences(project, node));
-    return [...references.flatMap((reference) => specifierIssues(context, reference)), ...tripleSlashIssues(context)];
+    return [...references.flatMap((reference) => specifierIssues(context, reference)), ...tripleSlashIssues(context), ...jsxRuntimeUses(file, project).map((use) => ({ use }))];
 };
 const issueOf = (outcome) => ("issue" in outcome ? [outcome.issue] : []);
 const useOf = (outcome) => ("use" in outcome ? [outcome.use] : []);

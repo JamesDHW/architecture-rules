@@ -71,7 +71,7 @@ const headline = (findings: readonly Finding[]): string => {
 };
 
 const summary = (result: CheckResult): string => {
-  const layerOf = new Map(result.files.map((file) => [file.relative, file.layer]));
+  const layerOf = new Map([...result.files.map((file) => [file.relative, file.layer] as const), [result.configFile, "configuration"] as const]);
   const { findings } = result;
   const stages = `${result.stages.map(stageLabel).join(" · ")} · ${duration(result.durationMs)}`;
   const breakdown = findings.length === 0 ? [] : [

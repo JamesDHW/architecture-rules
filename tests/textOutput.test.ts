@@ -27,6 +27,7 @@ const projectFinding = (ruleId: string): Finding => ({ source: "lint", severity:
 
 const result = (findings: readonly Finding[]): CheckResult => ({
   architecture,
+  configFile: "architecture.config.ts",
   projects: 2,
   files: [file("src/domain/order.ts", "domain"), file("src/routes/about.tsx", "route")],
   findings,

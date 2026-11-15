@@ -12,6 +12,8 @@ export type Stage = {
 /** What one check found, ready for any output: text, JSON, the Markdown report or the language server. */
 export type CheckResult = {
     readonly architecture: Architecture;
+    /** architecture.config.ts, root-relative: findings about it are counted as configuration, not under a layer. */
+    readonly configFile: string;
     readonly projects: number;
     /** The classified files in scope: every file, or the --file selection. */
     readonly files: readonly ClassifiedFile[];
@@ -22,6 +24,7 @@ export type CheckResult = {
 };
 export type CheckScope = {
     readonly architecture: Architecture;
+    readonly configFile: string;
     readonly projects: number;
     readonly files: readonly ClassifiedFile[];
     /** performance.now() when the check started. */

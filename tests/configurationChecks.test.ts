@@ -53,16 +53,29 @@ describe("unusedPermissions", () => {
       ["Layer adapter grants internal layer adapter, but none of its imports use it.", 10],
     ]);
   });
+
+  it("points at the layer's own key when a grant is not written in its block", () => {
+    const { root, architecture, opened, files } = setup();
+    const { uses } = analyzeImports(root, files, opened.projects);
+    const spread = { file: config.file, text: configText.replace('external: ["zod", "node:fs"]', "external: [...SHARED]") };
+    expect(unusedPermissions(architecture, uses, spread).find(({ message }) => message.includes("zod"))?.line).toBe(3);
+  });
 });
 
 describe("unmatchedPatterns", () => {
-  it("reports file and exclude patterns that match no program source", () => {
+  it("reports file patterns that match no program source, but not exclude patterns, which guard future files", () => {
     const { architecture, files } = setup();
-    const sources = files.map((file) => file.relative);
-    expect(unmatchedPatterns(architecture, files, sources, config).map(({ message, line }) => [message, line])).toEqual([
+    expect(unmatchedPatterns(architecture, files, config).map(({ message, line }) => [message, line])).toEqual([
       ["Layer domain: files pattern src/old/** matches no source file.", 4],
-      ["Layer domain: exclude pattern src/domain/**/*.stories.ts matches no source file.", 5],
     ]);
+  });
+
+  it("does not report a generated layer whose output is not built yet", () => {
+    const architecture = defineArchitecture({
+      projects: { tsconfigs: ["tsconfig.json"] },
+      layers: { types: { description: "Framework types", files: [".next/types/**/*.ts"], generated: { reason: "Written on build." } } },
+    });
+    expect(unmatchedPatterns(architecture, [], config)).toEqual([]);
   });
 });
 

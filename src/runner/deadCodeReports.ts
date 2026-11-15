@@ -63,7 +63,7 @@ export const exportRules: ReadonlySet<string> = new Set(["unused-exports", "unus
 
 export const message = (ruleId: string, report: Report, developmentOnly: boolean): string => {
   const subject = ruleId === "unused-files" ? "This file" : `\`${report.name}\``;
-  if (developmentOnly) return `${subject} is used only by development layers (tests, tooling), not by production code.`;
+  if (developmentOnly) return `${subject} is used only by development code (development layers, tests, scripts, tool configuration), not from a production entry.`;
   switch (ruleId) {
     case "unused-files":
       return "Nothing imports this file, and its layer is not an entry.";
@@ -74,7 +74,7 @@ export const message = (ruleId: string, report: Report, developmentOnly: boolean
     case "unused-dependencies":
       return `\`${report.name}\` is declared in package.json, but nothing uses it.`;
     case "unlisted-dependencies":
-      return `\`${report.name}\` is imported, but package.json does not declare it.`;
+      return `\`${report.name}\` is imported, or required by a tool's configuration, but package.json does not declare it.`;
     case "unlisted-binaries":
       return `A script runs \`${report.name}\`, which no declared package provides.`;
     case "unresolved-imports":

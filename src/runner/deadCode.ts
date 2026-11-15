@@ -1,14 +1,18 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+import type { Project } from "typescript/unstable/sync";
+
 import type { ClassifiedFile } from "../analysis/inventory.js";
 import { matches } from "../analysis/paths.js";
+import { isPublicExport, publicExports, type PublicExports } from "../analysis/publicExports.js";
+import { workspacesOf } from "../analysis/workspaces.js";
 import { isRecord, isString, isUnknownArray } from "../core/guards.js";
 import type { Architecture, EffectiveRule } from "../config/types.js";
 import { ArchitectureError } from "../errors/architectureError.js";
 import { afterCleanup } from "../errors/results.js";
 import { tryCatch, tryCatchAsync } from "../errors/tryCatch.js";
-import { compileDeadCodeConfig, isEntryFile, type DeadCodeConfig } from "./compileDeadCodeConfig.js";
+import { compileDeadCodeConfig } from "./compileDeadCodeConfig.js";
 import { run } from "./deadCodeEngine.js";
 import { devDependencyMessage, exportRules, message, projectRules, ruleByIssueType, type Report } from "./deadCodeReports.js";
 import type { Finding } from "./findings.js";
@@ -17,19 +21,16 @@ type Context = {
   readonly architecture: Architecture;
   readonly byPath: ReadonlyMap<string, ClassifiedFile>;
   readonly configFile: string;
+  readonly publicExports: PublicExports;
 };
 
-/** Exports something outside the program uses, by the file's layer entry setting. */
-const isEntryExport = (file: ClassifiedFile, name: string): boolean => {
-  const exports = file.policy.entry?.exports;
-  const isNamingEntry = exports !== undefined && isEntryFile(file);
-  if (!isNamingEntry) return false;
-  return exports === "all" || exports.includes(name);
-};
+/** Tools load architecture.config.ts, like any configuration file, from its default export. */
+const isConfigExport = (context: Context, file: ClassifiedFile, name: string): boolean => file.relative === context.configFile && name === "default";
 
-const isExemptExport = (file: ClassifiedFile, ruleId: string, name: string): boolean => {
+const isExemptExport = (context: Context, file: ClassifiedFile, ruleId: string, name: string): boolean => {
   if (!exportRules.has(ruleId)) return false;
-  return file.policy.generated !== undefined || isEntryExport(file, name);
+  const isGenerated = file.policy.generated !== undefined;
+  return isGenerated || isConfigExport(context, file, name) || isPublicExport(context.publicExports, file.relative, name);
 };
 
 const isReported = (context: Context, ruleId: string, report: Report): boolean => {
@@ -37,15 +38,7 @@ const isReported = (context: Context, ruleId: string, report: Report): boolean =
   const file = context.byPath.get(report.file);
   // Only the checked programs' source counts; the engine also reads package.json entry targets such as dist/.
   if (file === undefined) return false;
-  return !isExemptExport(file, ruleId, report.name);
-};
-
-/** From the run that counts entry exports as unused: only exports in entry files whose layer names its used exports. */
-const isNamedEntryExport = (context: Context, report: Report): boolean => {
-  const file = context.byPath.get(report.file);
-  const exports = file?.policy.entry?.exports;
-  const isListedEntry = file !== undefined && isEntryFile(file) && exports !== "all";
-  return isListedEntry && exportRules.has(ruleByIssueType[report.type] ?? "");
+  return !isExemptExport(context, file, ruleId, report.name);
 };
 
 const settingFor = (context: Context, ruleId: string, file: string): EffectiveRule | undefined => {
@@ -121,40 +114,35 @@ const toFinding = (context: Context, entry: Classified): readonly Finding[] => {
   }];
 };
 
-const writeConfig = (directory: string, name: string, config: DeadCodeConfig): string => {
-  const path = join(directory, name);
-  writeFileSync(path, JSON.stringify(config));
-  return path;
-};
-
 type Runs = { readonly everything: readonly Report[]; readonly production: readonly Report[] };
 
-/**
- * Three runs: everything and production only, where entry exports count as used, so public APIs re-exported from
- * an entry stay alive; and everything again with entry exports counted, for entries that name their used exports.
- */
-const runAll = async (root: string, directory: string, files: readonly ClassifiedFile[], context: Context): Promise<Runs | ArchitectureError> => {
-  const publicEntries = writeConfig(directory, "dead-code.json", compileDeadCodeConfig(files, false));
-  const countedEntries = writeConfig(directory, "dead-code-entries.json", compileDeadCodeConfig(files, true));
-  const [everything, production, entries] = await Promise.all([run(root, publicEntries, false), run(root, publicEntries, true), run(root, countedEntries, false)]);
+/** Two runs of one configuration: over everything, and over production layers only. */
+const runBoth = async (root: string, configPath: string): Promise<Runs | ArchitectureError> => {
+  const [everything, production] = await Promise.all([run(root, configPath, false), run(root, configPath, true)]);
   if (everything instanceof ArchitectureError) return everything;
   if (production instanceof ArchitectureError) return production;
-  if (entries instanceof ArchitectureError) return entries;
-  return { everything: [...everything, ...entries.filter((report) => isNamedEntryExport(context, report))], production };
+  return { everything, production };
+};
+
+export type DeadCodeScope = {
+  readonly architecture: Architecture;
+  readonly files: readonly ClassifiedFile[];
+  readonly projects: readonly Project[];
+  readonly configFile: string;
 };
 
 /**
- * Finds unused files, exports and dependencies from the layers' entries, through generated configurations in a
- * private directory inside the root.
+ * Finds unused files, exports and dependencies from the layers' entries, through a generated configuration in a
+ * private directory inside the root. Exports count as used only when imported, or public through an entry.
  */
-export const deadCode = async (
-  root: string, architecture: Architecture, files: readonly ClassifiedFile[], configFile: string,
-): Promise<readonly Finding[] | ArchitectureError> => {
+export const deadCode = async (root: string, { architecture, files, projects, configFile }: DeadCodeScope): Promise<readonly Finding[] | ArchitectureError> => {
   const directory = tryCatch(() => mkdtempSync(join(root, ".architecture-run-")));
   if (directory instanceof ArchitectureError) return directory;
-  const context: Context = { architecture, byPath: new Map(files.map((file) => [file.relative, file])), configFile };
+  const context: Context = { architecture, byPath: new Map(files.map((file) => [file.relative, file])), configFile, publicExports: publicExports(files, projects) };
   const outcome = await tryCatchAsync(async () => {
-    const runs = await runAll(root, directory, files, context);
+    const configPath = join(directory, "dead-code.json");
+    writeFileSync(configPath, JSON.stringify(compileDeadCodeConfig(files, workspacesOf(root, files), configFile)));
+    const runs = await runBoth(root, configPath);
     if (runs instanceof ArchitectureError) return runs;
     const entries = combine(context, runs.everything, runs.production);
     return [...entries.filter((entry) => !isAllowed(context, entry)).flatMap((entry) => toFinding(context, entry)), ...unusedAllowances(context, entries)];

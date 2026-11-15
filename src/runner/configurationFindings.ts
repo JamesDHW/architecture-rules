@@ -36,10 +36,9 @@ type Scope = { readonly architecture: Architecture; readonly files: readonly Cla
 /** Checks of the configuration and project setup, at the severity architecture.config.ts gives each rule. */
 export const configurationFindings = (root: string, opened: Projects, scope: Scope, uses: readonly ImportUse[]): readonly Finding[] => {
   const { architecture, files, config } = scope;
-  const sources = [...opened.sources].map((path) => relativePath(root, path));
   const issues = [
     ...unusedPermissions(architecture, uses, config),
-    ...unmatchedPatterns(architecture, files, sources, config),
+    ...unmatchedPatterns(architecture, files, config),
     ...competingConfiguration(root),
     ...typescriptVersion(root, checkerTypeScript()),
   ];

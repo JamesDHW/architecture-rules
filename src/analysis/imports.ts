@@ -2,15 +2,17 @@ import { existsSync, realpathSync } from "node:fs";
 import { isBuiltin } from "node:module";
 import { dirname, resolve } from "node:path";
 import {
-  isCallExpression, isExportDeclaration, isExternalModuleReference, isIdentifier, isImportDeclaration, isImportTypeNode,
-  isLiteralTypeNode, isNoSubstitutionTemplateLiteral, isStringLiteral, isVariableDeclaration, SyntaxKind,
-  type CallExpression, type ExportDeclaration, type Identifier, type ImportDeclaration, type NoSubstitutionTemplateLiteral,
-  type Node, type SourceFile, type StringLiteral, type VariableDeclaration,
+  isCallExpression, isExportDeclaration, isExternalModuleReference, isImportDeclaration, isImportTypeNode,
+  isLiteralTypeNode, isNoSubstitutionTemplateLiteral, isStringLiteral, SyntaxKind,
+  type CallExpression, type ExportDeclaration, type ImportDeclaration, type NoSubstitutionTemplateLiteral,
+  type Node, type SourceFile, type StringLiteral,
 } from "typescript/unstable/ast";
 import type { Project } from "typescript/unstable/sync";
 
 import type { ClassifiedFile, Issue } from "./inventory.js";
 import { infrastructure, inside, matches, relativePath, sourceFile } from "./paths.js";
+import { jsxRuntimeUses } from "./jsxRuntime.js";
+import { isModuleRequire } from "./requireCalls.js";
 import { descendants } from "./syntaxTree.js";
 
 export type ImportIssue = Issue & { readonly line: number; readonly column: number };
@@ -32,7 +34,6 @@ type FileContext = {
   readonly byPath: ReadonlyMap<string, ClassifiedFile>;
 };
 
-const nodeModuleSpecifiers: readonly string[] = ["node:module", "module"];
 
 const issueAt = (context: FileContext, node: Node, message: string): ImportIssue => {
   const start = node.getStart(context.source);
@@ -104,39 +105,6 @@ const specifierIssues = (context: FileContext, node: Node): readonly Outcome[] =
   return moduleIssues(context, node, specifier, isLocal);
 };
 
-/** Walks up from a declaration to the import that brought its value in, when there is one. */
-const isNodeModuleImport = (node: Node | undefined): boolean => {
-  if (node === undefined) return false;
-  if (isImportDeclaration(node)) return isStringLiteral(node.moduleSpecifier) && nodeModuleSpecifiers.includes(node.moduleSpecifier.text);
-  return node.kind !== SyntaxKind.SourceFile && isNodeModuleImport(node.parent);
-};
-
-const isVariable = (node: Node | undefined): node is VariableDeclaration => node !== undefined && isVariableDeclaration(node);
-
-const isCall = (node: Node | undefined): node is CallExpression => node !== undefined && isCallExpression(node);
-
-/** The function a declaration's initializer calls, when it is a call of a plain identifier. */
-const initializerFactory = (declaration: Node | undefined): Identifier | undefined => {
-  const initializer = isVariable(declaration) ? declaration.initializer : undefined;
-  if (!isCall(initializer)) return undefined;
-  return isIdentifier(initializer.expression) ? initializer.expression : undefined;
-};
-
-/** A local require created with createRequire from node:module loads modules like the global one. */
-const isCreatedRequire = (project: Project, declaration: Node | undefined): boolean => {
-  const factory = initializerFactory(declaration);
-  if (factory === undefined) return false;
-  return project.checker.getSymbolAtLocation(factory)?.declarations.some((handle) => isNodeModuleImport(handle.resolve(project))) ?? false;
-};
-
-const isModuleRequire = (project: Project, call: CallExpression): boolean => {
-  const callee = call.expression;
-  const callsRequire = isIdentifier(callee) && callee.text === "require";
-  if (!callsRequire) return false;
-  const localDefinitions = project.checker.getSymbolAtLocation(callee)?.declarations.filter((declaration) => !infrastructure(declaration.path)) ?? [];
-  return localDefinitions.length === 0 || localDefinitions.some((declaration) => isCreatedRequire(project, declaration.resolve(project)));
-};
-
 const callReferences = (project: Project, call: CallExpression): readonly Node[] => {
   const target = call.arguments.at(0) ?? call;
   const loadsModule = call.expression.kind === SyntaxKind.ImportKeyword || isModuleRequire(project, call);
@@ -171,7 +139,7 @@ const fileImportIssues = (root: string, file: ClassifiedFile, project: Project, 
   if (source === undefined) return [];
   const context: FileContext = { root, file, project, source, byPath };
   const references = descendants(source).flatMap((node) => moduleReferences(project, node));
-  return [...references.flatMap((reference) => specifierIssues(context, reference)), ...tripleSlashIssues(context)];
+  return [...references.flatMap((reference) => specifierIssues(context, reference)), ...tripleSlashIssues(context), ...jsxRuntimeUses(file, project).map((use) => ({ use }))];
 };
 
 const issueOf = (outcome: Outcome): readonly ImportIssue[] => ("issue" in outcome ? [outcome.issue] : []);

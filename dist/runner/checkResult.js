@@ -22,6 +22,7 @@ const stageStatus = (name, findings, ranPastStructure) => {
 /** Assembles a check's result; stages after structure are skipped when structural findings stopped the run. */
 export const checkResult = (scope, findings, exceptions, ranPastStructure) => ({
     architecture: scope.architecture,
+    configFile: scope.configFile,
     projects: scope.projects,
     files: scope.files,
     findings,

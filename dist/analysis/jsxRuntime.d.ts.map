@@ -1,0 +1,1 @@
+{"version":3,"file":"jsxRuntime.d.ts","sourceRoot":"","sources":["../../src/analysis/jsxRuntime.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,OAAO,EAAE,MAAM,0BAA0B,CAAC;AAExD,OAAO,KAAK,EAAE,SAAS,EAAE,MAAM,cAAc,CAAC;AAC9C,OAAO,KAAK,EAAE,cAAc,EAAE,MAAM,gBAAgB,CAAC;AAMrD,0HAA0H;AAC1H,eAAO,MAAM,cAAc,SAAU,cAAc,WAAW,OAAO,KAAG,SAAS,SAAS,EAOzF,CAAC"}

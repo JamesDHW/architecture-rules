@@ -46,12 +46,12 @@ const noManifestFinding = {
     message: "There is no package.json in the architecture root, so unused files, exports and dependencies were not checked.",
 };
 /** A --fix run is checked again afterwards; dead code is reported then. */
-const unusedCode = async (root, scoped, options) => {
+const unusedCode = async (root, opened, scoped, options) => {
     if (options.fix === true)
         return [];
     if (!existsSync(join(root, "package.json")))
         return [noManifestFinding];
-    return deadCode(root, scoped.architecture, scoped.files, scoped.config.file);
+    return deadCode(root, { architecture: scoped.architecture, files: scoped.files, projects: opened.projects, configFile: scoped.config.file });
 };
 const collectFindings = async (root, opened, scoped, options) => {
     const { architecture, files, selected, exceptions, config } = scoped;
@@ -63,7 +63,7 @@ const collectFindings = async (root, opened, scoped, options) => {
     if (lintFindings instanceof ArchitectureError)
         return lintFindings;
     const compilerErrors = compilerFindings(root, opened.projects);
-    const unused = await unusedCode(root, scoped, options);
+    const unused = await unusedCode(root, opened, scoped, options);
     if (unused instanceof ArchitectureError)
         return unused;
     const found = [...generatedIssues.map(structuralFinding), ...lintFindings, ...compilerErrors, ...unused, ...configurationFindings(root, opened, scoped, imports.uses)];
@@ -83,10 +83,11 @@ const inspectOpened = async (root, architecture, opened, options, started) => {
     const checked = structure(opened, tree.files, tree.issues);
     const selectedPaths = new Set(selected.map((file) => file.relative));
     const exceptions = checked.exceptions.filter((exception) => selectedPaths.has(exception.file));
-    const scope = { architecture, projects: opened.projects.length, files: selected, started };
+    const config = readConfig(root, options.configFile);
+    const scope = { architecture, configFile: config.file, projects: opened.projects.length, files: selected, started };
     if (checked.issues.length > 0)
         return checkResult(scope, sortFindings(checked.issues.map(structuralFinding)), exceptions, false);
-    const findings = await collectFindings(root, opened, { architecture, files: tree.files, selected, exceptions, config: readConfig(root, options.configFile) }, options);
+    const findings = await collectFindings(root, opened, { architecture, files: tree.files, selected, exceptions, config }, options);
     if (findings instanceof ArchitectureError)
         return findings;
     return checkResult(scope, sortFindings(findings), exceptions, true);

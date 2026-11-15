@@ -17,10 +17,12 @@ export const unmatchedPatternsRule = defineRule({
   id: "unmatched-patterns",
   title: "Select files with patterns that match",
   description: `
-Every pattern in a layer's files, exclude and entry.files must match at least
-one source file of the TypeScript programs. A pattern that matches nothing is
-dead configuration, often a typo or a leftover from a move, and it hides where
-files are expected to live.
+Every pattern in a layer's files and entry.files must match at least one
+source file of the TypeScript programs. A pattern that matches nothing is dead
+configuration, often a typo or a leftover from a move, and it hides where files
+are expected to live. Exclude patterns are not checked, since they guard
+against files that do not exist yet, and neither are a generated layer's files,
+which may not exist before a build.
   `.trim(),
   instead: "Fix or remove the pattern in architecture.config.ts.",
   enforcement: { type: "configuration", configuration: "error" },

@@ -56,7 +56,7 @@ const headline = (findings) => {
     return `${errors > 0 ? "✗" : "!"} ${counts} in ${plural(files, "file")}`;
 };
 const summary = (result) => {
-    const layerOf = new Map(result.files.map((file) => [file.relative, file.layer]));
+    const layerOf = new Map([...result.files.map((file) => [file.relative, file.layer]), [result.configFile, "configuration"]]);
     const { findings } = result;
     const stages = `${result.stages.map(stageLabel).join(" · ")} · ${duration(result.durationMs)}`;
     const breakdown = findings.length === 0 ? [] : [

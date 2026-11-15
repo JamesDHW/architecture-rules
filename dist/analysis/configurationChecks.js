@@ -6,17 +6,28 @@ import { ArchitectureError } from "../errors/architectureError.js";
 import { matches } from "./paths.js";
 const lineAt = (text, offset) => text.slice(0, offset).split("\n").length;
 const escaped = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-/** The line of a quoted value inside a layer's block, or of the layer's key; undefined when neither is found. */
-const configLine = (config, layer, value) => {
+const layerKeyAt = (config, layer) => {
     const layerKey = new RegExp(`["']?\\b${escaped(layer)}\\b["']?\\s*:\\s*\\{`).exec(config.text);
-    if (layerKey === null)
+    return layerKey === null ? undefined : layerKey.index;
+};
+/** Where a layer's block ends: at the next layer's key, or the end of the file. */
+const blockEnd = (config, start, layers) => {
+    const later = layers.map((name) => layerKeyAt(config, name)).filter((index) => index !== undefined && index > start);
+    return Math.min(config.text.length, ...later);
+};
+/**
+ * The line of a quoted value inside a layer's block, or of the layer's key when the value is not written there
+ * literally (a spread constant, say); undefined when the layer's key is not found.
+ */
+const configLine = (config, layers, layer, value) => {
+    const start = layerKeyAt(config, layer);
+    if (start === undefined)
         return undefined;
     if (value === undefined)
-        return lineAt(config.text, layerKey.index);
-    const quoted = new RegExp(`["'\`]${escaped(value)}["'\`]`, "g");
-    quoted.lastIndex = layerKey.index;
-    const found = quoted.exec(config.text);
-    return lineAt(config.text, found === null ? layerKey.index : found.index);
+        return lineAt(config.text, start);
+    const block = config.text.slice(start, blockEnd(config, start, layers));
+    const found = new RegExp(`["'\`]${escaped(value)}["'\`]`).exec(block);
+    return lineAt(config.text, start + (found === null ? 0 : found.index));
 };
 const configIssue = (ruleId, config, message, line) => {
     return { ruleId, file: config.file, message, ...(line === undefined ? {} : { line }) };
@@ -47,24 +58,28 @@ const grantLabel = ({ kind, value }) => {
 };
 /** Dependencies a layer grants that no import from the layer uses. */
 export const unusedPermissions = (architecture, uses, config) => {
+    const layers = Object.keys(architecture.layers);
     return Object.entries(architecture.layers).flatMap(([name, layer]) => grantsOf(layer)
         .filter((grant) => !isUsedGrant(uses, name, grant))
-        .map((grant) => configIssue("unused-permissions", config, `Layer ${name} grants ${grantLabel(grant)}, but none of its imports use it.`, configLine(config, name, grant.value))));
+        .map((grant) => configIssue("unused-permissions", config, `Layer ${name} grants ${grantLabel(grant)}, but none of its imports use it.`, configLine(config, layers, name, grant.value))));
 };
-const unmatched = (name, kind, patterns, paths, config) => {
+const unmatched = (config, layers, { name, kind, patterns, paths }) => {
     return patterns
         .filter((pattern) => !paths.some((path) => matches(path, [pattern])))
-        .map((pattern) => configIssue("unmatched-patterns", config, `Layer ${name}: ${kind} pattern ${pattern} matches no source file.`, configLine(config, name, pattern)));
+        .map((pattern) => configIssue("unmatched-patterns", config, `Layer ${name}: ${kind} pattern ${pattern} matches no source file.`, configLine(config, layers, name, pattern)));
 };
-/** Layer, exclude and entry patterns that match no source file of the programs. */
-export const unmatchedPatterns = (architecture, files, sources, config) => {
+/**
+ * Layer and entry patterns that match no source file of the programs. Exclude patterns are not checked: they guard
+ * against files that do not exist yet. Nor are a generated layer's files, which exist only after a build.
+ */
+export const unmatchedPatterns = (architecture, files, config) => {
+    const layers = Object.keys(architecture.layers);
     return Object.entries(architecture.layers).flatMap(([name, layer]) => {
-        const layerFiles = files.filter((file) => file.layer === name).map((file) => file.relative);
-        const selectable = sources.filter((path) => matches(path, layer.files));
+        const paths = files.filter((file) => file.layer === name).map((file) => file.relative);
+        const filePatterns = layer.policy.generated === undefined ? layer.files : [];
         return [
-            ...unmatched(name, "files", layer.files, layerFiles, config),
-            ...unmatched(name, "exclude", layer.exclude ?? [], selectable, config),
-            ...unmatched(name, "entry.files", layer.policy.entry?.files ?? [], layerFiles, config),
+            ...unmatched(config, layers, { name, kind: "files", patterns: filePatterns, paths }),
+            ...unmatched(config, layers, { name, kind: "entry.files", patterns: layer.policy.entry?.files ?? [], paths }),
         ];
     });
 };

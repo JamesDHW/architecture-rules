@@ -31,7 +31,7 @@ const fixture = (rules: ProjectRules = {}) => {
     },
   });
   const opened = openFixtureProjects(root, architecture);
-  return { root, architecture, files: inventory(root, architecture, opened.sources).files };
+  return { root, scope: { architecture, files: inventory(root, architecture, opened.sources).files, projects: opened.projects, configFile: "architecture.config.ts" } };
 };
 
 const summary = (findings: readonly { readonly ruleId: string; readonly file: string; readonly message: string }[]) => {
@@ -41,11 +41,11 @@ const summary = (findings: readonly { readonly ruleId: string; readonly file: st
 describe("dead-code stage", () => {
   // main.ts is an entry that names no used exports, so its export counts as unused: being loaded is not being imported.
   it("reports unused files, exports, types and dependencies from the layers' entries", async () => {
-    const { root, architecture, files } = fixture();
-    const findings = await deadCode(root, architecture, files, "architecture.config.ts");
+    const { root, scope } = fixture();
+    const findings = await deadCode(root, scope);
     if (findings instanceof Error) return expect.unreachable(findings.message);
     expect(summary(findings)).toEqual([
-      "production-reachability src/domain/testOnly.ts: This file is used only by development layers (tests, tooling), not by production code.",
+      "production-reachability src/domain/testOnly.ts: This file is used only by development code (development layers, tests, scripts, tool configuration), not from a production entry.",
       "unused-dependencies package.json: `left-pad` is declared in package.json, but nothing uses it.",
       "unused-exports src/domain/helper.ts: `unusedHelper` is exported, but nothing imports it.",
       "unused-exports src/main.ts: `started` is exported, but nothing imports it.",
@@ -56,12 +56,12 @@ describe("dead-code stage", () => {
   });
 
   it("honours allow lists and severities, and reports an allowance nothing needs", async () => {
-    const { root, architecture, files } = fixture({
+    const { root, scope } = fixture({
       "unused-dependencies": { options: { allow: ["left-pad", "sharp"] }, reason: "Loaded at runtime." },
       "unused-files": "off",
       "unused-types": { severity: "warn", reason: "Migrating." },
     });
-    const findings = await deadCode(root, architecture, files, "architecture.config.ts");
+    const findings = await deadCode(root, scope);
     if (findings instanceof Error) return expect.unreachable(findings.message);
     expect(findings.some((finding) => finding.ruleId === "unused-files")).toBe(false);
     expect(findings.find((finding) => finding.ruleId === "unused-types")?.severity).toBe("warning");
@@ -71,8 +71,8 @@ describe("dead-code stage", () => {
   });
 
   it("names no tool in its findings", async () => {
-    const { root, architecture, files } = fixture();
-    const findings = await deadCode(root, architecture, files, "architecture.config.ts");
+    const { root, scope } = fixture();
+    const findings = await deadCode(root, scope);
     if (findings instanceof Error) return expect.unreachable(findings.message);
     expect(findings.map((finding) => finding.message.toLowerCase()).join(" ")).not.toMatch(/knip|oxlint/);
   });

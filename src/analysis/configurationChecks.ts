@@ -16,15 +16,28 @@ const lineAt = (text: string, offset: number): number => text.slice(0, offset).s
 
 const escaped = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-/** The line of a quoted value inside a layer's block, or of the layer's key; undefined when neither is found. */
-const configLine = (config: ConfigText, layer: string, value?: string): number | undefined => {
+const layerKeyAt = (config: ConfigText, layer: string): number | undefined => {
   const layerKey = new RegExp(`["']?\\b${escaped(layer)}\\b["']?\\s*:\\s*\\{`).exec(config.text);
-  if (layerKey === null) return undefined;
-  if (value === undefined) return lineAt(config.text, layerKey.index);
-  const quoted = new RegExp(`["'\`]${escaped(value)}["'\`]`, "g");
-  quoted.lastIndex = layerKey.index;
-  const found = quoted.exec(config.text);
-  return lineAt(config.text, found === null ? layerKey.index : found.index);
+  return layerKey === null ? undefined : layerKey.index;
+};
+
+/** Where a layer's block ends: at the next layer's key, or the end of the file. */
+const blockEnd = (config: ConfigText, start: number, layers: readonly string[]): number => {
+  const later = layers.map((name) => layerKeyAt(config, name)).filter((index): index is number => index !== undefined && index > start);
+  return Math.min(config.text.length, ...later);
+};
+
+/**
+ * The line of a quoted value inside a layer's block, or of the layer's key when the value is not written there
+ * literally (a spread constant, say); undefined when the layer's key is not found.
+ */
+const configLine = (config: ConfigText, layers: readonly string[], layer: string, value?: string): number | undefined => {
+  const start = layerKeyAt(config, layer);
+  if (start === undefined) return undefined;
+  if (value === undefined) return lineAt(config.text, start);
+  const block = config.text.slice(start, blockEnd(config, start, layers));
+  const found = new RegExp(`["'\`]${escaped(value)}["'\`]`).exec(block);
+  return lineAt(config.text, start + (found === null ? 0 : found.index));
 };
 
 const configIssue = (ruleId: string, config: ConfigText, message: string, line: number | undefined): Issue => {
@@ -61,32 +74,36 @@ const grantLabel = ({ kind, value }: Grant): string => {
 
 /** Dependencies a layer grants that no import from the layer uses. */
 export const unusedPermissions = (architecture: Architecture, uses: readonly ImportUse[], config: ConfigText): readonly Issue[] => {
+  const layers = Object.keys(architecture.layers);
   return Object.entries(architecture.layers).flatMap(([name, layer]) => grantsOf(layer)
     .filter((grant) => !isUsedGrant(uses, name, grant))
     .map((grant) => configIssue(
       "unused-permissions", config,
       `Layer ${name} grants ${grantLabel(grant)}, but none of its imports use it.`,
-      configLine(config, name, grant.value),
+      configLine(config, layers, name, grant.value),
     )));
 };
 
-const unmatched = (name: string, kind: string, patterns: readonly string[], paths: readonly string[], config: ConfigText): readonly Issue[] => {
+type Unmatched = { readonly name: string; readonly kind: string; readonly patterns: readonly string[]; readonly paths: readonly string[] };
+
+const unmatched = (config: ConfigText, layers: readonly string[], { name, kind, patterns, paths }: Unmatched): readonly Issue[] => {
   return patterns
     .filter((pattern) => !paths.some((path) => matches(path, [pattern])))
-    .map((pattern) => configIssue("unmatched-patterns", config, `Layer ${name}: ${kind} pattern ${pattern} matches no source file.`, configLine(config, name, pattern)));
+    .map((pattern) => configIssue("unmatched-patterns", config, `Layer ${name}: ${kind} pattern ${pattern} matches no source file.`, configLine(config, layers, name, pattern)));
 };
 
-/** Layer, exclude and entry patterns that match no source file of the programs. */
-export const unmatchedPatterns = (
-  architecture: Architecture, files: readonly ClassifiedFile[], sources: readonly string[], config: ConfigText,
-): readonly Issue[] => {
+/**
+ * Layer and entry patterns that match no source file of the programs. Exclude patterns are not checked: they guard
+ * against files that do not exist yet. Nor are a generated layer's files, which exist only after a build.
+ */
+export const unmatchedPatterns = (architecture: Architecture, files: readonly ClassifiedFile[], config: ConfigText): readonly Issue[] => {
+  const layers = Object.keys(architecture.layers);
   return Object.entries(architecture.layers).flatMap(([name, layer]) => {
-    const layerFiles = files.filter((file) => file.layer === name).map((file) => file.relative);
-    const selectable = sources.filter((path) => matches(path, layer.files));
+    const paths = files.filter((file) => file.layer === name).map((file) => file.relative);
+    const filePatterns = layer.policy.generated === undefined ? layer.files : [];
     return [
-      ...unmatched(name, "files", layer.files, layerFiles, config),
-      ...unmatched(name, "exclude", layer.exclude ?? [], selectable, config),
-      ...unmatched(name, "entry.files", layer.policy.entry?.files ?? [], layerFiles, config),
+      ...unmatched(config, layers, { name, kind: "files", patterns: filePatterns, paths }),
+      ...unmatched(config, layers, { name, kind: "entry.files", patterns: layer.policy.entry?.files ?? [], paths }),
     ];
   });
 };

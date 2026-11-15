@@ -270,13 +270,13 @@ These rules are on by default, all at `error`, so nothing unused survives. They 
 | `unused-files` | A file in the TypeScript programs is not reachable by imports from any entry. |
 | `unused-exports`, `unused-types` | An export nothing imports, including one used only inside its own file, and entry exports their layer does not name. |
 | `duplicate-exports` | The same value is exported under two names. |
-| `production-reachability` | A file or export of a production layer is used only by development layers. |
+| `production-reachability` | A file or export of a production layer is used only by development code: development layers, and the tests, `package.json` scripts and tool configuration the analysis recognises. A script that runs in production is an entry: mark its layer. |
 | `unused-dependencies` | A package in `package.json` that no file imports, no script runs and no tool configuration uses. |
 | `unlisted-dependencies` | A package that is imported but not declared, or a devDependency that a production layer imports. |
 | `unlisted-binaries` | A script runs a command no declared package provides. |
 | `unresolved-imports` | The dead-code analysis cannot resolve an import TypeScript resolves, so its view of what is used is incomplete. |
 | `unused-permissions` | A layer grants an internal layer, external specifier or asset that none of its imports use. |
-| `unmatched-patterns` | A layer's `files`, `exclude` or `entry.files` pattern matches no source file. |
+| `unmatched-patterns` | A layer's `files` or `entry.files` pattern matches no source file. Exclude patterns guard against future files and are not checked, nor are a generated layer's files, which may not exist before a build. |
 | `competing-configuration` | Another linter's or dead-code tool's configuration is in the root (see below). |
 | `typescript-version` | The project's own TypeScript is not the checker's version, so editors would report different compiler errors. |
 
@@ -287,6 +287,8 @@ rules: {
   "unused-dependencies": { options: { allow: ["sharp"] }, reason: "The image service loads sharp at runtime." },
 }
 ```
+
+In a workspace monorepo (`pnpm-workspace.yaml` or `package.json` `workspaces`), each file is analysed in its own package, and an import of another package counts like any other import. A package's `package.json` `exports` make its files reachable, but their exports still count as used only when something imports them, unless a layer's `entry.exports` makes them public. `architecture.config.ts` is always an entry. The JSX runtime that JSX compiles to counts as a use of a layer's `react/jsx-runtime` grant.
 
 Dead-code findings are never fixed automatically: deleting code is a decision. The dead-code stage reads `package.json` in the architecture root; without one it warns and skips.
 
