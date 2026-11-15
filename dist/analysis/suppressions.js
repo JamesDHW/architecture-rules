@@ -100,8 +100,6 @@ export const readExceptions = (files, projects) => {
     const read = files.flatMap((file) => directiveComments(file, projects)).map(readComment);
     return { exceptions: read.flatMap((entry) => entry.exceptions), issues: read.flatMap((entry) => entry.issues) };
 };
-/** The structural issues readExceptions reports. */
-export const checkSuppressions = (files, projects) => readExceptions(files, projects).issues;
 const migration = (comment, source) => {
     const parts = legacyException.exec(comment.text);
     const ids = legacyRules(comment);

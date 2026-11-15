@@ -4,7 +4,7 @@ import { orThrow } from "../errors/tryCatch.js";
 import { isRegisteredArchitecture, registerArchitecture } from "./architectureRegistry.state.js";
 import { ARCHITECTURE_FIELDS, LAYER_FIELDS, PROJECTS_FIELDS, REFERENCE_MODES, RESERVED_LAYER_NAMES } from "./configuration.constants.js";
 import { defaultRules, overrideRules } from "./normalizeRules.js";
-import { dependencies, generated, naming } from "./policies.js";
+import { dependencies, developmentOnly, entryPoint, generated, naming } from "./policies.js";
 import { checked, fields, freeze, optional, patterns, text } from "./validation.js";
 /** Label for settings made at the top level of architecture.config.ts. */
 const projectWide = "architecture";
@@ -30,6 +30,7 @@ const projectPolicy = (config) => {
         ...(policyNaming.value === undefined ? {} : { naming: policyNaming.value }),
         dependencies: { internal: [], external: [], assets: [] },
         rules: policyRules.value,
+        development: false,
     }, [...policyNaming.issues, ...policyRules.issues]);
 };
 const layer = (name, value, layerNames, defaults) => {
@@ -42,7 +43,9 @@ const layer = (name, value, layerNames, defaults) => {
     const layerNaming = optional(declared.value.naming, (entry) => naming(entry, `${label}.naming`));
     const layerDependencies = optional(declared.value.dependencies, (entry) => dependencies(entry, layerNames, `${label}.dependencies`));
     const layerRules = overrideRules(defaults.rules, rules, label, false);
-    const layerGenerated = optional(declared.value.generated, (entry) => generated(entry, `${label}.generated`));
+    const layerGenerated = optional(declared.value.generated, (setting) => generated(setting, `${label}.generated`));
+    const layerEntry = optional(declared.value.entry, (setting) => entryPoint(setting, `${label}.entry`));
+    const layerDevelopment = optional(declared.value.development, (setting) => developmentOnly(setting, `${label}.development`));
     const isGeneratedWithRules = declared.value.generated !== undefined && rules !== undefined;
     const hasNoFiles = layerFiles.issues.length === 0 && layerFiles.value.length === 0;
     const policy = {
@@ -55,10 +58,13 @@ const layer = (name, value, layerNames, defaults) => {
         dependencies: layerDependencies.value ?? defaults.dependencies,
         rules: layerRules.value,
         ...(layerGenerated.value === undefined ? {} : { generated: layerGenerated.value }),
+        ...(layerEntry.value === undefined ? {} : { entry: layerEntry.value }),
+        development: layerDevelopment.value ?? false,
     };
     return checked({ description: layerDescription.value, files: layerFiles.value, exclude: layerExclude.value, policy }, [
         ...declared.issues, ...layerDescription.issues, ...layerFiles.issues, ...layerExclude.issues,
         ...layerNaming.issues, ...layerDependencies.issues, ...layerRules.issues, ...layerGenerated.issues,
+        ...layerEntry.issues, ...layerDevelopment.issues,
         ...(isGeneratedWithRules ? [`${label}: a generated layer is never linted, so it takes no rules`] : []),
         ...(hasNoFiles ? [`${label}.files must not be empty`] : []),
     ]);
@@ -71,6 +77,7 @@ const layerInputs = (value) => {
     return checked(value, hasValidNames ? [] : ["layers needs at least one layer, each with a valid, non-reserved name"]);
 };
 /** Validates and normalizes configuration, returning every problem at once; filesystem checks happen in the runner. */
+// architecture-disable-next-line production-reachability -- Tests read the validation result without the throw defineArchitecture adds.
 export const normalizeArchitecture = (value) => {
     const config = fields(value, ARCHITECTURE_FIELDS, "architecture");
     const projects = typescriptProjects(config.value.projects);

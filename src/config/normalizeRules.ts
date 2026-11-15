@@ -39,7 +39,17 @@ const customOptionIssues = (rule: RegisteredRule, implementation: Rule.RuleModul
   return "options" in rule ? rule.options.validate?.(options) ?? [] : [];
 };
 
+/** Options for rules the checker itself applies, validated against the schema the rule declares. */
+const checkerOptionIssues = (rule: RegisteredRule, options: readonly unknown[]): readonly string[] => {
+  if (!("options" in rule)) return options.length > 0 ? [`${rule.id} does not accept options`] : [];
+  const { schema } = rule.options;
+  const tupleSchema = isUnknownArray(schema) ? { type: "array", items: schema, maxItems: schema.length, additionalItems: false } : schema;
+  if (!matchesSchema(options, tupleSchema)) return [invalidOptions(rule.id, options)];
+  return rule.options.validate?.(options) ?? [];
+};
+
 /** Every problem with a rule's options; an empty list means they are valid. */
+// architecture-disable-next-line production-reachability -- Tests check each rule's option schema directly.
 export const validateOptions = (id: string, options: readonly unknown[]): readonly string[] => {
   const rule = rules.find((candidate) => candidate.id === id);
   if (rule === undefined) return [`Unknown rule: ${id}`];
@@ -49,6 +59,9 @@ export const validateOptions = (id: string, options: readonly unknown[]): readon
       return nativeOptionIssues(id, enforcement.rule, options);
     case "custom-oxlint":
       return customOptionIssues(rule, enforcement.implementation, options);
+    case "dead-code":
+    case "configuration":
+      return checkerOptionIssues(rule, options);
     case "typescript":
     case "advisory":
     case "architecture":
@@ -67,6 +80,8 @@ const defaultRule = (rule: RegisteredRule): EffectiveRule => {
   switch (enforcement.type) {
     case "oxlint":
     case "custom-oxlint":
+    case "dead-code":
+    case "configuration":
       return fromConfiguration(enforcement.configuration);
     case "typescript":
     case "advisory":
@@ -108,7 +123,10 @@ const scopeIssue = (rule: RegisteredRule, project: boolean): string | undefined 
   const isRunnerControlled = id === "file-naming" || id === "allowed-imports";
   if (isRunnerControlled) return "Use naming/imports, not a direct architecture rule override";
   const isLayerCompilerRule = !project && enforcement.type === "typescript";
-  return isLayerCompilerRule ? `${id} is a project-wide compiler requirement, not a layer rule` : undefined;
+  if (isLayerCompilerRule) return `${id} is a project-wide compiler requirement, not a layer rule`;
+  const isProjectScoped = enforcement.type === "configuration" || (enforcement.type === "dead-code" && enforcement.scope === "project");
+  const isLayerProjectRule = !project && isProjectScoped;
+  return isLayerProjectRule ? `${id} applies to the whole project; set it in the top-level rules` : undefined;
 };
 
 const severityIssues = (rule: RegisteredRule, severity: unknown): readonly string[] => {

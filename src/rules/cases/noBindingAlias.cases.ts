@@ -1,11 +1,13 @@
 import type { RuleCases } from "../../core/ruleCases.js";
 
+// architecture-disable-next-line production-reachability -- The test suite runs these extra cases; the rule's page shows only the main set.
 export const validUndefinedCases = [
   { name: "global undefined initialization", code: "const compactStart = undefined;" },
   { name: "global undefined inside a function", code: "const reset = () => { const compactStart = undefined; return compactStart; };" },
   { name: "unrelated shadow in sibling scope", code: "function other(undefined) {} const compactStart = undefined;" },
 ];
 
+// architecture-disable-next-line production-reachability -- The test suite runs these extra cases; the rule's page shows only the main set.
 export const invalidUndefinedCases = [
   { name: "parameter named undefined in initializer", code: "function example(undefined) { const otherName = undefined; }" },
   { name: "block-local undefined", code: "{ let undefined = 'value'; const otherName = undefined; }" },
@@ -13,8 +15,9 @@ export const invalidUndefinedCases = [
   { name: "imported undefined", code: "import { undefined } from './values.js'; const otherName = undefined;" },
 ];
 
-export /** Reassignment needs let, var or a parameter; no-let, no-var and no-param-reassign own those. */
-const outOfScopeCases = [
+/** Reassignment needs let, var or a parameter; no-let, no-var and no-param-reassign own those. */
+// architecture-disable-next-line production-reachability -- The test suite runs these extra cases; the rule's page shows only the main set.
+export const outOfScopeCases = [
   { name: "assignment", code: "isEnabled = shouldEnable;" },
   { name: "let cursor", code: "let child = node; child = child.parent;" },
   { name: "assignment to undefined", code: "let compactStart = 'started'; compactStart = undefined;" },

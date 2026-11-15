@@ -1,10 +1,11 @@
 /** Field names accepted at each level of architecture.config.ts. */
 export const ARCHITECTURE_FIELDS = ["projects", "layers", "naming", "rules"];
 export const PROJECTS_FIELDS = ["tsconfigs", "references"];
-export const LAYER_FIELDS = ["description", "files", "exclude", "naming", "dependencies", "rules", "generated"];
+export const LAYER_FIELDS = ["description", "files", "exclude", "naming", "dependencies", "rules", "generated", "entry", "development"];
 export const NAMING_FIELDS = ["case", "prefix", "suffixes", "requiredSuffix", "allowedNames"];
 export const DEPENDENCY_FIELDS = ["internal", "external", "assets"];
 export const GENERATED_FIELDS = ["reason"];
+export const ENTRY_FIELDS = ["reason", "files", "exports"];
 export const RULE_SETTING_FIELDS = ["severity", "options", "reason"];
 export const REFERENCE_MODES = ["follow", "explicit"];
 export const SEVERITIES = ["off", "warn", "error"];

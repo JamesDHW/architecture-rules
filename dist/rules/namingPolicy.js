@@ -7,7 +7,7 @@ const casePatterns = {
     "kebab-case": /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/,
     snake_case: /^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/,
 };
-export const isNamingCase = (value) => namingCases.some((namingCase) => namingCase === value);
+const isNamingCase = (value) => namingCases.some((namingCase) => namingCase === value);
 const isNamingCaseList = (value) => isStringArray(value) && value.length > 0 && value.every(isNamingCase);
 /** One case or a nonempty list of cases. */
 export const isNamingCaseSetting = (value) => isNamingCase(value) || isNamingCaseList(value);

@@ -28,7 +28,7 @@ const casePatterns: Readonly<Record<NamingCase, RegExp>> = {
   snake_case: /^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/,
 };
 
-export const isNamingCase = (value: unknown): value is NamingCase => namingCases.some((namingCase) => namingCase === value);
+const isNamingCase = (value: unknown): value is NamingCase => namingCases.some((namingCase) => namingCase === value);
 
 const isNamingCaseList = (value: unknown): value is readonly NamingCase[] => isStringArray(value) && value.length > 0 && value.every(isNamingCase);
 

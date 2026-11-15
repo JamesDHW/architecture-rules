@@ -7,9 +7,20 @@ export const valid = (): Architecture => defineArchitecture({
   rules: { "max-file-lines": ["warn", { max: 123 }], "explicit-conditions": { options: { allowString: true }, reason: "Boundary" } },
   layers: {
     domain: { description: "Domain", files: ["src/**"], naming: { case: ["PascalCase", "kebab-case"], requiredSuffix: ".model" }, dependencies: { internal: ["domain"], external: ["zod", "@tanstack/react-router/lazy", "node:fs"] } },
+    route: { description: "Routes", files: ["routes/**"], entry: { reason: "The router loads them.", exports: ["Route"] } },
+    api: { description: "API", files: ["index.ts"], entry: { reason: "Package entry.", files: ["index.ts"], exports: "all" } },
+    tests: { description: "Tests", files: ["tests/**"], entry: { reason: "The runner loads them." }, development: true },
   },
 });
 export const invalid = (): void => {
+  defineArchitecture({ projects, layers: { app: { description: "app", files: ["src/**"],
+    // @ts-expect-error an entry needs a reason: it is where dead code can hide
+    entry: { exports: "all" },
+  } } });
+  defineArchitecture({ projects, layers: { app: { description: "app", files: ["src/**"], entry: { reason: "Loaded.",
+    // @ts-expect-error entry exports are "all" or a list of names
+    exports: "some",
+  } } } });
   defineArchitecture({ projects,
     // @ts-expect-error filesystem allowlists were removed; TypeScript owns scope
     files: { otherFiles: ["**/*"] },

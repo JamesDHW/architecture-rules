@@ -1,11 +1,11 @@
-import type { Architecture, DependencyPolicy, NamingPolicy } from "../config/types.js";
+import type { Architecture, DependencyPolicy, EntrySetting, NamingPolicy } from "../config/types.js";
 export type RuleOverride = {
     readonly rule: string;
     readonly severity: string;
     readonly reason?: string;
 };
 /** One external specifier pattern and the layers that list it. */
-export type ExternalDependency = {
+type ExternalDependency = {
     readonly specifier: string;
     readonly layers: readonly string[];
 };
@@ -18,6 +18,8 @@ export type LayerDescription = {
     /** Present when the layer sets its own naming policy. */
     readonly naming?: NamingPolicy;
     readonly generated?: string;
+    readonly entry?: EntrySetting;
+    readonly development: boolean;
     readonly ruleOverrides: readonly RuleOverride[];
 };
 /** Everything describe prints, in the order the decisions are made. */
@@ -35,4 +37,5 @@ export type ArchitectureDescription = {
     };
 };
 export declare const describeArchitecture: (architecture: Architecture, config: string) => ArchitectureDescription;
+export {};
 //# sourceMappingURL=architectureDescription.d.ts.map

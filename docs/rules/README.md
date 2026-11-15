@@ -11,12 +11,14 @@ Each page explains one rule: why it exists, what to write instead, when a suppre
 | [`await-thenable`](await-thenable.md) | Only await thenable values | Lint rule, built on `typescript/await-thenable` | error by default |
 | [`checked-indexed-access`](checked-indexed-access.md) | Check every indexed collection access | TypeScript compiler options `{"noUncheckedIndexedAccess":true}` |  |
 | [`collection-loops`](collection-loops.md) | Use for...of as the default loop form | Lint rule | error by default |
+| [`competing-configuration`](competing-configuration.md) | Keep one source of truth for checks | Configuration check, set project-wide | error by default |
 | [`compiler-checking`](compiler-checking.md) | Run the configured compiler without weakening its contract | Structural check; lint comments cannot suppress it |  |
 | [`constants-module`](constants-module.md) | Put semantic constants in a constants module | Lint rule | error by default |
 | [`control-flow-braces`](control-flow-braces.md) | Use braces except for single-line terminal guards | Lint rule | error by default |
 | [`destructured-props`](destructured-props.md) | Destructure component props in the parameter list | Lint rule | error by default |
 | [`direct-boolean-conditions`](direct-boolean-conditions.md) | Use strict booleans directly | Lint rule, built on `typescript/no-unnecessary-boolean-literal-compare` | error by default, with options `[{"allowComparingNullableBooleansToTrue":true,"allowComparingNullableBooleansToFalse":true}]` |
 | [`domain-owned-dispatch`](domain-owned-dispatch.md) | Dispatch domain actions through their owning reducer | Lint rule | error by default |
+| [`duplicate-exports`](duplicate-exports.md) | Export each value once | Dead-code check | error by default |
 | [`eqeqeq`](eqeqeq.md) | Use explicit equality | Lint rule, built on `eslint/eqeqeq` | error by default |
 | [`exact-optional-property-types`](exact-optional-property-types.md) | Distinguish omitted properties from explicit undefined | TypeScript compiler options `{"exactOptionalPropertyTypes":true}` |  |
 | [`exhaustive-deps`](exhaustive-deps.md) | Declare exhaustive effect dependencies | Lint rule, built on `react/exhaustive-deps` | error by default |
@@ -89,6 +91,7 @@ Each page explains one rule: why it exists, what to write instead, when a suppre
 | [`prefer-single-boolean-return`](prefer-single-boolean-return.md) | Return a boolean expression instead of a true/false tail | Lint rule | error by default |
 | [`prefer-switch`](prefer-switch.md) | Prefer switch over repeated equality ifs | Lint rule | error by default |
 | [`preserve-cleanup-failures`](preserve-cleanup-failures.md) | Preserve operation and cleanup failures together | Advisory; nothing checks it automatically |  |
+| [`production-reachability`](production-reachability.md) | Ship only code production uses | Dead-code check | error by default |
 | [`project-membership`](project-membership.md) | Govern all local TypeScript program sources | Structural check; lint comments cannot suppress it |  |
 | [`pure-conditions`](pure-conditions.md) | Keep conditions free of explicit effects | Lint rule | error by default |
 | [`readonly-type-properties`](readonly-type-properties.md) | Declare data as recursively readonly | Lint rule | error by default |
@@ -102,4 +105,14 @@ Each page explains one rule: why it exists, what to write instead, when a suppre
 | [`switch-exhaustiveness`](switch-exhaustiveness.md) | Handle discriminated unions exhaustively | Lint rule, built on `typescript/switch-exhaustiveness-check` | error by default, with options `[{"considerDefaultExhaustiveForUnions":false,"allowDefaultCaseForExhaustiveSwitch":true}]` |
 | [`terminal-switch-cases`](terminal-switch-cases.md) | Return from switch cases in a focused operation | Lint rule | error by default |
 | [`type-aliases`](type-aliases.md) | Use type aliases for object shapes | Lint rule, built on `typescript/consistent-type-definitions` | error by default, with options `["type"]` |
+| [`typescript-version`](typescript-version.md) | Use the TypeScript version the checker uses | Configuration check, set project-wide | error by default |
+| [`unlisted-binaries`](unlisted-binaries.md) | Declare every command the scripts run | Dead-code check, set project-wide | error by default |
+| [`unlisted-dependencies`](unlisted-dependencies.md) | Declare every package that is used | Dead-code check, set project-wide | error by default |
+| [`unmatched-patterns`](unmatched-patterns.md) | Select files with patterns that match | Configuration check, set project-wide | error by default |
 | [`unnecessary-conditions`](unnecessary-conditions.md) | Remove type-proven unnecessary conditions | Lint rule, built on `typescript/no-unnecessary-condition` | error by default, with options `[{"checkTypePredicates":true,"allowConstantLoopConditions":"never"}]` |
+| [`unresolved-imports`](unresolved-imports.md) | Resolve every import the same way everywhere | Dead-code check | error by default |
+| [`unused-dependencies`](unused-dependencies.md) | Declare only packages that are used | Dead-code check, set project-wide | error by default |
+| [`unused-exports`](unused-exports.md) | Export only what is imported | Dead-code check | error by default |
+| [`unused-files`](unused-files.md) | Delete files nothing uses | Dead-code check | error by default |
+| [`unused-permissions`](unused-permissions.md) | Grant only the dependencies a layer uses | Configuration check, set project-wide | error by default |
+| [`unused-types`](unused-types.md) | Export only types that are imported | Dead-code check | error by default |

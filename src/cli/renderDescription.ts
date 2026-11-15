@@ -24,6 +24,16 @@ const listOrNone = (values: readonly string[]): string => (values.length > 0 ? v
 
 const describeOverride = ({ rule, severity, reason }: RuleOverride): string => `${rule} ${severity}${reason === undefined ? "" : `: ${reason}`}`;
 
+const usedExports = (exports: NonNullable<LayerDescription["entry"]>["exports"]): string => {
+  if (exports === undefined) return "no exports used";
+  return exports === "all" ? "all exports public" : `exports ${exports.join(", ")}`;
+};
+
+const describeEntry = ({ reason, files, exports }: NonNullable<LayerDescription["entry"]>): string => {
+  const which = files === undefined ? "every file" : files.join(", ");
+  return `${which}; ${usedExports(exports)}: ${reason}`;
+};
+
 const layerLines = (layer: LayerDescription, width: number): readonly string[] => {
   const detail = (label: string, value: string): string => `${indent}${" ".repeat(width)}  ${column(label, 10)}${value}`;
   return [
@@ -34,6 +44,8 @@ const layerLines = (layer: LayerDescription, width: number): readonly string[] =
     ...(layer.dependencies.assets.length > 0 ? [detail("assets", layer.dependencies.assets.join(", "))] : []),
     ...(layer.naming === undefined ? [] : [detail("naming", describeNaming(layer.naming))]),
     ...(layer.generated === undefined ? [] : [detail("generated", layer.generated)]),
+    ...(layer.entry === undefined ? [] : [detail("entry", describeEntry(layer.entry))]),
+    ...(layer.development ? [detail("role", "development only")] : []),
     ...layer.ruleOverrides.map((override) => detail("rule", describeOverride(override))),
   ];
 };

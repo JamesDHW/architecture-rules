@@ -3,7 +3,7 @@ import type { LineException } from "../analysis/suppressions.js";
 import type { Architecture } from "../config/types.js";
 import { type Finding } from "./findings.js";
 /** The stages of a check, in the order they run. */
-export type StageName = "structure" | "lint" | "types";
+type StageName = "structure" | "lint" | "types" | "dead-code";
 export type StageStatus = "passed" | "failed" | "skipped";
 export type Stage = {
     readonly name: StageName;
@@ -30,4 +30,5 @@ export type CheckScope = {
 /** Assembles a check's result; stages after structure are skipped when structural findings stopped the run. */
 export declare const checkResult: (scope: CheckScope, findings: readonly Finding[], exceptions: readonly LineException[], ranPastStructure: boolean) => CheckResult;
 export declare const hasErrors: (result: CheckResult) => boolean;
+export {};
 //# sourceMappingURL=checkResult.d.ts.map

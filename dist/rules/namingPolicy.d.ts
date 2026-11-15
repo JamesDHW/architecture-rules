@@ -14,7 +14,6 @@ export type NamingPolicy = {
     /** Exact filenames, e.g. page.tsx. Exempts naming only. */
     readonly allowedNames?: readonly string[];
 };
-export declare const isNamingCase: (value: unknown) => value is NamingCase;
 /** One case or a nonempty list of cases. */
 export declare const isNamingCaseSetting: (value: unknown) => value is NamingPolicy["case"];
 /** A single value or a list of them, as a list. */

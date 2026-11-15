@@ -1,6 +1,6 @@
 import type { Issue } from "../analysis/inventory.js";
 /** Which stage of the check reported a finding. */
-export type FindingSource = "structure" | "lint" | "compiler";
+export type FindingSource = "structure" | "lint" | "compiler" | "dead-code";
 /** One problem the check found, whatever reported it. Every output (text, JSON, report, editor) renders these. */
 export type Finding = {
     readonly source: FindingSource;

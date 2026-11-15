@@ -2,11 +2,12 @@ import type { Architecture } from "../config/types.js";
 import { ArchitectureError } from "../errors/architectureError.js";
 import { type CheckResult } from "./checkResult.js";
 import { type OutputFormat } from "./output.js";
-export type { CheckResult } from "./checkResult.js";
 export type InspectOptions = {
     readonly fix?: boolean;
     /** Absolute paths: lint and report only these files. The whole project is still analyzed. */
     readonly files?: readonly string[];
+    /** The architecture configuration's path, for findings about it; architecture.config.ts in the root by default. */
+    readonly configFile?: string;
 };
 export type CheckOptions = InspectOptions & {
     readonly explain?: string;

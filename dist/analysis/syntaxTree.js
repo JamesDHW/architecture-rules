@@ -1,5 +1,5 @@
 /** TypeScript's AST exposes children only through a forEachChild callback, so they are collected here once. */
-export const childrenOf = (node) => {
+const childrenOf = (node) => {
     const children = [];
     // architecture-disable-next-line no-array-mutation, no-captured-mutation -- forEachChild is the only child accessor TypeScript's AST offers.
     node.forEachChild((child) => { children.push(child); });

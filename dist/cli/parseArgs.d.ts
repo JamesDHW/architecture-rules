@@ -1,6 +1,6 @@
 export type DescribeFormat = "text" | "json" | "mermaid";
 /** How a check prints its findings; omitted on RunArgs for the default text output. */
-export type OutputFormat = "json" | "report";
+type OutputFormat = "json" | "report";
 export type RunArgs = {
     readonly kind: "run";
     readonly target: string;
@@ -19,4 +19,5 @@ export type CliArgs = {
     readonly message: string;
 } | RunArgs;
 export declare const parseArgs: (argv: readonly string[]) => CliArgs;
+export {};
 //# sourceMappingURL=parseArgs.d.ts.map

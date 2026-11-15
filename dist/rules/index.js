@@ -52,6 +52,8 @@ import { terminalSwitchCasesRule } from "./terminalSwitchCases.rule.js";
 import { explicitExportedReturnTypesRule, switchExhaustivenessRule, typeAliasesRule } from "./typeContracts.rules.js";
 import { noExplicitAnyRule, noNonNullAssertionRule, noTsCommentsRule, noUnsafeArgumentRule, noUnsafeAssignmentRule, noUnsafeCallRule, noUnsafeMemberAccessRule, noUnsafeReturnRule, noUnsafeTypeAssertionRule, } from "./typeSafety.rules.js";
 import { uncheckedIndexedAccessRule } from "./uncheckedIndexedAccess.rule.js";
+import { competingConfigurationRule, typescriptVersionRule, unmatchedPatternsRule, unusedPermissionsRule } from "./configuration.rules.js";
+import { duplicateExportsRule, productionReachabilityRule, unlistedBinariesRule, unlistedDependenciesRule, unresolvedImportsRule, unusedDependenciesRule, unusedExportsRule, unusedFilesRule, unusedTypesRule, } from "./deadCode.rules.js";
 export const rules = [
     fileInventoryRule, fileClassificationRule, projectMembershipRule, compilerCheckingRule, reasonedSuppressionsRule,
     allowedImportsRule,
@@ -99,5 +101,8 @@ export const rules = [
     constantsModuleRule,
     namedJsxHandlersRule,
     noLetRule, noCapturedMutationRule, destructuredPropsRule, noArrayMutationRule,
+    unusedFilesRule, unusedExportsRule, unusedTypesRule, duplicateExportsRule, productionReachabilityRule,
+    unusedDependenciesRule, unlistedDependenciesRule, unlistedBinariesRule, unresolvedImportsRule,
+    unusedPermissionsRule, unmatchedPatternsRule, competingConfigurationRule, typescriptVersionRule,
 ];
 //# sourceMappingURL=index.js.map

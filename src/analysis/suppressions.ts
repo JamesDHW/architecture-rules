@@ -142,9 +142,6 @@ export const readExceptions = (files: readonly ClassifiedFile[], projects: reado
   return { exceptions: read.flatMap((entry) => entry.exceptions), issues: read.flatMap((entry) => entry.issues) };
 };
 
-/** The structural issues readExceptions reports. */
-export const checkSuppressions = (files: readonly ClassifiedFile[], projects: readonly Project[]): readonly Issue[] => readExceptions(files, projects).issues;
-
 /** A replacement of part of one source file. */
 export type SourceEdit = { readonly path: string; readonly start: number; readonly end: number; readonly replacement: string };
 

@@ -1,5 +1,5 @@
 import { isError } from "./findings.js";
-const stageNames = ["structure", "lint", "types"];
+const stageNames = ["structure", "lint", "types", "dead-code"];
 const stageOf = (source) => {
     switch (source) {
         case "structure":
@@ -8,6 +8,8 @@ const stageOf = (source) => {
             return "lint";
         case "compiler":
             return "types";
+        case "dead-code":
+            return "dead-code";
     }
 };
 const stageStatus = (name, findings, ranPastStructure) => {

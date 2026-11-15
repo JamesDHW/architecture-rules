@@ -53,7 +53,7 @@ const check = async (args) => {
         return files;
     const explain = args.explain === undefined ? {} : { explain: args.explain };
     const format = args.format === undefined ? {} : { format: args.format };
-    return checkArchitecture(dirname(realpathSync(configPath)), architecture, { fix: args.fix, ...explain, ...format, ...files });
+    return checkArchitecture(dirname(realpathSync(configPath)), architecture, { fix: args.fix, configFile: configPath, ...explain, ...format, ...files });
 };
 const run = async (args) => {
     const outcome = await tryCatchAsync(async () => check(args));

@@ -5,11 +5,18 @@ export default defineArchitecture({
 
   naming: { case: "camelCase" },
 
+  rules: {
+    "unused-dependencies": {
+      options: { allow: ["architecture-rules"] },
+      reason: "The package links itself so pnpm exec architecture-check runs the committed dist/ here as in any project.",
+    },
+  },
+
   layers: {
     core: {
       description: "Rule definition primitives and type guards shared by every layer.",
       files: ["src/core/**/*.ts"],
-      dependencies: { internal: ["core"], external: ["eslint"] },
+      dependencies: { external: ["eslint"] },
     },
     errors: {
       description: "Error adapter: the only code that throws or catches.",
@@ -26,7 +33,7 @@ export default defineArchitecture({
       description: "Canonical rule definitions and their lint implementations.",
       files: ["src/rules/**/*.ts"],
       naming: { case: "camelCase", suffixes: [".rule", ".rules", ".constants", ".cases"] },
-      dependencies: { internal: ["rules", "core"], external: ["eslint", "oxlint", "picomatch", "node:path"] },
+      dependencies: { internal: ["rules", "core"], external: ["eslint", "oxlint", "node:path"] },
     },
     config: {
       description: "Validates and normalizes a project's architecture.config.ts.",
@@ -56,6 +63,7 @@ export default defineArchitecture({
     cli: {
       description: "Command-line entry point, argument parsing, the describe command and build scripts.",
       files: ["src/cli.ts", "src/cli/**/*.ts", "src/generateRuleDocs.ts"],
+      entry: { files: ["src/cli.ts", "src/generateRuleDocs.ts"], reason: "package.json's bin runs the CLI; the build runs the rule-docs generator." },
       naming: { case: "camelCase", suffixes: [".constants"] },
       dependencies: {
         internal: ["cli", "runner", "config", "rules", "core", "errors"],
@@ -65,20 +73,24 @@ export default defineArchitecture({
     api: {
       description: "Public package entry points.",
       files: ["src/index.ts", "src/plugin.ts"],
+      entry: { reason: "package.json exports these modules as the package's public API.", exports: "all" },
       dependencies: { internal: ["config", "rules", "core"], external: ["eslint"] },
     },
     tests: {
       description: "Executable tests, one file per subject.",
       files: ["tests/**/*.test.ts"],
+      entry: { reason: "Vitest runs every test file." },
+      development: true,
       naming: { case: "camelCase", requiredSuffix: ".test", suffixes: [".rule"] },
       dependencies: {
         internal: ["testSupport", "api", "cli", "runner", "analysis", "config", "rules", "core", "errors"],
-        external: ["eslint", "oxlint/plugins-dev", "vitest", "node:child_process", "node:fs", "node:module", "node:path", "node:url"],
+        external: ["eslint", "vitest", "node:child_process", "node:fs", "node:module", "node:path", "node:url"],
       },
     },
     testSupport: {
       description: "Fixtures and helpers shared by tests.",
       files: ["tests/utils/**/*.ts"],
+      development: true,
       dependencies: {
         internal: ["testSupport", "analysis", "config", "core", "errors"],
         external: ["oxlint/plugins-dev", "vitest", "node:fs", "node:os", "node:path"],
@@ -87,6 +99,8 @@ export default defineArchitecture({
     typeTests: {
       description: "Compile-only assertions on the public configuration types.",
       files: ["tests/types/**/*.ts"],
+      entry: { reason: "The typecheck compiles these assertions; nothing imports them.", exports: ["valid", "invalid"] },
+      development: true,
       dependencies: { internal: ["api"] },
       rules: {
         "no-ts-comments": {

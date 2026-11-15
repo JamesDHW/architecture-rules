@@ -20,6 +20,8 @@ const describeLayer = (architecture, name) => {
         dependencies: policy.dependencies,
         ...(ownsNaming ? { naming: policy.naming } : {}),
         ...(policy.generated === undefined ? {} : { generated: policy.generated.reason }),
+        ...(policy.entry === undefined ? {} : { entry: policy.entry }),
+        development: policy.development,
         ruleOverrides: overridesFrom(policy, origin),
     };
 };

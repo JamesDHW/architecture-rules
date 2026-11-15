@@ -15,6 +15,15 @@ import { descendants } from "./syntaxTree.js";
 
 export type ImportIssue = Issue & { readonly line: number; readonly column: number };
 
+/** A permission an import relied on: a layer, an external specifier (built-ins with node:) or an asset path. */
+export type ImportUse = { readonly layer: string; readonly kind: "internal" | "external" | "asset"; readonly value: string };
+
+/** What one module reference found: a denied import, or the permission that allowed it. */
+type Outcome = { readonly issue: ImportIssue } | { readonly use: ImportUse };
+
+/** Every import problem, and every permission that some import used. */
+export type ImportAnalysis = { readonly issues: readonly ImportIssue[]; readonly uses: readonly ImportUse[] };
+
 type FileContext = {
   readonly root: string;
   readonly file: ClassifiedFile;
@@ -31,6 +40,10 @@ const issueAt = (context: FileContext, node: Node, message: string): ImportIssue
   return { ruleId: "allowed-imports", file: context.file.relative, line: prefix.split("\n").length, column: start - prefix.lastIndexOf("\n") - 1, message };
 };
 
+const denied = (context: FileContext, node: Node, message: string): Outcome => ({ issue: issueAt(context, node, message) });
+
+const used = (context: FileContext, kind: ImportUse["kind"], value: string): Outcome => ({ use: { layer: context.file.layer, kind, value } });
+
 const isModuleDeclaration = (node: Node): node is ImportDeclaration | ExportDeclaration => isImportDeclaration(node) || isExportDeclaration(node);
 
 const isLiteralSpecifier = (node: Node): node is StringLiteral | NoSubstitutionTemplateLiteral => {
@@ -39,47 +52,48 @@ const isLiteralSpecifier = (node: Node): node is StringLiteral | NoSubstitutionT
 
 const isManagedSource = (path: string): boolean => existsSync(path) && !infrastructure(realpathSync(path));
 
-const targetIssues = (context: FileContext, node: Node, target: string): readonly ImportIssue[] => {
+const targetIssues = (context: FileContext, node: Node, target: string): readonly Outcome[] => {
   // Declaration handles use canonical (lowercase on case-insensitive hosts) paths; recover the program's filename first.
   const actual = realpathSync(context.project.program.getSourceFile(target)?.fileName ?? target);
   const classified = context.byPath.get(actual);
-  if (!inside(context.root, actual)) return [issueAt(context, node, `Import target escapes architecture root: ${target}`)];
-  if (classified === undefined) return [issueAt(context, node, `Import target is not governed source: ${relativePath(context.root, actual)}`)];
-  if (context.file.policy.dependencies.internal.includes(classified.layer)) return [];
-  return [issueAt(context, node, `Layer ${context.file.layer} may not import ${classified.layer}: ${classified.relative}`)];
+  if (!inside(context.root, actual)) return [denied(context, node, `Import target escapes architecture root: ${target}`)];
+  if (classified === undefined) return [denied(context, node, `Import target is not governed source: ${relativePath(context.root, actual)}`)];
+  if (context.file.policy.dependencies.internal.includes(classified.layer)) return [used(context, "internal", classified.layer)];
+  return [denied(context, node, `Layer ${context.file.layer} may not import ${classified.layer}: ${classified.relative}`)];
 };
 
 /** Built-ins are permitted as node: specifiers, whichever way the import spells them. */
-const builtinIssues = (context: FileContext, node: Node, specifier: string): readonly ImportIssue[] => {
+const builtinIssues = (context: FileContext, node: Node, specifier: string): readonly Outcome[] => {
   const prefixed = `node:${specifier.replace(/^node:/, "")}`;
-  if (matches(prefixed, context.file.policy.dependencies.external)) return [];
-  return [issueAt(context, node, `External import is not permitted: ${prefixed}`)];
+  if (matches(prefixed, context.file.policy.dependencies.external)) return [used(context, "external", prefixed)];
+  return [denied(context, node, `External import is not permitted: ${prefixed}`)];
 };
 
-const assetIssues = (context: FileContext, node: Node, specifier: string, asset: string): readonly ImportIssue[] => {
+const assetIssues = (context: FileContext, node: Node, specifier: string, asset: string): readonly Outcome[] => {
   const actual = realpathSync(asset);
-  const isPermitted = inside(context.root, actual) && matches(relativePath(context.root, actual), context.file.policy.dependencies.assets);
-  return isPermitted ? [] : [issueAt(context, node, `Asset import is not permitted: ${specifier}`)];
+  const relative = relativePath(context.root, actual);
+  const isPermitted = inside(context.root, actual) && matches(relative, context.file.policy.dependencies.assets);
+  return isPermitted ? [used(context, "asset", relative)] : [denied(context, node, `Asset import is not permitted: ${specifier}`)];
 };
 
-const moduleIssues = (context: FileContext, node: Node, specifier: string, isLocal: boolean): readonly ImportIssue[] => {
+const moduleIssues = (context: FileContext, node: Node, specifier: string, isLocal: boolean): readonly Outcome[] => {
   const declarations = context.project.checker.getSymbolAtLocation(node)?.declarations ?? [];
   const managed = declarations
     .filter((declaration) => declaration.kind === SyntaxKind.SourceFile)
     .map((declaration) => declaration.path)
     .filter(isManagedSource);
   if (managed.length > 0) return managed.flatMap((target) => targetIssues(context, node, target));
-  if (isLocal) return [issueAt(context, node, `Cannot resolve local import to governed source: ${specifier}`)];
+  if (isLocal) return [denied(context, node, `Cannot resolve local import to governed source: ${specifier}`)];
   if (declarations.length === 0) {
-    return [issueAt(context, node, `Unresolved external import: ${specifier} (project ${relativePath(context.root, context.project.configFileName)})`)];
+    return [denied(context, node, `Unresolved external import: ${specifier} (project ${relativePath(context.root, context.project.configFileName)})`)];
   }
-  if (matches(specifier, context.file.policy.dependencies.external)) return [];
-  return [issueAt(context, node, `External import is not permitted: ${specifier}`)];
+  if (matches(specifier, context.file.policy.dependencies.external)) return [used(context, "external", specifier)];
+  return [denied(context, node, `External import is not permitted: ${specifier}`)];
 };
 
-const specifierIssues = (context: FileContext, node: Node): readonly ImportIssue[] => {
+const specifierIssues = (context: FileContext, node: Node): readonly Outcome[] => {
   if (!isLiteralSpecifier(node)) {
-    return [issueAt(context, node, "Nonliteral module loading cannot be verified. Use a literal import or a documented line exception.")];
+    return [denied(context, node, "Nonliteral module loading cannot be verified. Use a literal import or a documented line exception.")];
   }
   const specifier = node.text;
   if (isBuiltin(specifier)) return builtinIssues(context, node, specifier);
@@ -138,20 +152,21 @@ const moduleReferences = (project: Project, node: Node): readonly Node[] => {
   return [];
 };
 
-const tripleSlashIssues = (context: FileContext): readonly ImportIssue[] => {
+const tripleSlashIssues = (context: FileContext): readonly Outcome[] => {
   const { source, file } = context;
   const pathIssues = source.referencedFiles.flatMap((reference) => {
     const target = resolve(dirname(file.path), reference.fileName);
     if (existsSync(target)) return targetIssues(context, source, target);
-    return [issueAt(context, source, `Unresolved reference path: ${reference.fileName}`)];
+    return [denied(context, source, `Unresolved reference path: ${reference.fileName}`)];
   });
-  const typeIssues = source.typeReferenceDirectives
-    .filter((reference) => !matches(reference.fileName, file.policy.dependencies.external))
-    .map((reference) => issueAt(context, source, `Type reference is not permitted: ${reference.fileName}`));
+  const typeIssues = source.typeReferenceDirectives.map((reference) => {
+    const isPermitted = matches(reference.fileName, file.policy.dependencies.external);
+    return isPermitted ? used(context, "external", reference.fileName) : denied(context, source, `Type reference is not permitted: ${reference.fileName}`);
+  });
   return [...pathIssues, ...typeIssues];
 };
 
-const fileImportIssues = (root: string, file: ClassifiedFile, project: Project, byPath: ReadonlyMap<string, ClassifiedFile>): readonly ImportIssue[] => {
+const fileImportIssues = (root: string, file: ClassifiedFile, project: Project, byPath: ReadonlyMap<string, ClassifiedFile>): readonly Outcome[] => {
   const source = project.program.getSourceFile(file.path);
   if (source === undefined) return [];
   const context: FileContext = { root, file, project, source, byPath };
@@ -159,8 +174,18 @@ const fileImportIssues = (root: string, file: ClassifiedFile, project: Project, 
   return [...references.flatMap((reference) => specifierIssues(context, reference)), ...tripleSlashIssues(context)];
 };
 
-export const checkImports = (root: string, files: readonly ClassifiedFile[], projects: readonly Project[]): readonly ImportIssue[] => {
+const issueOf = (outcome: Outcome): readonly ImportIssue[] => ("issue" in outcome ? [outcome.issue] : []);
+
+const useOf = (outcome: Outcome): readonly ImportUse[] => ("use" in outcome ? [outcome.use] : []);
+
+/** Checks every import against its layer's dependencies, and records the permissions the allowed ones used. */
+export const analyzeImports = (root: string, files: readonly ClassifiedFile[], projects: readonly Project[]): ImportAnalysis => {
   const byPath = new Map(files.map((file) => [realpathSync(file.path), file]));
-  const issues = files.flatMap((file) => projects.flatMap((project) => fileImportIssues(root, file, project, byPath)));
-  return [...new Map(issues.map((issue) => [`${issue.file}:${issue.line}:${issue.column}:${issue.message}`, issue])).values()];
+  const outcomes = files.flatMap((file) => projects.flatMap((project) => fileImportIssues(root, file, project, byPath)));
+  const issues = outcomes.flatMap(issueOf);
+  const uses = outcomes.flatMap(useOf);
+  return {
+    issues: [...new Map(issues.map((issue) => [`${issue.file}:${issue.line}:${issue.column}:${issue.message}`, issue])).values()],
+    uses: [...new Map(uses.map((use) => [`${use.layer}:${use.kind}:${use.value}`, use])).values()],
+  };
 };

@@ -17,6 +17,8 @@ const lintRuleName = (rule: RegisteredRule): string | undefined => {
       return `architecture/${rule.id}`;
     case "typescript":
     case "advisory":
+    case "dead-code":
+    case "configuration":
     case "architecture":
       return undefined;
   }
@@ -47,7 +49,7 @@ const fileRules = (file: ClassifiedFile, imports: readonly ImportIssue[], guard:
 });
 
 /** Glob metacharacters in real filenames must not turn exact selection into a pattern. */
-const exactSelector = (path: string): string => posix(path).replace(/[[\]*?{}()!]/g, (character) => `[${character}]`);
+export const exactSelector = (path: string): string => posix(path).replace(/[[\]*?{}()!]/g, (character) => `[${character}]`);
 
 /** Compiles disjoint policies for the runner's child-directory config (pinned Oxlint path semantics).
  * Generated files never reach this point; the runner checks only their names and imports. */

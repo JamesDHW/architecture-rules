@@ -4,7 +4,7 @@ import type { Architecture } from "../config/types.js";
 import { isError, type Finding, type FindingSource } from "./findings.js";
 
 /** The stages of a check, in the order they run. */
-export type StageName = "structure" | "lint" | "types";
+type StageName = "structure" | "lint" | "types" | "dead-code";
 export type StageStatus = "passed" | "failed" | "skipped";
 export type Stage = { readonly name: StageName; readonly status: StageStatus };
 
@@ -28,7 +28,7 @@ export type CheckScope = {
   readonly started: number;
 };
 
-const stageNames: readonly StageName[] = ["structure", "lint", "types"];
+const stageNames: readonly StageName[] = ["structure", "lint", "types", "dead-code"];
 
 const stageOf = (source: FindingSource): StageName => {
   switch (source) {
@@ -38,6 +38,8 @@ const stageOf = (source: FindingSource): StageName => {
       return "lint";
     case "compiler":
       return "types";
+    case "dead-code":
+      return "dead-code";
   }
 };
 

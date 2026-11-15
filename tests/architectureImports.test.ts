@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { checkImports } from "../src/analysis/imports.js";
+import { analyzeImports } from "../src/analysis/imports.js";
 import { defineArchitecture } from "../src/config/defineArchitecture.js";
 import { inventory } from "../src/analysis/inventory.js";
-import { checkSuppressions } from "../src/analysis/suppressions.js";
+import { readExceptions } from "../src/analysis/suppressions.js";
 import { openFixtureProjects } from "./utils/fixtures.js";
 import { projectFixture, twoLayerArchitecture } from "./utils/projectFixture.js";
 
@@ -16,7 +16,7 @@ describe("Import and suppression checks on TypeScript programs", () => {
     const a = twoLayerArchitecture(); const opened = openFixtureProjects(root, a);
     const tree = inventory(root, a, opened.sources);
     expect(tree.issues).toEqual([]);
-    const modelIssues = checkImports(root, tree.files, opened.projects).filter((issue) => issue.file === "src/domain/model.ts");
+    const modelIssues = analyzeImports(root, tree.files, opened.projects).issues.filter((issue) => issue.file === "src/domain/model.ts");
     expect(modelIssues.map((issue) => issue.message)).toContainEqual("Layer domain may not import adapter: src/adapters/client.ts");
   });
   it("checks re-exports, import types, and nonliteral dynamic imports", () => {
@@ -25,7 +25,7 @@ describe("Import and suppression checks on TypeScript programs", () => {
       "src/adapters/client.ts": "export const client = 1; export type Client = number;",
     });
     const a = twoLayerArchitecture(); const opened = openFixtureProjects(root, a);
-    const messages = checkImports(root, inventory(root, a, opened.sources).files, opened.projects);
+    const messages = analyzeImports(root, inventory(root, a, opened.sources).files, opened.projects).issues;
     expect(messages).toHaveLength(3);
     expect(messages.map((issue) => issue.line)).toEqual([1, 2, 3]);
   });
@@ -34,7 +34,7 @@ describe("Import and suppression checks on TypeScript programs", () => {
 // architecture-disable-next-line no-binding-alias -- Required public compatibility name.
 export const other = text;` });
     const a = twoLayerArchitecture(); const opened = openFixtureProjects(root, a);
-    expect(checkSuppressions(inventory(root, a, opened.sources).files, opened.projects)).toEqual([]);
+    expect(readExceptions(inventory(root, a, opened.sources).files, opened.projects).issues).toEqual([]);
   });
   it("rejects missing reasons, file-wide exceptions and engine directives", () => {
     const root = projectFixture({ "src/domain/model.ts": `// architecture-disable-next-line no-binding-alias
@@ -44,7 +44,7 @@ export const value = 1;
 // oxlint-disable-next-line architecture/no-binding-alias -- Reasoned, but in the engine's syntax.
 export const other = value;` });
     const a = twoLayerArchitecture(); const opened = openFixtureProjects(root, a);
-    expect(checkSuppressions(inventory(root, a, opened.sources).files, opened.projects).map((issue) => issue.line)).toEqual([1, 3, 4, 5]);
+    expect(readExceptions(inventory(root, a, opened.sources).files, opened.projects).issues.map((issue) => issue.line)).toEqual([1, 3, 4, 5]);
   });
   it("checks built-ins as node: specifiers, however the import spells them, without local @types packages", () => {
     const root = projectFixture({
@@ -59,7 +59,7 @@ export const other = value;` });
       },
     });
     const opened = openFixtureProjects(root, a);
-    const messages = checkImports(root, inventory(root, a, opened.sources).files, opened.projects).map((issue) => issue.message);
+    const messages = analyzeImports(root, inventory(root, a, opened.sources).files, opened.projects).issues.map((issue) => issue.message);
     expect(messages).toEqual(["External import is not permitted: node:fs"]);
   });
   it("ignores directive-like JSX text but validates actual JSX comments", () => {
@@ -68,7 +68,7 @@ export const other = value;` });
 {/* oxlint-disable */}
 </div>;` }, { jsx: "preserve" });
     const a = twoLayerArchitecture(); const opened = openFixtureProjects(root, a);
-    const issues = checkSuppressions(inventory(root, a, opened.sources).files, opened.projects);
+    const issues = readExceptions(inventory(root, a, opened.sources).files, opened.projects).issues;
     expect(issues).toHaveLength(1);
     expect(issues[0]?.line).toBe(3);
   });

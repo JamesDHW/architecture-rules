@@ -19,8 +19,6 @@ type Read = {
  * directive comments are structural issues, found before lint so no comment can switch a check off.
  */
 export declare const readExceptions: (files: readonly ClassifiedFile[], projects: readonly Project[]) => Read;
-/** The structural issues readExceptions reports. */
-export declare const checkSuppressions: (files: readonly ClassifiedFile[], projects: readonly Project[]) => readonly Issue[];
 /** A replacement of part of one source file. */
 export type SourceEdit = {
     readonly path: string;

@@ -2,8 +2,8 @@ import { isBuiltin } from "node:module";
 
 import { isString } from "../core/guards.js";
 import { isNamingCaseSetting, namingCases } from "../rules/namingPolicy.js";
-import { DEPENDENCY_FIELDS, GENERATED_FIELDS, NAMING_FIELDS } from "./configuration.constants.js";
-import type { DependencyPolicy, GeneratedSetting, NamingPolicy } from "./types.js";
+import { DEPENDENCY_FIELDS, ENTRY_FIELDS, GENERATED_FIELDS, NAMING_FIELDS } from "./configuration.constants.js";
+import type { DependencyPolicy, EntrySetting, GeneratedSetting, NamingPolicy } from "./types.js";
 import { checked, fields, optional, patterns, strings, text, type Checked } from "./validation.js";
 
 const isExactBasename = (name: string): boolean => !/[/\\*?{}[\]]/.test(name);
@@ -68,4 +68,26 @@ export const generated = (value: unknown, label: string): Checked<GeneratedSetti
   const input = fields(value, GENERATED_FIELDS, label);
   const reason = text(input.value.reason, `${label}.reason`);
   return checked({ reason: reason.value }, [...input.issues, ...reason.issues]);
+};
+
+const entryExports = (input: unknown, label: string): Checked<readonly string[] | "all"> => {
+  if (input === "all") return checked("all");
+  const names = strings(input, label);
+  return names.issues.length === 0 ? names : checked([], [`${label} must be "all" or a list of export names`]);
+};
+
+export const entryPoint = (value: unknown, label: string): Checked<EntrySetting> => {
+  const input = fields(value, ENTRY_FIELDS, label);
+  const reason = text(input.value.reason, `${label}.reason`);
+  const files = optional(input.value.files, (entryFiles) => patterns(entryFiles, `${label}.files`));
+  const exports = optional(input.value.exports, (entryExportsValue) => entryExports(entryExportsValue, `${label}.exports`));
+  return checked({
+    reason: reason.value,
+    ...(files.value === undefined ? {} : { files: files.value }),
+    ...(exports.value === undefined ? {} : { exports: exports.value }),
+  }, [...input.issues, ...reason.issues, ...files.issues, ...exports.issues]);
+};
+
+export const developmentOnly = (value: unknown, label: string): Checked<boolean> => {
+  return typeof value === "boolean" ? checked(value) : checked(false, [`${label} must be true or false`]);
 };

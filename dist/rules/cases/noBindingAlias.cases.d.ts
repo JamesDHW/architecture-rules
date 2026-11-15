@@ -7,6 +7,7 @@ export declare const invalidUndefinedCases: {
     name: string;
     code: string;
 }[];
+/** Reassignment needs let, var or a parameter; no-let, no-var and no-param-reassign own those. */
 export declare const outOfScopeCases: {
     name: string;
     code: string;

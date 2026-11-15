@@ -1,7 +1,7 @@
 import { isBuiltin } from "node:module";
 import { isString } from "../core/guards.js";
 import { isNamingCaseSetting, namingCases } from "../rules/namingPolicy.js";
-import { DEPENDENCY_FIELDS, GENERATED_FIELDS, NAMING_FIELDS } from "./configuration.constants.js";
+import { DEPENDENCY_FIELDS, ENTRY_FIELDS, GENERATED_FIELDS, NAMING_FIELDS } from "./configuration.constants.js";
 import { checked, fields, optional, patterns, strings, text } from "./validation.js";
 const isExactBasename = (name) => !/[/\\*?{}[\]]/.test(name);
 /** One nonempty string or a nonempty list of them. */
@@ -63,5 +63,25 @@ export const generated = (value, label) => {
     const input = fields(value, GENERATED_FIELDS, label);
     const reason = text(input.value.reason, `${label}.reason`);
     return checked({ reason: reason.value }, [...input.issues, ...reason.issues]);
+};
+const entryExports = (input, label) => {
+    if (input === "all")
+        return checked("all");
+    const names = strings(input, label);
+    return names.issues.length === 0 ? names : checked([], [`${label} must be "all" or a list of export names`]);
+};
+export const entryPoint = (value, label) => {
+    const input = fields(value, ENTRY_FIELDS, label);
+    const reason = text(input.value.reason, `${label}.reason`);
+    const files = optional(input.value.files, (entryFiles) => patterns(entryFiles, `${label}.files`));
+    const exports = optional(input.value.exports, (entryExportsValue) => entryExports(entryExportsValue, `${label}.exports`));
+    return checked({
+        reason: reason.value,
+        ...(files.value === undefined ? {} : { files: files.value }),
+        ...(exports.value === undefined ? {} : { exports: exports.value }),
+    }, [...input.issues, ...reason.issues, ...files.issues, ...exports.issues]);
+};
+export const developmentOnly = (value, label) => {
+    return typeof value === "boolean" ? checked(value) : checked(false, [`${label} must be true or false`]);
 };
 //# sourceMappingURL=policies.js.map

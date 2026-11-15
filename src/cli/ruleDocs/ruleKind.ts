@@ -12,6 +12,10 @@ export const enforcementLabel = (rule: ArchitectureRule): string => {
       return `Lint rule, built on ${inlineCode(lintRuleName(rule) ?? enforcement.rule)}`;
     case "typescript":
       return `TypeScript compiler options ${inlineCode(JSON.stringify(enforcement.compilerOptions))}`;
+    case "dead-code":
+      return enforcement.scope === "file" ? "Dead-code check" : "Dead-code check, set project-wide";
+    case "configuration":
+      return "Configuration check, set project-wide";
     case "architecture":
       return "Structural check; lint comments cannot suppress it";
     case "advisory":
@@ -31,6 +35,8 @@ export const defaultSetting = (rule: ArchitectureRule): string | undefined => {
   switch (enforcement.type) {
     case "custom-oxlint":
     case "oxlint":
+    case "dead-code":
+    case "configuration":
       return settingLabel(enforcement.configuration);
     case "typescript":
     case "architecture":

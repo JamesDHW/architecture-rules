@@ -7,7 +7,7 @@ import type { NamingPolicy } from "../rules/namingPolicy.js";
 export type { NamingPolicy };
 
 export type RegisteredRule = (typeof rules)[number];
-export type RuleId = RegisteredRule["id"];
+type RuleId = RegisteredRule["id"];
 type RuleById<K extends RuleId> = Extract<RegisteredRule, { readonly id: K }>;
 type NativeRules = NonNullable<OxlintConfig["rules"]>;
 type Tail<T> = T extends readonly [unknown, ...infer Options] ? Options : never;
@@ -24,9 +24,9 @@ type Detail<O extends readonly unknown[]> = {
   readonly reason: string;
 } & (O extends readonly [] ? { readonly options?: never } : { readonly options?: DeepReadonly<O> | DeepReadonly<ObjectOptions<O>> });
 export type RuleSetting<K extends RuleId> = Severity | readonly [Severity, ...DeepReadonly<OptionsFor<K>>] | Detail<OptionsFor<K>>;
-export type CompilerRuleId = Extract<RegisteredRule, { readonly enforcement: { readonly type: "typescript" } }>["id"];
+type CompilerRuleId = Extract<RegisteredRule, { readonly enforcement: { readonly type: "typescript" } }>["id"];
 type StructuralRuleId = Extract<RegisteredRule, { readonly enforcement: { readonly type: "architecture" } }>["id"];
-export type FileRuleId = Exclude<RuleId, StructuralRuleId | CompilerRuleId | "file-naming" | "allowed-imports">;
+type FileRuleId = Exclude<RuleId, StructuralRuleId | CompilerRuleId | "file-naming" | "allowed-imports">;
 export type FileRules = { readonly [K in FileRuleId]?: RuleSetting<K> };
 export type ProjectRules = FileRules & { readonly [K in CompilerRuleId]?: "error" | "off" | { readonly severity: "error" | "off"; readonly reason: string } };
 
@@ -47,11 +47,28 @@ export type Policy<Layer extends string = string> = {
 };
 /** Generator output: classified, named and import-checked, but never linted. */
 export type GeneratedSetting = { readonly reason: string };
+/**
+ * Marks a layer's files as loaded from outside the program, by a bundler, router, test runner or package
+ * consumer. Everything else is used only if something imports it, so an entry is where dead code can hide:
+ * it needs a reason.
+ */
+export type EntrySetting = {
+  readonly reason: string;
+  /** Root-relative patterns: only these files of the layer are entries. Every file of the layer by default. */
+  readonly files?: readonly string[];
+  /** Exports something outside the program uses: their names, or "all" for a public API. None by default. */
+  readonly exports?: readonly string[] | "all";
+};
+type LayerRole = {
+  readonly entry?: EntrySetting;
+  /** Tests, tooling and other code that never ships: it may use devDependencies and keeps no production code alive. */
+  readonly development?: boolean;
+};
 export type LayerDefinition<Layer extends string = string> = {
   readonly description: string;
   readonly files: readonly string[];
   readonly exclude?: readonly string[];
-} & (
+} & LayerRole & (
   | (Policy<Layer> & { readonly generated?: never })
   | (Omit<Policy<Layer>, "rules"> & { readonly generated: GeneratedSetting; readonly rules?: never })
 );
@@ -76,6 +93,8 @@ export type EffectivePolicy = {
   readonly dependencies: Required<DependencyPolicy>;
   readonly rules: Readonly<Record<string, EffectiveRule>>;
   readonly generated?: GeneratedSetting;
+  readonly entry?: EntrySetting;
+  readonly development: boolean;
 };
 export type NormalizedLayer = LayerDefinition & { readonly policy: EffectivePolicy };
 export type Architecture = {

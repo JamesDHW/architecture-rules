@@ -16,6 +16,15 @@ const describeNaming = (naming) => {
 };
 const listOrNone = (values) => (values.length > 0 ? values.join(", ") : "none");
 const describeOverride = ({ rule, severity, reason }) => `${rule} ${severity}${reason === undefined ? "" : `: ${reason}`}`;
+const usedExports = (exports) => {
+    if (exports === undefined)
+        return "no exports used";
+    return exports === "all" ? "all exports public" : `exports ${exports.join(", ")}`;
+};
+const describeEntry = ({ reason, files, exports }) => {
+    const which = files === undefined ? "every file" : files.join(", ");
+    return `${which}; ${usedExports(exports)}: ${reason}`;
+};
 const layerLines = (layer, width) => {
     const detail = (label, value) => `${indent}${" ".repeat(width)}  ${column(label, 10)}${value}`;
     return [
@@ -26,6 +35,8 @@ const layerLines = (layer, width) => {
         ...(layer.dependencies.assets.length > 0 ? [detail("assets", layer.dependencies.assets.join(", "))] : []),
         ...(layer.naming === undefined ? [] : [detail("naming", describeNaming(layer.naming))]),
         ...(layer.generated === undefined ? [] : [detail("generated", layer.generated)]),
+        ...(layer.entry === undefined ? [] : [detail("entry", describeEntry(layer.entry))]),
+        ...(layer.development ? [detail("role", "development only")] : []),
         ...layer.ruleOverrides.map((override) => detail("rule", describeOverride(override))),
     ];
 };

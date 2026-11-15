@@ -5,7 +5,7 @@ import { renderRuleIndex } from "./cli/ruleDocs/renderRuleIndex.js";
 import { ruleCases } from "./rules/cases/ruleCases.js";
 import { rules } from "./rules/index.js";
 /** Rewrites docs/rules from the rule definitions and test cases, removing pages of rules that no longer exist. */
-export const writeRuleDocs = async () => {
+const writeRuleDocs = async () => {
     const directory = new URL("../docs/rules/", import.meta.url);
     await rm(directory, { recursive: true, force: true });
     await mkdir(directory, { recursive: true });

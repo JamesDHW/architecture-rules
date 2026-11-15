@@ -1,6 +1,8 @@
-import { readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-import { checkImports, type ImportIssue } from "../analysis/imports.js";
+import type { ConfigText } from "../analysis/configurationChecks.js";
+import { analyzeImports, type ImportIssue } from "../analysis/imports.js";
 import { inventory, type ClassifiedFile, type Issue } from "../analysis/inventory.js";
 import { openProjects, type Projects } from "../analysis/projects.js";
 import { exceptionMigrations, readExceptions, type LineException, type SourceEdit } from "../analysis/suppressions.js";
@@ -11,18 +13,20 @@ import { tryCatch, tryCatchAsync } from "../errors/tryCatch.js";
 import { namingError } from "../rules/namingPolicy.js";
 import { checkResult, type CheckResult, type CheckScope } from "./checkResult.js";
 import { compilerFindings } from "./compilerDiagnostics.js";
+import { configurationFindings, readConfig } from "./configurationFindings.js";
+import { deadCode } from "./deadCode.js";
 import { applyExceptions, exceptedRulesByFile } from "./exceptions.js";
 import { explainFile } from "./explain.js";
 import { sortFindings, structuralFinding, type Finding } from "./findings.js";
 import { lint } from "./oxlint.js";
 import { printOutput, type OutputFormat } from "./output.js";
 
-export type { CheckResult } from "./checkResult.js";
-
 export type InspectOptions = {
   readonly fix?: boolean;
   /** Absolute paths: lint and report only these files. The whole project is still analyzed. */
   readonly files?: readonly string[];
+  /** The architecture configuration's path, for findings about it; architecture.config.ts in the root by default. */
+  readonly configFile?: string;
 };
 
 export type CheckOptions = InspectOptions & { readonly explain?: string; readonly format?: OutputFormat };
@@ -53,18 +57,39 @@ const inScope = (selected: readonly ClassifiedFile[], options: InspectOptions) =
   return (finding: Finding): boolean => options.files === undefined || selectedPaths.has(finding.file);
 };
 
-type Scoped = { readonly files: readonly ClassifiedFile[]; readonly selected: readonly ClassifiedFile[]; readonly exceptions: readonly LineException[] };
+type Scoped = {
+  readonly architecture: Architecture;
+  readonly files: readonly ClassifiedFile[];
+  readonly selected: readonly ClassifiedFile[];
+  readonly exceptions: readonly LineException[];
+  readonly config: ConfigText;
+};
+
+const noManifestFinding: Finding = {
+  source: "dead-code", severity: "warning", ruleId: "unused-dependencies", file: "package.json",
+  message: "There is no package.json in the architecture root, so unused files, exports and dependencies were not checked.",
+};
+
+/** A --fix run is checked again afterwards; dead code is reported then. */
+const unusedCode = async (root: string, scoped: Scoped, options: InspectOptions): Promise<readonly Finding[] | ArchitectureError> => {
+  if (options.fix === true) return [];
+  if (!existsSync(join(root, "package.json"))) return [noManifestFinding];
+  return deadCode(root, scoped.architecture, scoped.files, scoped.config.file);
+};
 
 const collectFindings = async (root: string, opened: Projects, scoped: Scoped, options: InspectOptions): Promise<readonly Finding[] | ArchitectureError> => {
-  const { files, selected, exceptions } = scoped;
+  const { architecture, files, selected, exceptions, config } = scoped;
   const linted = selected.filter((file) => !isGenerated(file));
-  const imports = checkImports(root, files, opened.projects);
-  const generatedIssues = generatedFileIssues(selected.filter(isGenerated), imports);
+  const imports = analyzeImports(root, files, opened.projects);
+  const generatedIssues = generatedFileIssues(selected.filter(isGenerated), imports.issues);
   const guard = options.fix === true ? exceptedRulesByFile(exceptions) : undefined;
-  const lintFindings = await lint(root, linted, imports, opened.projects, guard);
+  const lintFindings = await lint(root, linted, imports.issues, opened.projects, guard);
   if (lintFindings instanceof ArchitectureError) return lintFindings;
-  const compilerErrors = compilerFindings(root, opened.projects).filter(inScope(selected, options));
-  return applyExceptions([...generatedIssues.map(structuralFinding), ...lintFindings, ...compilerErrors], exceptions);
+  const compilerErrors = compilerFindings(root, opened.projects);
+  const unused = await unusedCode(root, scoped, options);
+  if (unused instanceof ArchitectureError) return unused;
+  const found = [...generatedIssues.map(structuralFinding), ...lintFindings, ...compilerErrors, ...unused, ...configurationFindings(root, opened, scoped, imports.uses)];
+  return applyExceptions(found.filter(inScope(selected, options)), exceptions);
 };
 
 /** Structural issues, and the line exceptions of the linted files, before anything is linted. */
@@ -85,7 +110,7 @@ const inspectOpened = async (
   const exceptions = checked.exceptions.filter((exception) => selectedPaths.has(exception.file));
   const scope: CheckScope = { architecture, projects: opened.projects.length, files: selected, started };
   if (checked.issues.length > 0) return checkResult(scope, sortFindings(checked.issues.map(structuralFinding)), exceptions, false);
-  const findings = await collectFindings(root, opened, { files: tree.files, selected, exceptions }, options);
+  const findings = await collectFindings(root, opened, { architecture, files: tree.files, selected, exceptions, config: readConfig(root, options.configFile) }, options);
   if (findings instanceof ArchitectureError) return findings;
   return checkResult(scope, sortFindings(findings), exceptions, true);
 };

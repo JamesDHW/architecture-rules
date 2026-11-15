@@ -18,7 +18,21 @@ type TypeScriptEnforcement = {
 type AdvisoryEnforcement = {
     readonly type: "advisory";
 };
-export type Enforcement = OxlintEnforcement | CustomOxlintEnforcement | TypeScriptEnforcement | AdvisoryEnforcement | {
+/**
+ * Checked over the whole program by the dead-code stage: unused files, exports and dependencies.
+ * file-scoped rules can be set per layer; project-scoped ones (dependencies, binaries) only project-wide.
+ */
+type DeadCodeEnforcement = {
+    readonly type: "dead-code";
+    readonly scope: "file" | "project";
+    readonly configuration: Severity;
+};
+/** Checked by the checker against architecture.config.ts and the project's setup; set only project-wide. */
+type ConfigurationEnforcement = {
+    readonly type: "configuration";
+    readonly configuration: Severity;
+};
+type Enforcement = OxlintEnforcement | CustomOxlintEnforcement | TypeScriptEnforcement | AdvisoryEnforcement | DeadCodeEnforcement | ConfigurationEnforcement | {
     readonly type: "architecture";
 };
 /** Code that satisfies a rule's wording while missing its point. Rendered in the rule's generated documentation. */
