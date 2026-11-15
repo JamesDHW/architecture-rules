@@ -2,7 +2,7 @@
 
 # Keep ternaries simple and side-effect-free
 
-`simple-ternaries` · Custom lint rule `architecture/simple-ternaries` · error by default
+`simple-ternaries` · Lint rule · error by default
 
 Prefer a ternary for one ordinary simple value choice, rather than an if-return plus a fallback return. Good: return isSaving ? "Saving…" : "Save";
 

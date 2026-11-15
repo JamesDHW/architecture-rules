@@ -2,7 +2,7 @@
 
 # Remove type-proven unnecessary conditions
 
-`unnecessary-conditions` · Oxlint rule `typescript/no-unnecessary-condition` · error by default, with options `[{"checkTypePredicates":true,"allowConstantLoopConditions":"never"}]`
+`unnecessary-conditions` · Lint rule, built on `typescript/no-unnecessary-condition` · error by default, with options `[{"checkTypePredicates":true,"allowConstantLoopConditions":"never"}]`
 
 Reject tests that TypeScript proves cannot affect the outcome. Receive untrusted inputs as unknown and validate at boundaries. Use a documented scoped exception when inaccurate external declarations genuinely require a defensive check.
 

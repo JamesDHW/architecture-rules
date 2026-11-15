@@ -2,7 +2,7 @@
 
 # Return from switch cases in a focused operation
 
-`terminal-switch-cases` · Custom lint rule `architecture/terminal-switch-cases` · error by default
+`terminal-switch-cases` · Lint rule · error by default
 
 Use switches for behavior dispatch over a discriminant, not switch(true) or switch(false) predicate chains. Ordered predicates belong in guard clauses. Each nonempty case body must end in a return. Extract dispatch into a focused helper when shared work must follow it. Do not break out of the switch to continue the caller. Adjacent empty labels may share the next terminal body; a trailing empty label has no body and is not allowed. Case braces are optional, except where lexical declarations need their own scope.
 

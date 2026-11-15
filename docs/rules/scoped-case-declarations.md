@@ -2,7 +2,7 @@
 
 # Scope lexical declarations within switch cases
 
-`scoped-case-declarations` · Oxlint rule `eslint/no-case-declarations` · error by default
+`scoped-case-declarations` · Lint rule, built on `eslint/no-case-declarations` · error by default
 
 Case braces are optional for simple returns. Good: case 'success': { const label = formatProject(project); return label; } Bad: the same lexical declaration in an unbraced case. Braces keep lexical bindings from leaking into other cases' shared scope.
 

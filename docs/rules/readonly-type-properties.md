@@ -2,7 +2,7 @@
 
 # Declare data as recursively readonly
 
-`readonly-type-properties` · Custom lint rule `architecture/readonly-type-properties` · error by default
+`readonly-type-properties` · Lint rule · error by default
 
 Mark every data-model property and collection readonly, and compose nested models that are themselves readonly. Mutable types may exist only inside isolated adapters where an external API requires mutation.
 

@@ -2,7 +2,7 @@
 
 # Use for...of as the default loop form
 
-`collection-loops` · Custom lint rule `architecture/collection-loops` · error by default
+`collection-loops` · Lint rule · error by default
 
 Use for...of or for await...of for intentional iteration. Prefer dedicated collection operations for direct transformations and searches. Do not use classic for, for...in, while, or do...while by default. Require a documented scoped exception for an API or algorithm that genuinely needs another form.
 

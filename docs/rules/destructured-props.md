@@ -2,7 +2,7 @@
 
 # Destructure component props in the parameter list
 
-`destructured-props` · Custom lint rule `architecture/destructured-props` · error by default
+`destructured-props` · Lint rule · error by default
 
 Destructure a React component's props in its parameter list. The parameter list then shows every prop the component uses, and the body reads names rather than props.name.
 

@@ -2,7 +2,7 @@
 
 # Use braces except for single-line terminal guards
 
-`control-flow-braces` · Custom lint rule `architecture/control-flow-braces` · error by default
+`control-flow-braces` · Lint rule · error by default
 
 Require braces around conditional and loop bodies, except for single-line terminal guards. An if may omit braces only when its body is a return, throw, break, or continue and the entire if occupies one line. Loops always use braces. This brace exception does not permit throw outside approved error adapters, or break/continue without a no-loop-jumps exception. Else remains forbidden by no-else. A brace rule fixture may exercise those statements independently, but the complete default profile still rejects them.
 

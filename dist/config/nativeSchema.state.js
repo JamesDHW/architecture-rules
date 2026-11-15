@@ -15,7 +15,7 @@ const readNativeSchema = () => {
     });
     if (isSchemaOrError(parsed))
         return parsed;
-    return new ArchitectureError(["Invalid installed Oxlint schema"]);
+    return new ArchitectureError(["The lint engine's configuration schema is missing or invalid"]);
 };
 export const nativeSchema = () => {
     const cached = loaded.get("schema");

@@ -2,7 +2,7 @@
 
 # Name every non-pass-through React handler
 
-`named-jsx-handlers` · Custom lint rule `architecture/named-jsx-handlers` · error by default
+`named-jsx-handlers` · Lint rule · error by default
 
 JSX may pass through an existing callback directly. Any handler that creates behavior—by adapting arguments, branching, sequencing work, or invoking a domain operation—must be a descriptively named value outside the JSX.
 

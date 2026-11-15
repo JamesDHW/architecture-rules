@@ -2,7 +2,7 @@
 
 # Keep long-lived state in *.state.ts modules
 
-`no-captured-mutation` · Custom lint rule `architecture/no-captured-mutation` · error by default
+`no-captured-mutation` · Lint rule · error by default
 
 Do not change an array, object, Map or Set from a function other than the one that created it. State that must outlive a function call (a registry of live connections, requests waiting for a reply) lives in a *.state.ts module, which exports a factory of named operations. Building a value inside one function call is not long-lived state and is outside this rule; no-array-mutation covers how to build it.
 

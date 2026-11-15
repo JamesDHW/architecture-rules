@@ -2,7 +2,7 @@
 
 # Name files after one primary concept
 
-`file-naming` · Custom lint rule `architecture/file-naming` · error by default
+`file-naming` · Lint rule · error by default
 
 Name files after one primary concept.
 

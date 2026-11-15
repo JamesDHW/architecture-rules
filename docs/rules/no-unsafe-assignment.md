@@ -2,7 +2,7 @@
 
 # Do not assign unsafe types
 
-`no-unsafe-assignment` · Oxlint rule `typescript/no-unsafe-assignment` · error by default
+`no-unsafe-assignment` · Lint rule, built on `typescript/no-unsafe-assignment` · error by default
 
 Do not use any, non-null assertions, unchecked type assertions, @ts-ignore, or @ts-expect-error in application code. Accept untrusted values as unknown and validate or narrow them. If unsafe interoperability is unavoidable, isolate it in a descriptively named boundary adapter and document the reason.
 

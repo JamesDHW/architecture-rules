@@ -2,7 +2,7 @@
 
 # Return a boolean expression instead of a true/false tail
 
-`prefer-single-boolean-return` · Custom lint rule `architecture/prefer-single-boolean-return` · error by default
+`prefer-single-boolean-return` · Lint rule · error by default
 
 When the remaining path of a function or block is only "if condition return true; return false" or the reverse, return the condition instead.
 

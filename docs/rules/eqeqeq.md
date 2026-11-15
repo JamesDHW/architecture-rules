@@ -2,7 +2,7 @@
 
 # Use explicit equality
 
-`eqeqeq` · Oxlint rule `eslint/eqeqeq` · error by default
+`eqeqeq` · Lint rule, built on `eslint/eqeqeq` · error by default
 
 Only boolean-typed expressions may be tested directly. Compare values explicitly according to the intended condition rather than relying on JavaScript coercion.
 

@@ -2,7 +2,7 @@
 
 # Use complete, domain-specific names
 
-`generic-name-denylist` · Oxlint rule `eslint/id-denylist` · error by default, with options `["data","item","obj","arr","tmp"]`
+`generic-name-denylist` · Lint rule, built on `eslint/id-denylist` · error by default, with options `["data","item","obj","arr","tmp"]`
 
 Name values by their domain role using complete words. Do not use generic placeholders such as data, item, obj, arr, or tmp.
 

@@ -2,7 +2,7 @@
 
 # Do not hide a name from an enclosing scope
 
-`no-shadow` · Oxlint rule `eslint/no-shadow` · error by default
+`no-shadow` · Lint rule, built on `eslint/no-shadow` · error by default
 
 Do not declare a name that hides one from an enclosing scope, including an import. A destructured prop named like an imported style or helper silently replaces it inside the component, and both are often strings, so TypeScript cannot tell.
 

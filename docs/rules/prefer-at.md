@@ -2,7 +2,7 @@
 
 # Check every indexed collection access
 
-`prefer-at` · Oxlint rule `unicorn/prefer-at` · error by default
+`prefer-at` · Lint rule, built on `unicorn/prefer-at` · error by default
 
 Treat array, tuple, and record lookup results as possibly undefined unless the type system proves that the key exists. Prefer .at() for index access so absence is part of the result.
 

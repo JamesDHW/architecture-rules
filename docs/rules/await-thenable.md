@@ -2,7 +2,7 @@
 
 # Only await thenable values
 
-`await-thenable` · Oxlint rule `typescript/await-thenable` · error by default
+`await-thenable` · Lint rule, built on `typescript/await-thenable` · error by default
 
 Awaiting a non-promise is either a mistake or hides that the callee is synchronous. Only await values that are actually thenable.
 

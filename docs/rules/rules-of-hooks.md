@@ -2,7 +2,7 @@
 
 # Follow the Rules of Hooks
 
-`rules-of-hooks` · Oxlint rule `react/rules-of-hooks` · error by default
+`rules-of-hooks` · Lint rule, built on `react/rules-of-hooks` · error by default
 
 Hooks must run in the same order on every render. Conditional or nested hook calls create state that cannot be understood or reproduced reliably.
 

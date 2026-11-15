@@ -2,7 +2,7 @@
 
 # Prefer arrow functions
 
-`prefer-arrow-functions` · Oxlint rule `eslint/func-style` · error by default, with options `["expression"]`
+`prefer-arrow-functions` · Lint rule, built on `eslint/func-style` · error by default, with options `["expression"]`
 
 Use arrow functions for named operations, React components, callbacks, and closures. Use other function forms only where the language or an API requires them.
 

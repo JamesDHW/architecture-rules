@@ -2,7 +2,7 @@
 
 # Use collection operations' neutral empty behavior
 
-`neutral-collection-results` · Oxlint rule `unicorn/no-useless-length-check` · error by default
+`neutral-collection-results` · Lint rule, built on `unicorn/no-useless-length-check` · error by default
 
 Do not branch on emptiness merely to reproduce an operation's empty result.
 

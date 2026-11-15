@@ -2,7 +2,7 @@
 
 # Prefer switch over repeated equality ifs
 
-`prefer-switch` · Custom lint rule `architecture/prefer-switch` · error by default
+`prefer-switch` · Lint rule · error by default
 
 Use a switch for adjacent terminal decisions comparing the same value with strict equality. Each branch must directly return or throw, optionally after other statements. Independent effectful if statements are not alternatives: combining them can change execution count or the value tested later.
 

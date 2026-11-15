@@ -2,7 +2,7 @@
 
 # Handle discriminated unions exhaustively
 
-`switch-exhaustiveness` · Oxlint rule `typescript/switch-exhaustiveness-check` · error by default, with options `[{"considerDefaultExhaustiveForUnions":false,"allowDefaultCaseForExhaustiveSwitch":true}]`
+`switch-exhaustiveness` · Lint rule, built on `typescript/switch-exhaustiveness-check` · error by default, with options `[{"considerDefaultExhaustiveForUnions":false,"allowDefaultCaseForExhaustiveSwitch":true}]`
 
 Complete dispatches over a discriminated union must prove at compile time that all variants are handled. A targeted narrowing if that intentionally handles only one variant remains allowed; it is not a complete dispatch.
 

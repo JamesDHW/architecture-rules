@@ -2,7 +2,7 @@
 
 # Remove unreachable statements after terminal exits
 
-`no-unreachable-statements` · Oxlint rule `eslint/no-unreachable` · error by default
+`no-unreachable-statements` · Lint rule, built on `eslint/no-unreachable` · error by default
 
 ```
 Good: publishProject(); return; Bad: return; publishProject(); Unreachable work misrepresents the operation and often exposes an incorrectly placed exit.

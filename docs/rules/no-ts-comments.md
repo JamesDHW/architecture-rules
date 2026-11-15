@@ -2,7 +2,7 @@
 
 # Do not use @ts-ignore or @ts-expect-error
 
-`no-ts-comments` · Oxlint rule `typescript/ban-ts-comment` · error by default, with options `[{"ts-expect-error":true,"ts-ignore":true,"ts-nocheck":true}]`
+`no-ts-comments` · Lint rule, built on `typescript/ban-ts-comment` · error by default, with options `[{"ts-expect-error":true,"ts-ignore":true,"ts-nocheck":true}]`
 
 Do not use any, non-null assertions, unchecked type assertions, @ts-ignore, or @ts-expect-error in application code. Accept untrusted values as unknown and validate or narrow them. If unsafe interoperability is unavoidable, isolate it in a descriptively named boundary adapter and document the reason.
 

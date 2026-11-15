@@ -2,7 +2,7 @@
 
 # Do not cast into a boolean
 
-`no-boolean-cast` · Oxlint rule `eslint/no-implicit-coercion` · error by default, with options `[{"boolean":true,"number":false,"string":false}]`
+`no-boolean-cast` · Lint rule, built on `eslint/no-implicit-coercion` · error by default, with options `[{"boolean":true,"number":false,"string":false}]`
 
 Casting to boolean, implicitly or explicitly, hides the intended condition. Truthiness is not consistent across languages and runtimes, which leads to unwanted results.
 

@@ -9,25 +9,26 @@ import { ArchitectureError } from "../errors/architectureError.js";
 import { afterCleanup } from "../errors/results.js";
 import { tryCatch, tryCatchAsync } from "../errors/tryCatch.js";
 import { namingError } from "../rules/namingPolicy.js";
+import { checkResult, type CheckResult, type CheckScope } from "./checkResult.js";
 import { compilerFindings } from "./compilerDiagnostics.js";
 import { explainFile } from "./explain.js";
-import { isError, structuralFinding, type Finding } from "./findings.js";
-import { renderReport } from "./markdownReport.js";
+import { sortFindings, structuralFinding, type Finding } from "./findings.js";
 import { lint } from "./oxlint.js";
-import { guidanceFor } from "./ruleGuidance.js";
-import { printJson, printText } from "./textOutput.js";
+import { printOutput, type OutputFormat } from "./output.js";
 
-export type CheckOptions = {
+export type { CheckResult } from "./checkResult.js";
+
+export type InspectOptions = {
   readonly fix?: boolean;
-  readonly explain?: string;
-  readonly format?: "json" | "report";
-  /** Absolute paths: lint and report only these files. */
+  /** Absolute paths: lint and report only these files. The whole project is still analyzed. */
   readonly files?: readonly string[];
 };
 
+export type CheckOptions = InspectOptions & { readonly explain?: string; readonly format?: OutputFormat };
+
 const isGenerated = (file: ClassifiedFile): boolean => file.policy.generated !== undefined;
 
-/** Generated files keep their naming and import contracts; those are reported here instead of through Oxlint. */
+/** Generated files keep their naming and import contracts; those are reported here instead of through lint. */
 const generatedFileIssues = (generated: readonly ClassifiedFile[], imports: readonly ImportIssue[]): readonly Issue[] => {
   const generatedPaths = new Set(generated.map((file) => file.relative));
   const namingIssues = generated.flatMap((file) => {
@@ -46,57 +47,78 @@ const selectFiles = (files: readonly ClassifiedFile[], selection: readonly strin
   return files.filter((file) => selection.includes(file.path));
 };
 
-type Collected = { readonly findings: readonly Finding[]; readonly files: readonly ClassifiedFile[] };
-
-const collectFindings = async (root: string, architecture: Architecture, opened: Projects, files: readonly ClassifiedFile[], options: CheckOptions): Promise<Collected | ArchitectureError> => {
-  const selected = selectFiles(files, options.files);
-  if (selected instanceof ArchitectureError) return selected;
-  const linted = selected.filter((file) => !isGenerated(file));
+const inScope = (selected: readonly ClassifiedFile[], options: InspectOptions) => {
   const selectedPaths = new Set(selected.map((file) => file.relative));
+  return (finding: Finding): boolean => options.files === undefined || selectedPaths.has(finding.file);
+};
+
+const collectFindings = async (
+  root: string, opened: Projects, files: readonly ClassifiedFile[], selected: readonly ClassifiedFile[], options: InspectOptions,
+): Promise<readonly Finding[] | ArchitectureError> => {
+  const linted = selected.filter((file) => !isGenerated(file));
   const imports = checkImports(root, files, opened.projects);
   const generatedIssues = generatedFileIssues(selected.filter(isGenerated), imports);
   const lintFindings = await lint(root, linted, imports, opened.projects, options.fix === true);
   if (lintFindings instanceof ArchitectureError) return lintFindings;
-  const compilerErrors = compilerFindings(root, opened.projects).filter((finding) => options.files === undefined || selectedPaths.has(finding.file));
-  return { findings: [...generatedIssues.map(structuralFinding), ...lintFindings, ...compilerErrors], files: selected };
+  const compilerErrors = compilerFindings(root, opened.projects).filter(inScope(selected, options));
+  return [...generatedIssues.map(structuralFinding), ...lintFindings, ...compilerErrors];
 };
 
-const output = (root: string, architecture: Architecture, opened: Projects, collected: Collected, options: CheckOptions): number => {
-  const { findings, files } = collected;
-  const format = options.format ?? "text";
-  switch (format) {
-    case "report":
-      process.stdout.write(renderReport({ architecture, files, findings, suppressions: listSuppressions(files, opened.projects) }));
-      return 0;
-    case "json":
-      printJson(findings, guidanceFor(root, findings));
-      return findings.some(isError) ? 1 : 0;
-    case "text":
-      printText(findings, guidanceFor(root, findings));
-      return findings.some(isError) ? 1 : 0;
-  }
-};
-
-const runChecks = async (root: string, architecture: Architecture, opened: Projects, options: CheckOptions): Promise<number | ArchitectureError> => {
+const inspectOpened = async (
+  root: string, architecture: Architecture, opened: Projects, options: InspectOptions, started: number,
+): Promise<CheckResult | ArchitectureError> => {
   const tree = inventory(root, architecture, opened.sources);
+  const selected = selectFiles(tree.files, options.files);
+  if (selected instanceof ArchitectureError) return selected;
   // Generated output is never linted, so its suppression comments (often a file-wide disable) are not checked either.
   const linted = tree.files.filter((file) => !isGenerated(file));
   const structural = [...opened.issues, ...tree.issues, ...checkSuppressions(linted, opened.projects)];
-  if (options.explain !== undefined) return explainFile(root, architecture, opened, tree, structural, options.explain);
-  if (structural.length > 0) return output(root, architecture, opened, { findings: structural.map(structuralFinding), files: tree.files }, options);
-  const collected = await collectFindings(root, architecture, opened, tree.files, options);
-  if (collected instanceof ArchitectureError) return collected;
-  // Fixes can change imports as well as expressions. Revalidate the entire contract.
-  if (options.fix === true) return checkArchitecture(root, architecture, { ...options, fix: false });
-  return output(root, architecture, opened, collected, options);
+  const scope: CheckScope = { architecture, projects: opened.projects.length, files: selected, started };
+  const suppressions = listSuppressions(selected, opened.projects);
+  if (structural.length > 0) return checkResult(scope, sortFindings(structural.map(structuralFinding)), suppressions, false);
+  const findings = await collectFindings(root, opened, tree.files, selected, options);
+  if (findings instanceof ArchitectureError) return findings;
+  return checkResult(scope, sortFindings(findings), suppressions, true);
 };
 
-/** Checks the architecture rooted at root: structure first, then lint, then compiler diagnostics. */
-export const checkArchitecture = async (rootPath: string, architecture: Architecture, options: CheckOptions = {}): Promise<number | ArchitectureError> => {
-  const root = realpathSync(rootPath);
+const withProjects = async <Result>(
+  root: string, architecture: Architecture, use: (opened: Projects) => Promise<Result | ArchitectureError>,
+): Promise<Result | ArchitectureError> => {
   const opened = openProjects(root, architecture);
   if (opened instanceof ArchitectureError) return opened;
-  const outcome = await tryCatchAsync(async () => runChecks(root, architecture, opened, options));
+  const outcome = await tryCatchAsync(async () => use(opened));
   const closed = tryCatch(opened.close);
   return afterCleanup(outcome, closed);
+};
+
+/**
+ * Checks the architecture rooted at rootPath and returns every finding without printing anything:
+ * structure first, then lint, then compiler diagnostics. The CLI and the language server both render this.
+ */
+export const inspectArchitecture = async (rootPath: string, architecture: Architecture, options: InspectOptions = {}): Promise<CheckResult | ArchitectureError> => {
+  const started = performance.now();
+  const root = realpathSync(rootPath);
+  const result = await withProjects(root, architecture, async (opened) => inspectOpened(root, architecture, opened, options, started));
+  const isFinal = options.fix !== true || result instanceof ArchitectureError;
+  if (isFinal) return result;
+  // Fixes can change imports as well as expressions. Revalidate the entire contract.
+  return inspectArchitecture(rootPath, architecture, { ...options, fix: false });
+};
+
+const explain = async (root: string, architecture: Architecture, file: string): Promise<number | ArchitectureError> => {
+  return withProjects(root, architecture, async (opened) => {
+    const tree = inventory(root, architecture, opened.sources);
+    const linted = tree.files.filter((candidate) => !isGenerated(candidate));
+    const structural = [...opened.issues, ...tree.issues, ...checkSuppressions(linted, opened.projects)];
+    return explainFile(root, architecture, opened, tree, structural, file);
+  });
+};
+
+/** Checks the architecture and prints the result; resolves to the process exit code. */
+export const checkArchitecture = async (rootPath: string, architecture: Architecture, options: CheckOptions = {}): Promise<number | ArchitectureError> => {
+  const root = realpathSync(rootPath);
+  if (options.explain !== undefined) return explain(root, architecture, options.explain);
+  const result = await inspectArchitecture(root, architecture, options);
+  if (result instanceof ArchitectureError) return result;
+  return printOutput(root, result, options.format ?? "text");
 };

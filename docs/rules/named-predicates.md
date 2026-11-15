@@ -2,7 +2,7 @@
 
 # Name your predicates
 
-`named-predicates` · Custom lint rule `architecture/named-predicates` · error by default
+`named-predicates` · Lint rule · error by default
 
 Name compound conditions in if statements, loop tests, ternary tests, and JSX rendering conditions. Assigned and returned boolean expressions may implement predicates directly. A standalone predicate call needs no additional wrapper.
 

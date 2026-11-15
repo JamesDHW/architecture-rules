@@ -80,7 +80,7 @@ describe("packaged CLI", () => {
     writeFiles(root, { "src/unclassified.ts": "export {};" });
     const result = run(["--fix"], root);
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("file-classification");
+    expect(result.stdout).toContain("file-classification");
     expect(hasRunDirectory(root)).toBe(false);
   });
   it("ignores unrelated files and supports an mts architecture definition", () => {
@@ -96,7 +96,7 @@ describe("packaged CLI", () => {
     const root = rootFixture("/* oxlint-disable */\nexport const value = 1;");
     const result = run([], root);
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("reasoned-suppressions");
+    expect(result.stdout).toContain("reasoned-suppressions");
   });
   it("does not check suppressions in generated files", () => {
     const root = generatedFixture("/* eslint-disable */\n// @ts-nocheck\nexport const routes = [] as any;");
@@ -119,8 +119,8 @@ describe("packaged CLI", () => {
     expect(clean.status, clean.stdout + clean.stderr).toBe(0);
     const importing = run([], generatedFixture("export { value } from './data.gen.js';"));
     expect(importing.status).toBe(1);
-    expect(importing.stderr).toContain("allowed-imports");
-    expect(importing.stderr).toContain("routes may not import data");
+    expect(importing.stdout).toContain("allowed-imports");
+    expect(importing.stdout).toContain("routes may not import data");
   });
   it("passes exact absolute selectors to native Oxlint, including glob metacharacters", () => {
     const root = temporaryRoot("architecture[glob]-");

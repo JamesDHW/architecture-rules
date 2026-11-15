@@ -2,7 +2,7 @@
 
 # Use statements for conditional effects
 
-`explicit-conditional-effects` · Oxlint rule `eslint/no-unused-expressions` · error by default, with options `[{"allowShortCircuit":false,"allowTernary":false,"allowTaggedTemplates":true,"enforceForJSX":true,"ignoreDirectives":true}]`
+`explicit-conditional-effects` · Lint rule, built on `eslint/no-unused-expressions` · error by default, with options `[{"allowShortCircuit":false,"allowTernary":false,"allowTaggedTemplates":true,"enforceForJSX":true,"ignoreDirectives":true}]`
 
 Use if statements for conditional effects, not discarded logical or ternary expressions. Reserve && and || for boolean computation and approved JSX presence rendering; reserve ?? for missing-value defaults.
 

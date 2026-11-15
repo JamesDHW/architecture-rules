@@ -2,7 +2,7 @@
 
 # Do not rename values through aliases
 
-`no-binding-alias` · Custom lint rule `architecture/no-binding-alias` · error by default
+`no-binding-alias` · Lint rule · error by default
 
 Do not declare a const solely to give an existing binding another name, and do not rename imports with as. Use the original name, or create a genuinely new value through a named transformation. Renaming while destructuring an object property remains allowed.
 

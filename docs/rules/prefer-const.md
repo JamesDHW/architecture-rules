@@ -2,7 +2,7 @@
 
 # Keep values immutable
 
-`prefer-const` · Oxlint rule `eslint/prefer-const` · error by default
+`prefer-const` · Lint rule, built on `eslint/prefer-const` · error by default
 
 Do not reassign bindings. Callers can understand an immutable transformation without tracking changes over time.
 

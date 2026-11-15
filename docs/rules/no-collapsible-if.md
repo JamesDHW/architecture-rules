@@ -2,7 +2,7 @@
 
 # Do not nest a sole if inside another if
 
-`no-collapsible-if` · Custom lint rule `architecture/no-collapsible-if` · error by default
+`no-collapsible-if` · Lint rule · error by default
 
 Do not hide simple && or || operations in nested if blocks unless those ifs share a prefix that would otherwise be duplicated.
 

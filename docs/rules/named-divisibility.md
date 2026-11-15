@@ -2,7 +2,7 @@
 
 # Name divisibility checks
 
-`named-divisibility` · Custom lint rule `architecture/named-divisibility` · error by default
+`named-divisibility` · Lint rule · error by default
 
 Do not test or return an inline remainder comparison such as value % n === 0. Give that check a name, typically isDivisibleBy(value, n).
 

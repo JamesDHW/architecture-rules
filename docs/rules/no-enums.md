@@ -2,7 +2,7 @@
 
 # Use literal unions instead of enums
 
-`no-enums` · Custom lint rule `architecture/no-enums` · error by default
+`no-enums` · Lint rule · error by default
 
 Do not declare TypeScript enums. Represent a closed set with a literal union. Add an as const object only when runtime access to named values is genuinely useful.
 

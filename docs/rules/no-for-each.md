@@ -2,7 +2,7 @@
 
 # Do not use forEach
 
-`no-for-each` · Oxlint rule `unicorn/no-array-for-each` · error by default
+`no-for-each` · Lint rule, built on `unicorn/no-array-for-each` · error by default
 
 Use map, filter, or another dedicated transformation for direct value transformations. Use for...of when intentionally sequencing effects. Do not use forEach, including with asynchronous callbacks.
 

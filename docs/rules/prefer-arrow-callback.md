@@ -2,7 +2,7 @@
 
 # Prefer arrow functions for callbacks
 
-`prefer-arrow-callback` · Oxlint rule `eslint/prefer-arrow-callback` · error by default
+`prefer-arrow-callback` · Lint rule, built on `eslint/prefer-arrow-callback` · error by default
 
 Use arrow functions for callbacks and closures. One default function syntax reduces incidental variation, while arrow functions also make lexical this behavior consistent and explicit.
 

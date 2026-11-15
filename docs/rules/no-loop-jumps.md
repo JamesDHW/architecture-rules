@@ -2,7 +2,7 @@
 
 # Replace loop jumps with selection or focused operations
 
-`no-loop-jumps` · Custom lint rule `architecture/no-loop-jumps` · error by default
+`no-loop-jumps` · Lint rule · error by default
 
 Do not use break, continue, or labelled statements by default. Use find/some for searches, filter stable collections before effectful iteration, or extract a focused helper that returns its result. Switch cases also return rather than break. Document a scoped exception when an alternative is genuinely worse.
 

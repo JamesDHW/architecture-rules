@@ -2,7 +2,7 @@
 
 # Declare components and hooks at module scope
 
-`module-scope-components` · Oxlint rule `react/no-unstable-nested-components` · error by default
+`module-scope-components` · Lint rule, built on `react/no-unstable-nested-components` · error by default
 
 Do not define a React component or hook inside another function. Declare it at module scope and pass every required value through explicit props or hook inputs.
 

@@ -2,7 +2,7 @@
 
 # Use reduce only for simple folds
 
-`reduce-simple-folds` · Oxlint rule `unicorn/no-array-reduce` · error by default, with options `[{"allowSimpleOperations":true}]`
+`reduce-simple-folds` · Lint rule, built on `unicorn/no-array-reduce` · error by default, with options `[{"allowSimpleOperations":true}]`
 
 Use reduce only when the result is genuinely a single simple fold, such as a sum, minimum, or maximum. Use dedicated operations such as map, filter, or a descriptively named helper for transformation, selection, grouping, indexing, and multi-purpose accumulation.
 

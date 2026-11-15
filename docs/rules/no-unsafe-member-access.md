@@ -2,7 +2,7 @@
 
 # Do not access members of unsafe types
 
-`no-unsafe-member-access` · Oxlint rule `typescript/no-unsafe-member-access` · error by default
+`no-unsafe-member-access` · Lint rule, built on `typescript/no-unsafe-member-access` · error by default
 
 Do not use any, non-null assertions, unchecked type assertions, @ts-ignore, or @ts-expect-error in application code. Accept untrusted values as unknown and validate or narrow them. If unsafe interoperability is unavoidable, isolate it in a descriptively named boundary adapter and document the reason.
 

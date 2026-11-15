@@ -2,7 +2,7 @@
 
 # Remove empty conditional branches
 
-`no-empty-branches` · Custom lint rule `architecture/no-empty-branches` · error by default
+`no-empty-branches` · Lint rule · error by default
 
 Do not leave empty or comment-only conditional branches. Remove the meaningless decision or express an exhaustive no-op with a terminal return. Framework-required empty function stubs are outside this rule. Stacked switch labels remain allowed because they select the following terminal body.
 

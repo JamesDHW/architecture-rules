@@ -2,7 +2,7 @@
 
 # Sequence normalized operations and cleanup without finally
 
-`no-finally` · Custom lint rule `architecture/no-finally` · error by default
+`no-finally` · Lint rule · error by default
 
 Do not use finally, including in the error adapter. Sequence the operation and its cleanup explicitly through the adapter:
 

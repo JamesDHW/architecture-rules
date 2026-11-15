@@ -2,7 +2,7 @@
 
 # Warn on deeply ascending relative imports
 
-`no-deep-relative-imports` · Custom lint rule `architecture/no-deep-relative-imports` · warn by default
+`no-deep-relative-imports` · Lint rule · warn by default
 
 Warn when an import ascends three or more parent directories. Use the owning module's alias when crossing to a top-level area rather than navigating the repository with ../../../ paths.
 

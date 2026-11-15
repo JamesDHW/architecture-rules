@@ -2,7 +2,7 @@
 
 # Forbid circular dependencies
 
-`no-cycle` · Oxlint rule `import/no-cycle` · error by default
+`no-cycle` · Lint rule, built on `import/no-cycle` · error by default
 
 Keep file and package dependency graphs acyclic. If two modules depend on each other, extract the shared concept or reverse an effectful dependency through an injected capability rather than retaining the cycle.
 

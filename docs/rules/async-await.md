@@ -2,7 +2,7 @@
 
 # Use async/await for sequential asynchronous flow
 
-`async-await` · Oxlint rule `promise/prefer-await-to-then` · error by default, with options `[{"strict":true}]`
+`async-await` · Lint rule, built on `promise/prefer-await-to-then` · error by default, with options `[{"strict":true}]`
 
 Express sequential asynchronous work with async/await, not .then, .catch, or .finally. Ban those methods even after an await or yield. Use explicit Promise combinators such as Promise.all when intentional concurrency is the operation being expressed.
 

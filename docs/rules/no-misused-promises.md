@@ -2,7 +2,7 @@
 
 # Do not misuse promises in conditionals or listeners
 
-`no-misused-promises` · Oxlint rule `typescript/no-misused-promises` · error by default, with options `[{"checksVoidReturn":{"attributes":false}}]`
+`no-misused-promises` · Lint rule, built on `typescript/no-misused-promises` · error by default, with options `[{"checksVoidReturn":{"attributes":false}}]`
 
 Promises used as booleans or passed where a callback must finish synchronously are a common source of unhandled asynchronous failures. Treat a promise as asynchronous work, not as a value. JSX props are the exception: React ignores a handler's return value, so an async handler may be passed directly, as in the named-handler example.
 

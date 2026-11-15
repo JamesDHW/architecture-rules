@@ -2,7 +2,7 @@
 
 # Combine adjacent guards with the same terminal outcome
 
-`one-path-one-result` · Custom lint rule `architecture/one-path-one-result` · warn by default
+`one-path-one-result` · Lint rule · warn by default
 
 Combine adjacent terminal if guards with identical return expressions into a named predicate when they represent the same outcome. Preserve short-circuit predicate order. Only guards whose complete body is a single return qualify.
 

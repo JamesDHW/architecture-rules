@@ -2,7 +2,7 @@
 
 # Do not keep a result for later through a detour
 
-`no-useless-assignment` · Oxlint rule `eslint/no-useless-assignment` · error by default
+`no-useless-assignment` · Lint rule, built on `eslint/no-useless-assignment` · error by default
 
 Do not use an intermediary variable to keep a result for later when the value can be used now. Assignments that are overwritten before they are read make the flow rely on state that a later change can corrupt.
 

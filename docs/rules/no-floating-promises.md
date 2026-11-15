@@ -2,7 +2,7 @@
 
 # Do not ignore promises
 
-`no-floating-promises` · Oxlint rule `typescript/no-floating-promises` · error by default
+`no-floating-promises` · Lint rule, built on `typescript/no-floating-promises` · error by default
 
 Floating promises hide failures and make asynchronous control flow harder to follow. Await, return, or explicitly void a promise at the point it is created.
 

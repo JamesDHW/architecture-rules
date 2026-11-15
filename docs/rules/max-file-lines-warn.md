@@ -2,7 +2,7 @@
 
 # Warn when a source file exceeds 150 lines
 
-`max-file-lines-warn` · Custom lint rule `architecture/max-file-lines-warn` · warn by default, with options `[{"max":150,"skipBlankLines":true,"skipComments":true}]`
+`max-file-lines-warn` · Lint rule · warn by default, with options `[{"max":150,"skipBlankLines":true,"skipComments":true}]`
 
 Warn when a source file exceeds 150 lines and report an error when it exceeds 200 lines. Split the file by cohesive responsibility rather than moving arbitrary ranges of code.
 

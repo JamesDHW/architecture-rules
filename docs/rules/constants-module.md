@@ -2,7 +2,7 @@
 
 # Put semantic constants in a constants module
 
-`constants-module` · Custom lint rule `architecture/constants-module` · error by default
+`constants-module` · Lint rule · error by default
 
 Declare SCREAMING_SNAKE_CASE semantic constants in a file ending with .constants.ts, including constants used by only one consumer.
 

@@ -2,7 +2,7 @@
 
 # Declare every binding with const
 
-`no-let` · Custom lint rule `architecture/no-let` · error by default
+`no-let` · Lint rule · error by default
 
 Do not declare variables with let. Declare every binding with const and compute a new value instead of reassigning an old one.
 

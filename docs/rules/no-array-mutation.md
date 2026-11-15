@@ -2,7 +2,7 @@
 
 # Build new arrays instead of changing them in place
 
-`no-array-mutation` · Custom lint rule `architecture/no-array-mutation` · error by default
+`no-array-mutation` · Lint rule · error by default
 
 Do not change arrays in place with push, pop, shift, unshift, splice, sort, reverse, fill or copyWithin. Build the value you need instead: map, filter and flatMap for transformations, Object.fromEntries for lookups, Array.fromAsync for one-at-a-time asynchronous work, toSorted, toReversed and toSpliced for reordering, and an iterator (values()) to consume items one by one.
 

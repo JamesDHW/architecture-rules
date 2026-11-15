@@ -2,7 +2,7 @@
 
 # Pass JSX props explicitly
 
-`explicit-jsx-props` · Oxlint rule `react/jsx-props-no-spreading` · error by default, with options `[{"html":"ignore","custom":"enforce"}]`
+`explicit-jsx-props` · Lint rule, built on `react/jsx-props-no-spreading` · error by default, with options `[{"html":"ignore","custom":"enforce"}]`
 
 List application-component props explicitly at the call site rather than spreading an object. Prop spreading is allowed only inside a low-level pass-through primitive whose explicit purpose is forwarding native attributes.
 

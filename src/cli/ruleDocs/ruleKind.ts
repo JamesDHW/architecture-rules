@@ -7,9 +7,9 @@ export const enforcementLabel = (rule: ArchitectureRule): string => {
   const { enforcement } = rule;
   switch (enforcement.type) {
     case "custom-oxlint":
-      return `Custom lint rule ${inlineCode(lintRuleName(rule) ?? rule.id)}`;
+      return "Lint rule";
     case "oxlint":
-      return `Oxlint rule ${inlineCode(lintRuleName(rule) ?? enforcement.rule)}`;
+      return `Lint rule, built on ${inlineCode(lintRuleName(rule) ?? enforcement.rule)}`;
     case "typescript":
       return `TypeScript compiler options ${inlineCode(JSON.stringify(enforcement.compilerOptions))}`;
     case "architecture":

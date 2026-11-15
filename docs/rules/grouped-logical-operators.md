@@ -2,7 +2,7 @@
 
 # Expose mixed logical operator precedence
 
-`grouped-logical-operators` · Custom lint rule `architecture/grouped-logical-operators` · error by default
+`grouped-logical-operators` · Lint rule · error by default
 
 Parenthesize mixed && and || operations to make their grouping explicit.
 

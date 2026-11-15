@@ -2,7 +2,7 @@
 
 # Do not use a ternary as a boolean detour
 
-`no-unneeded-ternary` · Oxlint rule `eslint/no-unneeded-ternary` · error by default
+`no-unneeded-ternary` · Lint rule, built on `eslint/no-unneeded-ternary` · error by default
 
 Do not use an intermediary expression to keep a boolean for later. A ternary that only produces true or false from a condition is a detour.
 

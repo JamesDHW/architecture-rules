@@ -2,7 +2,7 @@
 
 # Do not use else
 
-`no-else` · Custom lint rule `architecture/no-else` · error by default
+`no-else` · Lint rule · error by default
 
 Do not use else or else if. Handle the special case with an early return, throw, break, or continue, then write the remaining path at the same level.
 

@@ -1,15 +1,8 @@
 import type { ClassifiedFile } from "../analysis/inventory.js";
-import type { Suppression } from "../analysis/suppressions.js";
 import type { Architecture, EffectiveRule } from "../config/types.js";
 import { rules } from "../rules/index.js";
+import type { CheckResult } from "./checkResult.js";
 import type { Finding } from "./findings.js";
-
-export type ReportInput = {
-  readonly architecture: Architecture;
-  readonly files: readonly ClassifiedFile[];
-  readonly findings: readonly Finding[];
-  readonly suppressions: readonly Suppression[];
-};
 
 const cell = (text: string): string => text.replaceAll("|", "\\|").replaceAll("\n", " ");
 
@@ -57,7 +50,7 @@ const advisoryLines = (): readonly string[] => {
 };
 
 /** A Markdown report of the check: findings by rule, every suppression, configuration overrides and layers. */
-export const renderReport = ({ architecture, files, findings, suppressions }: ReportInput): string => {
+export const renderReport = ({ architecture, files, findings, suppressions }: CheckResult): string => {
   const errorCount = findings.filter((finding) => finding.severity === "error").length;
   const summary = `${files.length} source files in ${Object.keys(architecture.layers).length} layers. `
     + `${errorCount} errors, ${findings.length - errorCount} warnings, ${suppressions.length} suppressions.`;

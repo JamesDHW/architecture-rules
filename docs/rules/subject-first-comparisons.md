@@ -2,7 +2,7 @@
 
 # Put the comparison subject before the literal
 
-`subject-first-comparisons` · Oxlint rule `eslint/yoda` · error by default, with options `["never",{"exceptRange":true}]`
+`subject-first-comparisons` · Lint rule, built on `eslint/yoda` · error by default, with options `["never",{"exceptRange":true}]`
 
 ```
 Good: project.status === "archived"

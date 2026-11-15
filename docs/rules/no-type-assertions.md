@@ -2,7 +2,7 @@
 
 # Do not use unchecked type assertions
 
-`no-type-assertions` · Custom lint rule `architecture/no-type-assertions` · error by default
+`no-type-assertions` · Lint rule · error by default
 
 Do not use unchecked type assertions in application code. Type-preserving constructs such as as const and satisfies remain allowed.
 

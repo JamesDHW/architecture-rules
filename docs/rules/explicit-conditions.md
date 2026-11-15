@@ -2,7 +2,7 @@
 
 # Use explicit conditions for non-boolean values
 
-`explicit-conditions` · Oxlint rule `typescript/strict-boolean-expressions` · error by default, with options `[{"allowString":false,"allowNumber":false,"allowNullableObject":false}]`
+`explicit-conditions` · Lint rule, built on `typescript/strict-boolean-expressions` · error by default, with options `[{"allowString":false,"allowNumber":false,"allowNullableObject":false}]`
 
 Only boolean-typed expressions may be tested directly.
 

@@ -2,7 +2,7 @@
 
 # Declare exhaustive effect dependencies
 
-`exhaustive-deps` · Oxlint rule `react/exhaustive-deps` · error by default
+`exhaustive-deps` · Lint rule, built on `react/exhaustive-deps` · error by default
 
 Effect and memoization dependency lists that omit reactive values hide stale closures and missed updates. List every value the callback closes over.
 

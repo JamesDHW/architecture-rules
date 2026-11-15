@@ -2,7 +2,7 @@
 
 # Use strict booleans directly
 
-`direct-boolean-conditions` · Oxlint rule `typescript/no-unnecessary-boolean-literal-compare` · error by default, with options `[{"allowComparingNullableBooleansToTrue":true,"allowComparingNullableBooleansToFalse":true}]`
+`direct-boolean-conditions` · Lint rule, built on `typescript/no-unnecessary-boolean-literal-compare` · error by default, with options `[{"allowComparingNullableBooleansToTrue":true,"allowComparingNullableBooleansToFalse":true}]`
 
 ```
 Good: if (project.isArchived) { showArchiveNotice(project); }

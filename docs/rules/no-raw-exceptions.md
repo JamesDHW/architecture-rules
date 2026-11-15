@@ -2,7 +2,7 @@
 
 # Confine raw exceptions to explicit adapters
 
-`no-raw-exceptions` · Custom lint rule `architecture/no-raw-exceptions` · error by default
+`no-raw-exceptions` · Lint rule · error by default
 
 Return errors as values instead of throwing or catching exceptions. Keep the project's error adapter, such as a tryCatch helper and its error types, in a layer of its own and turn this rule off there with a reason. Everywhere else, wrap a throwing or rejecting external operation with that adapter immediately and branch on the returned error.
 

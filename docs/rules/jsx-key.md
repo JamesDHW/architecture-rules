@@ -2,7 +2,7 @@
 
 # Use stable list keys
 
-`jsx-key` · Oxlint rule `react/jsx-key` · error by default
+`jsx-key` · Lint rule, built on `react/jsx-key` · error by default
 
 List items need a stable key so React can reconcile identity across renders. Missing or index keys cause subtle state bugs when the list changes.
 

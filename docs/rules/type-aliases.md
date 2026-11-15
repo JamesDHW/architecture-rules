@@ -2,7 +2,7 @@
 
 # Use type aliases for object shapes
 
-`type-aliases` · Oxlint rule `typescript/consistent-type-definitions` · error by default, with options `["type"]`
+`type-aliases` · Lint rule, built on `typescript/consistent-type-definitions` · error by default, with options `["type"]`
 
 Use type aliases for object shapes as well as unions, functions, and composed types. Use an interface only at a boundary where a third-party API requires declaration or module augmentation.
 

@@ -2,7 +2,7 @@
 
 # Pass booleans directly instead of branching
 
-`no-boolean-if-else` · Custom lint rule `architecture/no-boolean-if-else` · error by default
+`no-boolean-if-else` · Lint rule · error by default
 
 Do not use intermediary branches to pass true and false into the same call. Pass the boolean expression directly.
 

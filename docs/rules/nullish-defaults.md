@@ -2,7 +2,7 @@
 
 # Use nullish coalescing for missing-value defaults
 
-`nullish-defaults` · Oxlint rule `typescript/prefer-nullish-coalescing` · error by default
+`nullish-defaults` · Lint rule, built on `typescript/prefer-nullish-coalescing` · error by default
 
 Use ?? when supplying a fallback for missing data. Do not use || for value defaulting; reserve it for boolean logic.
 

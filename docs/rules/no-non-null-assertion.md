@@ -2,7 +2,7 @@
 
 # Do not use non-null assertions
 
-`no-non-null-assertion` · Oxlint rule `typescript/no-non-null-assertion` · error by default
+`no-non-null-assertion` · Lint rule, built on `typescript/no-non-null-assertion` · error by default
 
 Do not use any, non-null assertions, unchecked type assertions, @ts-ignore, or @ts-expect-error in application code. Accept untrusted values as unknown and validate or narrow them. If unsafe interoperability is unavoidable, isolate it in a descriptively named boundary adapter and document the reason.
 

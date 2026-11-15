@@ -2,7 +2,7 @@
 
 # Reveal logic operators
 
-`prefer-logical-over-ternary` · Oxlint rule `unicorn/prefer-logical-operator-over-ternary` · error by default
+`prefer-logical-over-ternary` · Lint rule, built on `unicorn/prefer-logical-operator-over-ternary` · error by default
 
 Do not hide simple || or && operations inside a ternary that repeats one of its branches. Prefer the logical operator so the combination is visible.
 

@@ -2,7 +2,7 @@
 
 # Respect architectural import permissions
 
-`allowed-imports` · Custom lint rule `architecture/allowed-imports` · error by default
+`allowed-imports` · Lint rule · error by default
 
 Import only what the importing file's layer lists in its dependencies. Internal edges are checked against the resolved target's layer, packages and node: built-ins against the external specifier patterns, and assets against explicit paths. Omission grants no permission. Re-exports and type-only imports are dependencies too. Nonliteral module loading requires a reasoned exception. Dynamic runtime loaders/eval and transitive function purity are not proved by this check. The architecture runner supplies resolved edge diagnostics; direct plugin use alone does not enforce this policy.
 

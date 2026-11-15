@@ -2,7 +2,7 @@
 
 # Do not mutate inputs
 
-`no-param-reassign` · Oxlint rule `eslint/no-param-reassign` · error by default, with options `[{"props":true}]`
+`no-param-reassign` · Lint rule, built on `eslint/no-param-reassign` · error by default, with options `[{"props":true}]`
 
 Do not mutate inputs, shared state, or previously observable values. Local mutation may construct a fresh, unaliased result inside a focused helper when that is clearer than an immutable accumulator.
 

@@ -2,7 +2,7 @@
 
 # Do not use var
 
-`no-var` · Oxlint rule `eslint/no-var` · error by default
+`no-var` · Lint rule, built on `eslint/no-var` · error by default
 
 Do not reassign bindings or introduce function-scoped var. Immutable const bindings make data flow easier to follow.
 

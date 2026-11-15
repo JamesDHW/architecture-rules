@@ -2,7 +2,7 @@
 
 # Limit source files to 200 lines
 
-`max-file-lines` · Oxlint rule `eslint/max-lines` · error by default, with options `[{"max":200,"skipBlankLines":true,"skipComments":true}]`
+`max-file-lines` · Lint rule, built on `eslint/max-lines` · error by default, with options `[{"max":200,"skipBlankLines":true,"skipComments":true}]`
 
 Warn when a source file exceeds 150 lines and report an error when it exceeds 200 lines. Split the file by cohesive responsibility rather than moving arbitrary ranges of code.
 

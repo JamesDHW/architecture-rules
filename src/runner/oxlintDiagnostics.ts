@@ -29,8 +29,8 @@ const position = (labels: unknown): { readonly line?: number; readonly column?: 
   return { ...(typeof line === "number" ? { line } : {}), ...(typeof column === "number" ? { column } : {}) };
 };
 
-/** Oxlint reports unused disable directives without a rule code; reasoned-suppressions owns them. */
-const unusedDirective = /^Unused (?:oxlint|eslint)-disable directive/;
+/** The engine reports unused disable directives without a rule code; reasoned-suppressions owns them. */
+const unusedDirective = /^Unused \S+-disable directive/;
 
 const ruleIdFor = (code: string, message: string): string => {
   if (unusedDirective.test(message)) return "reasoned-suppressions";
@@ -42,23 +42,22 @@ const toFinding = (root: string, diagnostic: unknown): Finding | undefined => {
   const { message, code, severity, filename, labels } = diagnostic;
   const hasText = isString(message) && isString(filename);
   if (!hasText) return undefined;
-  const label = isString(code) ? code : "oxlint";
+  const label = isString(code) ? code : "lint";
   return {
     source: "lint",
     severity: severity === "warning" ? "warning" : "error",
     ruleId: ruleIdFor(label, message),
-    code: label,
     file: relativePath(root, resolve(root, filename)),
     ...position(labels),
     message,
   };
 };
 
-/** Findings from one Oxlint run printed with --format json. */
+/** Findings from one lint run printed with --format json, under architecture rule ids. */
 export const parseOxlintOutput = (root: string, output: string): readonly Finding[] | ArchitectureError => {
   const parsed = tryCatch((): unknown => JSON.parse(output));
-  if (parsed instanceof ArchitectureError) return new ArchitectureError([`Oxlint printed output that is not JSON: ${output.slice(0, 200)}`]);
+  if (parsed instanceof ArchitectureError) return new ArchitectureError([`The lint engine printed output that is not JSON: ${output.slice(0, 200)}`]);
   const diagnostics = isRecord(parsed) ? parsed["diagnostics"] : undefined;
-  if (!isUnknownArray(diagnostics)) return new ArchitectureError(["Oxlint's JSON output has no diagnostics list"]);
+  if (!isUnknownArray(diagnostics)) return new ArchitectureError(["The lint engine's JSON output has no diagnostics list"]);
   return diagnostics.flatMap((diagnostic) => toFinding(root, diagnostic) ?? []);
 };

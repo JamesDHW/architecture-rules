@@ -2,7 +2,7 @@
 
 # Do not call unsafe types
 
-`no-unsafe-call` · Oxlint rule `typescript/no-unsafe-call` · error by default
+`no-unsafe-call` · Lint rule, built on `typescript/no-unsafe-call` · error by default
 
 Do not use any, non-null assertions, unchecked type assertions, @ts-ignore, or @ts-expect-error in application code. Accept untrusted values as unknown and validate or narrow them. If unsafe interoperability is unavoidable, isolate it in a descriptively named boundary adapter and document the reason.
 

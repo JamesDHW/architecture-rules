@@ -2,7 +2,7 @@
 
 # Keep conditions free of explicit effects
 
-`pure-conditions` · Custom lint rule `architecture/pure-conditions` · error by default
+`pure-conditions` · Lint rule · error by default
 
 Conditions must compute a decision without performing effects. Reject explicit assignment, update, delete, await, yield, construction, and comma sequencing inside if/loop/ternary tests, switch discriminants/case tests, and short-circuit boolean expressions. Calls and getters are presumed pure by this syntax check, not proven pure. Do not hide an effect in a called predicate just to bypass the rule.
 

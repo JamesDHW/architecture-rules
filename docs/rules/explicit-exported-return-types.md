@@ -2,7 +2,7 @@
 
 # Type exported functions at their boundaries
 
-`explicit-exported-return-types` · Oxlint rule `typescript/explicit-module-boundary-types` · error by default, with options `[{"allowTypedFunctionExpressions":true}]`
+`explicit-exported-return-types` · Lint rule, built on `typescript/explicit-module-boundary-types` · error by default, with options `[{"allowTypedFunctionExpressions":true}]`
 
 Add an explicit return type to every exported non-component function. Allow TypeScript to infer return types for private helpers and inline callbacks.
 

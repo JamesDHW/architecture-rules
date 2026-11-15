@@ -2,7 +2,7 @@
 
 # Dispatch domain actions through their owning reducer
 
-`domain-owned-dispatch` · Custom lint rule `architecture/domain-owned-dispatch` · error by default
+`domain-owned-dispatch` · Lint rule · error by default
 
 When a reducer delegates behavior to domain reducers, represent those domains explicitly in the action type. The parent dispatches exhaustively by domain; each child dispatches exhaustively over its own action union. A single-domain reducer may retain a flat action union. Events affecting multiple domains need an explicit coordinating owner, not an arbitrary split by action-name prefix.
 
