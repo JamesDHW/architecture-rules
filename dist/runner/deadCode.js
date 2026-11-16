@@ -43,7 +43,9 @@ const classify = (context, reports) => {
 const combine = (context, everything, production) => {
     const all = classify(context, everything);
     const seen = new Set(all.map(({ ruleId, report }) => keyOf(ruleId, report)));
-    const productionOnly = classify(context, production).filter(({ ruleId, report }) => !seen.has(keyOf(ruleId, report)));
+    // Development layers may be used only by development code; the engine still sees them when a package exports them.
+    const isProductionCode = (report) => context.byPath.get(report.file)?.policy.development !== true;
+    const productionOnly = classify(context, production).filter(({ ruleId, report }) => !seen.has(keyOf(ruleId, report)) && isProductionCode(report));
     return [
         ...all.map(({ ruleId, report }) => ({ ruleId, report, message: message(ruleId, report, false) })),
         ...productionOnly.flatMap(({ ruleId, report }) => {

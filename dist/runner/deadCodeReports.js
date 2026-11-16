@@ -79,5 +79,5 @@ export const message = (ruleId, report, developmentOnly) => {
             return `\`${report.name}\` is exported, but nothing imports it.`;
     }
 };
-export const devDependencyMessage = (report) => `\`${report.name}\` is a devDependency, but production code imports it. Move it to dependencies.`;
+export const devDependencyMessage = (report) => `\`${report.name}\` is not in this package's dependencies, but production code imports it. Add it to dependencies.`;
 //# sourceMappingURL=deadCodeReports.js.map

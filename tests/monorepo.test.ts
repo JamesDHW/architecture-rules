@@ -20,6 +20,8 @@ const monorepo = () => {
     "architecture.config.ts": "export default {};\n",
     "packages/lib/package.json": JSON.stringify({ name: "@fixture/lib", private: true, type: "module", exports: { "./*": "./src/*.ts" } }),
     "packages/lib/src/util.ts": "export const used = (): number => 1;\nexport const unused = (): number => 2;\n",
+    "packages/lib/src/testing/fake.ts": "export const fake = (): number => 3;\n",
+    "packages/lib/src/util.test.ts": "import { fake } from './testing/fake.ts';\nconsole.log(fake());\n",
     "apps/app/package.json": JSON.stringify({ name: "app", private: true, type: "module" }),
     "apps/app/src/main.ts": "import { used } from '../../../packages/lib/src/util.ts';\nconsole.log(used());\n",
     "scripts/package.json": JSON.stringify({ type: "module" }),
@@ -28,8 +30,10 @@ const monorepo = () => {
   const architecture = defineArchitecture({
     projects: { tsconfigs: ["tsconfig.json"] },
     layers: {
-      lib: { description: "Library", files: ["packages/lib/src/**"] },
+      lib: { description: "Library", files: ["packages/lib/src/**"], exclude: ["packages/lib/src/testing/**", "**/*.test.ts"] },
+      testSupport: { description: "Test helpers", files: ["packages/lib/src/testing/**"], development: true },
       app: { description: "App", files: ["apps/app/src/**"], entry: { reason: "The app starts here." } },
+      tests: { description: "Tests", files: ["packages/lib/src/util.test.ts"], entry: { reason: "The runner loads tests." }, development: true },
       script: { description: "Scripts", files: ["scripts/**"], entry: { reason: "package.json scripts run these." } },
       tooling: { description: "Configuration", files: ["architecture.config.ts"], development: true },
     },

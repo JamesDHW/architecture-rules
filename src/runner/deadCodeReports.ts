@@ -84,5 +84,5 @@ export const message = (ruleId: string, report: Report, developmentOnly: boolean
   }
 };
 
-export const devDependencyMessage = (report: Report): string => `\`${report.name}\` is a devDependency, but production code imports it. Move it to dependencies.`;
+export const devDependencyMessage = (report: Report): string => `\`${report.name}\` is not in this package's dependencies, but production code imports it. Add it to dependencies.`;
 
