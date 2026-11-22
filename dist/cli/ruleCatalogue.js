@@ -16,6 +16,8 @@ const kindOf = (rule) => {
             return "compiler";
         case "dead-code":
             return "dead code";
+        case "glossary":
+            return "glossary";
         case "configuration":
             return "configuration";
         case "advisory":

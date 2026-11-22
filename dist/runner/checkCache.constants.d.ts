@@ -1,5 +1,5 @@
 /** Bump when the cache's shape or what its keys cover changes, so older caches are ignored. */
-export declare const CACHE_VERSION = 1;
+export declare const CACHE_VERSION = 2;
 /** Lockfiles whose change can change types and dead-code results without any source changing. */
 export declare const LOCKFILES: readonly string[];
 /** The compiler cache's entry for errors that belong to no one file. */

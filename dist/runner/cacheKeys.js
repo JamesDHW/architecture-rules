@@ -4,6 +4,18 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CACHE_VERSION, LOCKFILES } from "./checkCache.constants.js";
 const hash = (parts) => createHash("sha256").update(parts.join("\0")).digest("hex");
+const escaped = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/**
+ * Files that may declare a glossary term's type. Which declaration a term binds to changes the glossary findings of
+ * files that never import it, so these files go into every key.
+ */
+const bindingDeclarations = (architecture, texts) => {
+    const typeNames = Object.values(architecture.glossaries).flatMap(({ terms }) => terms.flatMap((term) => (term.type === undefined ? [] : [term.type])));
+    if (typeNames.length === 0)
+        return [];
+    const declaration = new RegExp(`\\b(?:type|interface|class|enum)\\s+(?:${typeNames.map(escaped).join("|")})\\b`);
+    return [...texts].filter(([, text]) => declaration.test(text)).map(([path, text]) => `${path}:${hash([text])}`);
+};
 const readIfPresent = (path) => (existsSync(path) ? readFileSync(path, "utf8") : "");
 /** The checker's own build: rebuilding it changes the findings it may report. */
 const toolStamp = () => {
@@ -36,7 +48,7 @@ export const cacheKeys = (root, architecture, opened, files, imports, workspaces
     const declarations = files.filter((file) => /\.d\.[cm]?ts$/.test(file.relative)).map((file) => `${file.relative}:${contents.get(file.relative) ?? ""}`);
     const global = hash([
         String(CACHE_VERSION), toolStamp(), JSON.stringify(architecture), JSON.stringify([...opened.compilerOptions]),
-        ...manifests, ...LOCKFILES.map((name) => readIfPresent(join(root, name))), ...declarations,
+        ...manifests, ...LOCKFILES.map((name) => readIfPresent(join(root, name))), ...declarations, ...bindingDeclarations(architecture, texts),
     ]);
     const closureOf = closures(files, imports);
     const issuesByFile = Map.groupBy(imports.issues, (issue) => issue.file);

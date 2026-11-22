@@ -1,8 +1,8 @@
 import type { LineException } from "../analysis/suppressions.js";
 import type { Finding } from "./findings.js";
 
-/** Lint and dead-code findings can be excepted on a line; structural and compiler findings cannot. */
-const isExceptableFinding = (finding: Finding): boolean => finding.source === "lint" || finding.source === "dead-code";
+/** Lint, dead-code and glossary findings can be excepted on a line; structural and compiler findings cannot. */
+const isExceptableFinding = (finding: Finding): boolean => finding.source === "lint" || finding.source === "dead-code" || finding.source === "glossary";
 
 const covers = (exception: LineException, ruleId: string) => (finding: Finding): boolean => {
   return finding.file === exception.file && finding.line === exception.target && finding.ruleId === ruleId && isExceptableFinding(finding);

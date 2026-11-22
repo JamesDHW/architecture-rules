@@ -12,7 +12,20 @@ export const valid = (): Architecture => defineArchitecture({
     tests: { description: "Tests", files: ["tests/**"], entry: { reason: "The runner loads them." }, development: true },
   },
 });
+export const validGlossary = (): Architecture => defineArchitecture({
+  projects,
+  glossaries: { sales: { terms: { Customer: { definition: "Has placed an order.", avoid: ["client"], type: "Customer" } } } },
+  layers: { domain: { description: "Domain", files: ["src/**"], glossary: ["sales"] } },
+});
 export const invalid = (): void => {
+  defineArchitecture({ projects, glossaries: { sales: { terms: { Customer: { definition: "Buys." } } } }, layers: { domain: { description: "Domain", files: ["src/**"],
+    // @ts-expect-error a layer follows only glossaries the configuration defines
+    glossary: "slaes",
+  } } });
+  defineArchitecture({ projects, glossaries: { sales: { terms: {
+    // @ts-expect-error every term needs a definition
+    Customer: { avoid: ["client"] },
+  } } }, layers: { domain: { description: "Domain", files: ["src/**"], glossary: "sales" } } });
   defineArchitecture({ projects, layers: { app: { description: "app", files: ["src/**"],
     // @ts-expect-error an entry needs a reason: it is where dead code can hide
     entry: { exports: "all" },

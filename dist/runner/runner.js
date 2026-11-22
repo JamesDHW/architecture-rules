@@ -11,6 +11,7 @@ import { applyExceptions, exceptedRulesByFile } from "./exceptions.js";
 import { explainFile } from "./explain.js";
 import { sortFindings, structuralFinding } from "./findings.js";
 import { migrateExceptions } from "./migrateExceptions.js";
+import { glossaryFindings } from "./glossaryFindings.js";
 import { lint } from "./oxlint.js";
 import { cacheKeys } from "./cacheKeys.js";
 import { compilerStage, deadCodeStage } from "./cachedStages.js";
@@ -56,9 +57,12 @@ const collectFindings = async (root, opened, scoped, options) => {
     const guard = options.fix === true ? exceptedRulesByFile(exceptions) : undefined;
     const cache = options.fix === true ? undefined : { contents: readCache(root), keys: cacheKeys(root, architecture, opened, files, imports, workspacesOf(root, files)) };
     const lintSplit = cache === undefined ? { stale: linted, cached: [] } : splitByCache(linted, cache.contents.lint, cache.keys);
-    const linting = await lint(root, lintSplit.stale, imports.issues, opened.projects, guard);
-    if (linting instanceof ArchitectureError)
-        return linting;
+    const lintResult = await lint(root, lintSplit.stale, imports.issues, opened.projects, guard);
+    if (lintResult instanceof ArchitectureError)
+        return lintResult;
+    // Glossary findings about names are cached with the file's lint findings: both depend on the file and what it imports.
+    const glossary = glossaryFindings(architecture, opened, files, lintSplit.stale, config);
+    const linting = [...lintResult, ...glossary.names];
     const lintFindings = [...lintSplit.cached, ...linting];
     const compiled = compilerStage(root, opened, files, cache);
     const unused = await unusedCode(root, opened, scoped, cache);
@@ -73,7 +77,7 @@ const collectFindings = async (root, opened, scoped, options) => {
         });
     }
     const compilerErrors = compiled.findings;
-    const found = [...generatedIssues.map(structuralFinding), ...lintFindings, ...compilerErrors, ...unused, ...configurationFindings(root, opened, scoped, imports.uses)];
+    const found = [...generatedIssues.map(structuralFinding), ...lintFindings, ...compilerErrors, ...unused, ...configurationFindings(root, opened, scoped, imports.uses), ...glossary.configuration];
     return { findings: applyExceptions(found.filter(inScope(selected, options)), exceptions), imports };
 };
 /** Structural issues, and the line exceptions of the linted files, before anything is linted. */

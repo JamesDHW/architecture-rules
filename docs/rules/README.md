@@ -32,6 +32,8 @@ Each page explains one rule: why it exists, what to write instead, when a suppre
 | [`file-naming`](file-naming.md) | Name files after one primary concept | Lint rule | error by default |
 | [`force-consistent-casing-in-file-names`](force-consistent-casing-in-file-names.md) | Match import paths to on-disk file casing | TypeScript compiler options `{"forceConsistentCasingInFileNames":true}` |  |
 | [`generic-name-denylist`](generic-name-denylist.md) | Use complete, domain-specific names | Lint rule, built on `eslint/id-denylist` | error by default, with options `["data","item","obj","arr","tmp"]` |
+| [`glossary-aliases`](glossary-aliases.md) | Name things with the glossary's words | Glossary check, in layers that follow a glossary | error by default |
+| [`glossary-types`](glossary-types.md) | Give each glossary term one type | Glossary check, in layers that follow a glossary | error by default |
 | [`grouped-logical-operators`](grouped-logical-operators.md) | Expose mixed logical operator precedence | Lint rule | error by default |
 | [`guard-clauses`](guard-clauses.md) | Use guard clauses for terminal cases | Lint rule, built on `eslint/no-else-return` | off by default, with options `[{"allowElseIf":false}]` |
 | [`jsx-key`](jsx-key.md) | Use stable list keys | Lint rule, built on `react/jsx-key` | error by default |
@@ -115,4 +117,5 @@ Each page explains one rule: why it exists, what to write instead, when a suppre
 | [`unused-exports`](unused-exports.md) | Export only what is imported | Dead-code check | error by default |
 | [`unused-files`](unused-files.md) | Delete files nothing uses | Dead-code check | error by default |
 | [`unused-permissions`](unused-permissions.md) | Grant only the dependencies a layer uses | Configuration check, set project-wide | error by default |
+| [`unused-terms`](unused-terms.md) | Define only the terms the code uses | Configuration check, set project-wide | error by default |
 | [`unused-types`](unused-types.md) | Export only types that are imported | Dead-code check | error by default |

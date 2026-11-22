@@ -1,7 +1,7 @@
 import type { Issue } from "../analysis/inventory.js";
 
 /** Which stage of the check reported a finding. */
-export type FindingSource = "structure" | "lint" | "compiler" | "dead-code";
+export type FindingSource = "structure" | "lint" | "compiler" | "dead-code" | "glossary";
 
 /**
  * Where a finding stands against the baseline: new (not recorded there), touched (recorded, but in a file the change

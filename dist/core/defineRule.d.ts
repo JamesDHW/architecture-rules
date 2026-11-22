@@ -27,12 +27,20 @@ type DeadCodeEnforcement = {
     readonly scope: "file" | "project";
     readonly configuration: Severity;
 };
+/**
+ * Checked by the checker against the glossaries a layer follows: the names its files declare, and their types.
+ * Can be set per layer, and runs only in layers that follow a glossary.
+ */
+type GlossaryEnforcement = {
+    readonly type: "glossary";
+    readonly configuration: Severity;
+};
 /** Checked by the checker against architecture.config.ts and the project's setup; set only project-wide. */
 type ConfigurationEnforcement = {
     readonly type: "configuration";
     readonly configuration: Severity;
 };
-type Enforcement = OxlintEnforcement | CustomOxlintEnforcement | TypeScriptEnforcement | AdvisoryEnforcement | DeadCodeEnforcement | ConfigurationEnforcement | {
+type Enforcement = OxlintEnforcement | CustomOxlintEnforcement | TypeScriptEnforcement | AdvisoryEnforcement | DeadCodeEnforcement | GlossaryEnforcement | ConfigurationEnforcement | {
     readonly type: "architecture";
 };
 /** Code that satisfies a rule's wording while missing its point. Rendered in the rule's generated documentation. */

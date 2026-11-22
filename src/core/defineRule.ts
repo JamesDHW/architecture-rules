@@ -37,6 +37,15 @@ type DeadCodeEnforcement = {
   readonly configuration: Severity;
 };
 
+/**
+ * Checked by the checker against the glossaries a layer follows: the names its files declare, and their types.
+ * Can be set per layer, and runs only in layers that follow a glossary.
+ */
+type GlossaryEnforcement = {
+  readonly type: "glossary";
+  readonly configuration: Severity;
+};
+
 /** Checked by the checker against architecture.config.ts and the project's setup; set only project-wide. */
 type ConfigurationEnforcement = {
   readonly type: "configuration";
@@ -49,6 +58,7 @@ type Enforcement =
   | TypeScriptEnforcement
   | AdvisoryEnforcement
   | DeadCodeEnforcement
+  | GlossaryEnforcement
   | ConfigurationEnforcement
   | { readonly type: "architecture" };
 

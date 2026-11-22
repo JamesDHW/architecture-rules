@@ -298,6 +298,39 @@ In a workspace monorepo (`pnpm-workspace.yaml` or `package.json` `workspaces`), 
 
 Dead-code findings are never fixed automatically: deleting code is a decision. The dead-code stage reads `package.json` in the architecture root; without one it warns and skips.
 
+### Glossary
+
+A glossary fixes the words a part of the code uses for its concepts, so one thing has one name and one name means one thing. Glossaries are named at the top level, and a layer opts in by name. A layer without a glossary is not checked, so technical layers keep their own vocabulary:
+
+```ts
+glossaries: {
+  sales: {
+    terms: {
+      Customer: { definition: "A person or organisation that has placed at least one order.", avoid: ["client", "buyer"], type: "Customer" },
+      ApiClient: { definition: "Our HTTP client for the payments API." },
+    },
+  },
+},
+layers: {
+  domain: { description: "Domain", files: ["src/domain/**"], glossary: "sales" },
+  infrastructure: { description: "Adapters", files: ["src/adapters/**"] },
+},
+```
+
+A term is written as a type would be named; names match it in any case and in the plural (`customer`, `customers`, `CUSTOMER_LIMIT`). Only names the layer declares are read: variables, parameters, functions, classes, interfaces, types, properties, methods and file names. Imported names, object-literal keys and `override` methods follow a shape someone else defined.
+
+| Rule | Fails when |
+| --- | --- |
+| `glossary-aliases` | A name uses an avoided word: `clients`, `getClient`, a file `buyers.ts`. The message gives the term, its definition and the rename. Only the head noun counts by default, the last word up to a trailing "by" clause, so `clientOrders` is about orders; `{ match: "any" }` reads every word. A longer term owns its words: `apiClient` is ApiClient. |
+| `glossary-types` | For a term with a `type`: a value named after the term has another type (`customer: string`), or a value of the term's type is named after a different term (`order: Customer`). A union, array, set, map, promise, subtype or intersection of the type counts as the type; `any` and unresolved types are skipped. Names that ask or relate rather than name (`isCustomer`, `forCustomer`) are not judged. The type must be declared once, at the top level of a file in the layers that follow the glossary. |
+| `unused-terms` | A glossary no layer follows, or a term no declared name uses. |
+
+A term's `type` is what lets the check see meaning rather than spelling. It also removes most false positives: `client: HttpClient` is a different thing that happens to share the word, so it is not a finding. Code that uses primitives for domain values (`customerId: string`) gets much less from `glossary-types`; agreeing a term is a good moment to give it a type.
+
+The glossary rules can be set per layer like lint rules, take line exceptions, and their errors can be recorded in the baseline. Two glossaries a layer follows together must not give one word two meanings, and neither may one glossary: a word that is a term and another term's avoided word is a configuration error.
+
+Seed a glossary from the words people and agents actually confuse, ten or twenty at first, in a grilling session at the start of a project or when a misunderstanding surfaces. A word that keeps collecting baselined findings is usually too generic to avoid (`account`, `item`, `module`); rethink the entry rather than excepting it everywhere.
+
 ## Adopting on an existing codebase
 
 Turning the rules on in an existing codebase reports every violation at once. Fixing them all first is rarely possible, so adoption happens in one setup step, then file by file:

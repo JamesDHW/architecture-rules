@@ -3,6 +3,6 @@ import type { ArchitectureRule } from "../core/defineRule.js";
 export declare const lintRuleName: (rule: ArchitectureRule) => string | undefined;
 /** How Oxlint labels a lint rule's findings: architecture/no-let becomes architecture(no-let). */
 export declare const diagnosticCode: (lintName: string) => string;
-/** Lint and dead-code rules can be excepted on a line; structural, configuration and compiler checks always apply. */
+/** Lint, dead-code and glossary rules can be excepted on a line; structural, configuration and compiler checks always apply. */
 export declare const isExceptable: (rule: ArchitectureRule) => boolean;
 //# sourceMappingURL=lintNames.d.ts.map

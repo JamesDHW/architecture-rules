@@ -60,6 +60,7 @@ export const validateOptions = (id: string, options: readonly unknown[]): readon
     case "custom-oxlint":
       return customOptionIssues(rule, enforcement.implementation, options);
     case "dead-code":
+    case "glossary":
     case "configuration":
       return checkerOptionIssues(rule, options);
     case "typescript":
@@ -81,6 +82,7 @@ const defaultRule = (rule: RegisteredRule): EffectiveRule => {
     case "oxlint":
     case "custom-oxlint":
     case "dead-code":
+    case "glossary":
     case "configuration":
       return fromConfiguration(enforcement.configuration);
     case "typescript":
