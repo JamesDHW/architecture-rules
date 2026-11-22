@@ -15,16 +15,22 @@ import { jsxRuntimeUses } from "./jsxRuntime.js";
 import { isModuleRequire } from "./requireCalls.js";
 import { descendants } from "./syntaxTree.js";
 
-export type ImportIssue = Issue & { readonly line: number; readonly column: number };
+/** The governed file and layer a denied import reached, when it reached one. */
+type ImportTarget = { readonly layer: string; readonly file: string };
+
+export type ImportIssue = Issue & { readonly line: number; readonly column: number; readonly target?: ImportTarget };
 
 /** A permission an import relied on: a layer, an external specifier (built-ins with node:) or an asset path. */
 export type ImportUse = { readonly layer: string; readonly kind: "internal" | "external" | "asset"; readonly value: string };
 
-/** What one module reference found: a denied import, or the permission that allowed it. */
-type Outcome = { readonly issue: ImportIssue } | { readonly use: ImportUse };
+/** An allowed import of one governed file by another, both root-relative. */
+export type ImportLink = { readonly from: string; readonly to: string };
 
-/** Every import problem, and every permission that some import used. */
-export type ImportAnalysis = { readonly issues: readonly ImportIssue[]; readonly uses: readonly ImportUse[] };
+/** What one module reference found: a denied import, or the permission that allowed it and, for source, the file it reached. */
+type Outcome = { readonly issue: ImportIssue } | { readonly use: ImportUse; readonly link?: ImportLink };
+
+/** Every import problem, every permission that some import used, and every allowed import between governed files. */
+export type ImportAnalysis = { readonly issues: readonly ImportIssue[]; readonly uses: readonly ImportUse[]; readonly links: readonly ImportLink[] };
 
 type FileContext = {
   readonly root: string;
@@ -35,13 +41,15 @@ type FileContext = {
 };
 
 
-const issueAt = (context: FileContext, node: Node, message: string): ImportIssue => {
+const issueAt = (context: FileContext, node: Node, message: string, target: ImportTarget | undefined): ImportIssue => {
   const start = node.getStart(context.source);
   const prefix = context.source.text.slice(0, start);
-  return { ruleId: "allowed-imports", file: context.file.relative, line: prefix.split("\n").length, column: start - prefix.lastIndexOf("\n") - 1, message };
+  const line = prefix.split("\n").length;
+  const column = start - prefix.lastIndexOf("\n") - 1;
+  return { ruleId: "allowed-imports", file: context.file.relative, line, column, message, ...(target === undefined ? {} : { target }) };
 };
 
-const denied = (context: FileContext, node: Node, message: string): Outcome => ({ issue: issueAt(context, node, message) });
+const denied = (context: FileContext, node: Node, message: string, target?: ImportTarget): Outcome => ({ issue: issueAt(context, node, message, target) });
 
 const used = (context: FileContext, kind: ImportUse["kind"], value: string): Outcome => ({ use: { layer: context.file.layer, kind, value } });
 
@@ -59,8 +67,11 @@ const targetIssues = (context: FileContext, node: Node, target: string): readonl
   const classified = context.byPath.get(actual);
   if (!inside(context.root, actual)) return [denied(context, node, `Import target escapes architecture root: ${target}`)];
   if (classified === undefined) return [denied(context, node, `Import target is not governed source: ${relativePath(context.root, actual)}`)];
-  if (context.file.policy.dependencies.internal.includes(classified.layer)) return [used(context, "internal", classified.layer)];
-  return [denied(context, node, `Layer ${context.file.layer} may not import ${classified.layer}: ${classified.relative}`)];
+  if (context.file.policy.dependencies.internal.includes(classified.layer)) {
+    return [{ ...used(context, "internal", classified.layer), link: { from: context.file.relative, to: classified.relative } }];
+  }
+  const reached = { layer: classified.layer, file: classified.relative };
+  return [denied(context, node, `Layer ${context.file.layer} may not import ${classified.layer}: ${classified.relative}`, reached)];
 };
 
 /** Built-ins are permitted as node: specifiers, whichever way the import spells them. */
@@ -146,13 +157,20 @@ const issueOf = (outcome: Outcome): readonly ImportIssue[] => ("issue" in outcom
 
 const useOf = (outcome: Outcome): readonly ImportUse[] => ("use" in outcome ? [outcome.use] : []);
 
+const linkOf = (outcome: Outcome): readonly ImportLink[] => {
+  if ("issue" in outcome) return [];
+  return outcome.link === undefined ? [] : [outcome.link];
+};
+
 /** Checks every import against its layer's dependencies, and records the permissions the allowed ones used. */
 export const analyzeImports = (root: string, files: readonly ClassifiedFile[], projects: readonly Project[]): ImportAnalysis => {
   const byPath = new Map(files.map((file) => [realpathSync(file.path), file]));
   const outcomes = files.flatMap((file) => projects.flatMap((project) => fileImportIssues(root, file, project, byPath)));
   const issues = outcomes.flatMap(issueOf);
   const uses = outcomes.flatMap(useOf);
+  const links = outcomes.flatMap(linkOf);
   return {
+    links: [...new Map(links.map((link) => [`${link.from}\0${link.to}`, link])).values()],
     issues: [...new Map(issues.map((issue) => [`${issue.file}:${issue.line}:${issue.column}:${issue.message}`, issue])).values()],
     uses: [...new Map(uses.map((use) => [`${use.layer}:${use.kind}:${use.value}`, use])).values()],
   };

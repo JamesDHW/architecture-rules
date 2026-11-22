@@ -6,12 +6,14 @@ import { infrastructure, inside, matches, relativePath, sourceFile } from "./pat
 import { jsxRuntimeUses } from "./jsxRuntime.js";
 import { isModuleRequire } from "./requireCalls.js";
 import { descendants } from "./syntaxTree.js";
-const issueAt = (context, node, message) => {
+const issueAt = (context, node, message, target) => {
     const start = node.getStart(context.source);
     const prefix = context.source.text.slice(0, start);
-    return { ruleId: "allowed-imports", file: context.file.relative, line: prefix.split("\n").length, column: start - prefix.lastIndexOf("\n") - 1, message };
+    const line = prefix.split("\n").length;
+    const column = start - prefix.lastIndexOf("\n") - 1;
+    return { ruleId: "allowed-imports", file: context.file.relative, line, column, message, ...(target === undefined ? {} : { target }) };
 };
-const denied = (context, node, message) => ({ issue: issueAt(context, node, message) });
+const denied = (context, node, message, target) => ({ issue: issueAt(context, node, message, target) });
 const used = (context, kind, value) => ({ use: { layer: context.file.layer, kind, value } });
 const isModuleDeclaration = (node) => isImportDeclaration(node) || isExportDeclaration(node);
 const isLiteralSpecifier = (node) => {
@@ -26,9 +28,11 @@ const targetIssues = (context, node, target) => {
         return [denied(context, node, `Import target escapes architecture root: ${target}`)];
     if (classified === undefined)
         return [denied(context, node, `Import target is not governed source: ${relativePath(context.root, actual)}`)];
-    if (context.file.policy.dependencies.internal.includes(classified.layer))
-        return [used(context, "internal", classified.layer)];
-    return [denied(context, node, `Layer ${context.file.layer} may not import ${classified.layer}: ${classified.relative}`)];
+    if (context.file.policy.dependencies.internal.includes(classified.layer)) {
+        return [{ ...used(context, "internal", classified.layer), link: { from: context.file.relative, to: classified.relative } }];
+    }
+    const reached = { layer: classified.layer, file: classified.relative };
+    return [denied(context, node, `Layer ${context.file.layer} may not import ${classified.layer}: ${classified.relative}`, reached)];
 };
 /** Built-ins are permitted as node: specifiers, whichever way the import spells them. */
 const builtinIssues = (context, node, specifier) => {
@@ -115,13 +119,20 @@ const fileImportIssues = (root, file, project, byPath) => {
 };
 const issueOf = (outcome) => ("issue" in outcome ? [outcome.issue] : []);
 const useOf = (outcome) => ("use" in outcome ? [outcome.use] : []);
+const linkOf = (outcome) => {
+    if ("issue" in outcome)
+        return [];
+    return outcome.link === undefined ? [] : [outcome.link];
+};
 /** Checks every import against its layer's dependencies, and records the permissions the allowed ones used. */
 export const analyzeImports = (root, files, projects) => {
     const byPath = new Map(files.map((file) => [realpathSync(file.path), file]));
     const outcomes = files.flatMap((file) => projects.flatMap((project) => fileImportIssues(root, file, project, byPath)));
     const issues = outcomes.flatMap(issueOf);
     const uses = outcomes.flatMap(useOf);
+    const links = outcomes.flatMap(linkOf);
     return {
+        links: [...new Map(links.map((link) => [`${link.from}\0${link.to}`, link])).values()],
         issues: [...new Map(issues.map((issue) => [`${issue.file}:${issue.line}:${issue.column}:${issue.message}`, issue])).values()],
         uses: [...new Map(uses.map((use) => [`${use.layer}:${use.kind}:${use.value}`, use])).values()],
     };

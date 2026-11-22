@@ -75,6 +75,19 @@ export type LayerDefinition<Layer extends string = string> = {
 /** The tsconfigs whose programs define the source under check; references are followed unless set to explicit. */
 export type TypeScriptProjects = { readonly tsconfigs: readonly string[]; readonly references?: "follow" | "explicit" };
 /**
+ * What happens to a baselined finding in a file someone changes: "fix" makes the file fix it before the change
+ * passes; "no-new" only stops the file adding findings.
+ */
+export type TouchPolicy = "fix" | "no-new";
+/**
+ * Incremental adoption of an existing codebase. "observe" reports every finding but always exits 0, for tuning a
+ * new configuration before anything is enforced.
+ */
+type AdoptionSettings = {
+  readonly mode?: "enforce" | "observe";
+  readonly onTouch?: { readonly default?: TouchPolicy; readonly rules?: { readonly [K in RuleId]?: TouchPolicy } };
+};
+/**
  * Read top to bottom, the configuration follows the order decisions are made:
  * the TypeScript projects, then layers with their dependencies, then rules.
  */
@@ -85,6 +98,8 @@ export type ArchitectureInput<Layer extends string> = {
   readonly naming?: NamingPolicy;
   /** Project-wide rule settings; a layer's rules override them. */
   readonly rules?: ProjectRules;
+  /** How the baseline treats existing findings while the codebase is brought into line. */
+  readonly adoption?: AdoptionSettings;
 };
 export type EffectiveRule = { readonly severity: Severity; readonly options: readonly unknown[]; readonly origin: string; readonly reason?: string };
 export type EffectivePolicy = {
@@ -97,8 +112,13 @@ export type EffectivePolicy = {
   readonly development: boolean;
 };
 export type NormalizedLayer = LayerDefinition & { readonly policy: EffectivePolicy };
+export type Adoption = {
+  readonly mode: "enforce" | "observe";
+  readonly onTouch: { readonly default: TouchPolicy; readonly rules: Readonly<Record<string, TouchPolicy>> };
+};
 export type Architecture = {
   readonly projects: Required<TypeScriptProjects>;
+  readonly adoption: Adoption;
   /** The policy a layer inherits when it sets nothing itself. */
   readonly defaults: EffectivePolicy;
   readonly layers: Readonly<Record<string, NormalizedLayer>>;

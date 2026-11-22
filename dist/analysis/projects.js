@@ -88,7 +88,8 @@ const loadProjects = (api, architecture, configs) => {
         snapshot.dispose();
         api.close();
     };
-    return { api, snapshot, projects, sources: new Set(memberships.flatMap((entry) => entry.sources)), issues: memberships.flatMap((entry) => entry.issues), close };
+    const compilerOptions = new Map([...configs].map(([path, config]) => [path, config.compilerOptions]));
+    return { api, snapshot, projects, sources: new Set(memberships.flatMap((entry) => entry.sources)), issues: memberships.flatMap((entry) => entry.issues), compilerOptions, close };
 };
 const openSnapshot = (root, architecture, configs) => {
     const api = tryCatch(() => new API({ cwd: root }));

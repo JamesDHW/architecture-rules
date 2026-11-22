@@ -1,6 +1,7 @@
 import { isRecord } from "../core/guards.js";
 import { ArchitectureError } from "../errors/architectureError.js";
 import { orThrow } from "../errors/tryCatch.js";
+import { adoption } from "./adoption.js";
 import { isRegisteredArchitecture, registerArchitecture } from "./architectureRegistry.state.js";
 import { ARCHITECTURE_FIELDS, LAYER_FIELDS, PROJECTS_FIELDS, REFERENCE_MODES, RESERVED_LAYER_NAMES } from "./configuration.constants.js";
 import { defaultRules, overrideRules } from "./normalizeRules.js";
@@ -84,15 +85,17 @@ export const normalizeArchitecture = (value) => {
     const inputs = layerInputs(config.value.layers);
     const layerNames = Object.keys(inputs.value);
     const defaults = projectPolicy(config.value);
+    const adoptionSettings = adoption(config.value.adoption);
     const layers = Object.entries(inputs.value).map(([name, entry]) => ({ name, result: layer(name, entry, layerNames, defaults.value) }));
     const issues = [
-        ...config.issues, ...projects.issues, ...inputs.issues, ...defaults.issues,
+        ...config.issues, ...projects.issues, ...inputs.issues, ...defaults.issues, ...adoptionSettings.issues,
         ...layers.flatMap(({ result }) => result.issues),
     ];
     if (issues.length > 0)
         return new ArchitectureError(issues);
     const architecture = freeze({
         projects: projects.value,
+        adoption: adoptionSettings.value,
         defaults: defaults.value,
         layers: Object.fromEntries(layers.map(({ name, result }) => [name, result.value])),
     });

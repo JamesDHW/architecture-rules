@@ -1,0 +1,1 @@
+{"version":3,"file":"classifyProject.d.ts","sourceRoot":"","sources":["../../src/runner/classifyProject.ts"],"names":[],"mappings":"AAEA,OAAO,EAAa,KAAK,SAAS,EAAE,MAAM,0BAA0B,CAAC;AACrE,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,oBAAoB,CAAC;AACvD,OAAO,KAAK,EAAE,iBAAiB,EAAE,MAAM,gCAAgC,CAAC;AAGxE,oHAAoH;AACpH,eAAO,MAAM,eAAe,aAAoB,MAAM,gBAAgB,YAAY,KAAG,OAAO,CAAC,SAAS,GAAG,iBAAiB,CAGzH,CAAC"}

@@ -1,5 +1,11 @@
 /** Field names accepted at each level of architecture.config.ts. */
-export const ARCHITECTURE_FIELDS = ["projects", "layers", "naming", "rules"];
+export const ARCHITECTURE_FIELDS = ["projects", "layers", "naming", "rules", "adoption"];
+export const ADOPTION_FIELDS = ["mode", "onTouch"];
+export const ON_TOUCH_FIELDS = ["default", "rules"];
+export const ADOPTION_MODES = ["enforce", "observe"];
+export const TOUCH_POLICIES = ["fix", "no-new"];
+/** Rules whose existing findings stay allowed in a file someone changes: fixing one can mean a refactor. */
+export const NO_NEW_ON_TOUCH = ["allowed-imports"];
 export const PROJECTS_FIELDS = ["tsconfigs", "references"];
 export const LAYER_FIELDS = ["description", "files", "exclude", "naming", "dependencies", "rules", "generated", "entry", "development"];
 export const NAMING_FIELDS = ["case", "prefix", "suffixes", "requiredSuffix", "allowedNames"];

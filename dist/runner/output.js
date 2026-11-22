@@ -1,20 +1,19 @@
-import { hasErrors } from "./checkResult.js";
 import { renderReport } from "./markdownReport.js";
 import { guidanceFor } from "./ruleGuidance.js";
-import { renderJson, renderText } from "./textOutput.js";
-/** Prints the result and returns the exit code: 1 when any error was found, except for the report, which always exits 0. */
-export const printOutput = (root, result, format) => {
-    const guidance = guidanceFor(root, result.findings);
+import { renderAgent, renderJson, renderText } from "./textOutput.js";
+const noGate = { notes: [], details: {} };
+/** Renders the result in the format asked for. */
+export const renderOutput = (root, result, format, gate = noGate) => {
+    const guidance = guidanceFor(root, result.findings.filter((finding) => finding.status !== "baselined"));
     switch (format) {
         case "report":
-            process.stdout.write(renderReport(result));
-            return 0;
+            return renderReport(result);
         case "json":
-            process.stdout.write(renderJson(result, guidance));
-            return hasErrors(result) ? 1 : 0;
+            return renderJson(result, guidance, gate.details);
         case "text":
-            process.stdout.write(renderText(result, guidance));
-            return hasErrors(result) ? 1 : 0;
+            return renderText(result, guidance, gate.notes);
+        case "agent":
+            return renderAgent(result, guidance, gate.notes);
     }
 };
 //# sourceMappingURL=output.js.map

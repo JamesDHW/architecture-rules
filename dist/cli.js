@@ -1,28 +1,23 @@
 #!/usr/bin/env node
-import { realpathSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { mergeBaselineFiles } from "./baseline/mergeBaselines.js";
 import { ArchitectureError } from "./errors/architectureError.js";
-import { allOrError } from "./errors/results.js";
-import { tryCatch, tryCatchAsync } from "./errors/tryCatch.js";
+import { tryCatchAsync } from "./errors/tryCatch.js";
 import { checkArchitecture } from "./runner/runner.js";
+import { adoptCommand } from "./cli/adoptCommand.js";
+import { baselineCommand } from "./cli/baselineCommand.js";
+import { checkCommand } from "./cli/checkCommand.js";
 import { describeCommand } from "./cli/describeCommand.js";
-import { configPathFor, loadArchitecture } from "./config/loadArchitecture.js";
+import { doctorCommand } from "./cli/doctorCommand.js";
+import { fixCommand } from "./cli/fixCommand.js";
+import { graphCommand } from "./cli/graphCommand.js";
+import { help } from "./cli/help.js";
+import { loadProject } from "./cli/inspectProject.js";
+import { mapCommand } from "./cli/mapCommand.js";
 import { parseArgs } from "./cli/parseArgs.js";
+import { ruleById } from "./cli/ruleCatalogue.js";
+import { explainRule, rulesCommand } from "./cli/rulesCommand.js";
+import { statusCommand } from "./cli/statusCommand.js";
 import { startServer } from "./editor/server.js";
-const help = `Usage: architecture-check [--config path] [--fix] [--json] [--file path]... [project-dir]
-       architecture-check explain <file> [--config path]
-       architecture-check describe [--json | --mermaid] [--config path] [project-dir]
-       architecture-check report [--config path] [project-dir]
-       architecture-check lsp
-
---file      Lint and report only this file (repeatable); the whole project is still analyzed.
---json      Print every finding, and what to write instead, as one JSON document.
-report      Prints a Markdown report: findings by rule, exceptions, configuration overrides and layers.
-lsp         Runs the language server editors use: the same findings as the check, on every save.
-
-Requires architecture.config.ts (or architecture.config.mts) exporting defineArchitecture(...).
-Checks the configured TypeScript programs, rooted at the configuration's directory.
-`;
 const printHelp = () => {
     process.stdout.write(help);
     return 0;
@@ -37,29 +32,55 @@ const printError = (error) => {
     }
     return 1;
 };
-/** --file paths as the real absolute paths the checker compares, resolved from the working directory. */
-const selectedFiles = (paths) => {
-    if (paths === undefined)
-        return {};
-    const files = allOrError(paths.map((path) => tryCatch(() => realpathSync(resolve(path)))));
-    return files instanceof ArchitectureError ? files : { files };
+/** explain <rule> describes a rule; explain <file> the effective policy for that file. */
+const explain = async (args, target) => {
+    const rule = ruleById(target);
+    if (rule !== undefined)
+        return explainRule(rule);
+    const project = await loadProject(args.target, args.config);
+    if (project instanceof ArchitectureError)
+        return project;
+    return checkArchitecture(project.root, project.architecture, { configFile: project.configPath, explain: target });
 };
-const check = async (args) => {
+const runCheck = async (args) => {
     if (args.describe !== undefined)
         return describeCommand(args, args.describe);
-    const configPath = configPathFor(args.target, args.config);
-    const architecture = await loadArchitecture(configPath);
-    if (architecture instanceof ArchitectureError)
-        return architecture;
-    const files = selectedFiles(args.files);
-    if (files instanceof ArchitectureError)
-        return files;
-    const explain = args.explain === undefined ? {} : { explain: args.explain };
-    const format = args.format === undefined ? {} : { format: args.format };
-    return checkArchitecture(dirname(realpathSync(configPath)), architecture, { fix: args.fix, configFile: configPath, ...explain, ...format, ...files });
+    if (args.explain !== undefined)
+        return explain(args, args.explain);
+    if (args.format === "report") {
+        const project = await loadProject(args.target, args.config);
+        if (project instanceof ArchitectureError)
+            return project;
+        return checkArchitecture(project.root, project.architecture, { configFile: project.configPath, format: "report" });
+    }
+    return checkCommand(args);
+};
+const dispatch = async (args) => {
+    switch (args.kind) {
+        case "run":
+            return runCheck(args);
+        case "status":
+            return statusCommand(args);
+        case "graph":
+            return graphCommand(args);
+        case "map":
+            return mapCommand(args);
+        case "rules":
+            return rulesCommand(args.json);
+        case "baseline":
+            return baselineCommand(args);
+        case "baseline-merge":
+            return mergeBaselineFiles(args.ancestor, args.current, args.other);
+        case "doctor":
+            return doctorCommand(args);
+        case "adopt":
+            return adoptCommand(args.output);
+        case "fix":
+            return fixCommand(args);
+    }
 };
 const run = async (args) => {
-    const outcome = await tryCatchAsync(async () => check(args));
+    const outcome = await tryCatchAsync(async () => dispatch(args));
     return outcome instanceof ArchitectureError ? printError(outcome) : outcome;
 };
 const main = async () => {
@@ -72,6 +93,15 @@ const main = async () => {
         case "lsp":
             return startServer();
         case "run":
+        case "status":
+        case "graph":
+        case "map":
+        case "rules":
+        case "baseline":
+        case "baseline-merge":
+        case "doctor":
+        case "adopt":
+        case "fix":
             return run(args);
     }
 };

@@ -46,11 +46,21 @@ export default defineArchitecture({
       },
     },
     runner: {
-      description: "Runs a check: structural analysis, then Oxlint, then compiler diagnostics.",
+      description: "Runs a check: structural analysis, then Oxlint, then compiler diagnostics, with a cache of each stage.",
       files: ["src/runner/**/*.ts"],
+      naming: { case: "camelCase", suffixes: [".constants"] },
       dependencies: {
         internal: ["runner", "analysis", "config", "rules", "core", "errors"],
-        external: ["oxlint", "typescript/unstable/**", "node:child_process", "node:fs", "node:module", "node:path", "node:stream/consumers", "node:url"],
+        external: ["oxlint", "typescript/unstable/**", "node:child_process", "node:crypto", "node:fs", "node:module", "node:path", "node:stream/consumers", "node:url"],
+      },
+    },
+    baseline: {
+      description: "Incremental adoption: the baseline of recorded debt, the files a change touches, and the gates a check must pass.",
+      files: ["src/baseline/**/*.ts"],
+      naming: { case: "camelCase", suffixes: [".constants"] },
+      dependencies: {
+        internal: ["baseline", "runner", "analysis", "config", "core", "errors"],
+        external: ["node:child_process", "node:fs", "node:path"],
       },
     },
     editor: {
@@ -58,7 +68,7 @@ export default defineArchitecture({
       files: ["src/editor/**/*.ts"],
       naming: { case: "camelCase", suffixes: [".state"] },
       dependencies: {
-        internal: ["editor", "runner", "config", "rules", "core", "errors"],
+        internal: ["editor", "baseline", "runner", "config", "rules", "core", "errors"],
         external: ["node:path", "node:url"],
       },
     },
@@ -68,7 +78,7 @@ export default defineArchitecture({
       entry: { files: ["src/cli.ts", "src/generateRuleDocs.ts"], reason: "package.json's bin runs the CLI; the build runs the rule-docs generator." },
       naming: { case: "camelCase", suffixes: [".constants"] },
       dependencies: {
-        internal: ["cli", "editor", "runner", "config", "rules", "core", "errors"],
+        internal: ["cli", "editor", "baseline", "runner", "analysis", "config", "rules", "core", "errors"],
         external: ["node:fs", "node:fs/promises", "node:path", "node:url"],
       },
     },

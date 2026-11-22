@@ -11,6 +11,7 @@ type Diagnostic = {
         };
     };
     readonly severity: number;
+    readonly tags?: readonly number[];
     readonly code: string;
     readonly codeDescription?: {
         readonly href: string;

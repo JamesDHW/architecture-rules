@@ -4,6 +4,7 @@ import { configPathFor, loadArchitecture } from "../config/loadArchitecture.js";
 import { ArchitectureError } from "../errors/architectureError.js";
 import { tryCatch } from "../errors/tryCatch.js";
 import { inspectArchitecture } from "../runner/runner.js";
+import { judge } from "../baseline/judge.js";
 import { fileDiagnostics } from "./diagnostics.js";
 import { frame, parseMessages } from "./protocol.js";
 import { session, updateSession } from "./session.state.js";
@@ -39,7 +40,12 @@ const findingsFor = async (root, checks) => {
     if (architecture instanceof ArchitectureError)
         return configurationErrors(root, configPath, architecture);
     const result = await inspectArchitecture(root, architecture, { configFile: configPath });
-    return result instanceof ArchitectureError ? configurationErrors(root, configPath, result) : result.findings;
+    if (result instanceof ArchitectureError)
+        return configurationErrors(root, configPath, result);
+    // Files changed since HEAD are the ones being worked on; outside git, nothing counts as touched.
+    const judged = judge(root, result, { write: false, change: { kind: "worktree" } });
+    const verdict = judged instanceof ArchitectureError ? judge(root, result, { write: false }) : judged;
+    return verdict instanceof ArchitectureError ? configurationErrors(root, configPath, verdict) : verdict.result.findings;
 };
 const publish = (root, findings) => {
     const files = fileDiagnostics(root, findings, session().published);

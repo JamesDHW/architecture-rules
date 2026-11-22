@@ -92,6 +92,8 @@ pnpm exec architecture-check            # check every file against it
 
 Starting points for other project shapes are in `examples/` (a React SPA, a Node CLI and a TypeScript library). They are visible templates, not hidden presets: copy one and adapt it.
 
+For an existing codebase, read [Adopting on an existing codebase](#adopting-on-an-existing-codebase) first: the rules go on in one step, and the code follows file by file.
+
 ## For agents
 
 Add something like this to your `AGENTS.md` or `CLAUDE.md`:
@@ -99,6 +101,10 @@ Add something like this to your `AGENTS.md` or `CLAUDE.md`:
 ```md
 Before changing code, run `pnpm exec architecture-check describe` to see the layers, what each may import, and which layers may use each package. After changing code, run `pnpm exec architecture-check` and fix every finding. Do not edit architecture.config.ts or add exceptions without asking.
 ```
+
+In a codebase with a baseline, `architecture-check adopt --agent-snippet` prints the version that also covers recorded debt: every file an agent changes must be left compliant.
+
+`--format agent` is for agent hooks: only what must change, one line per finding plus one line per rule on what to write instead, written to stderr, with exit code 2 on failure (most hook systems show such output to the agent). It prints nothing when the files are clean. Run it with `--file <edited file>` after each edit and with `--worktree` before the agent finishes; without a change flag it judges the working tree. A `--file` that is not source of the checked programs is ignored, so the hook can pass every edited file.
 
 `describe` reads only the configuration, so it is fast. `explain <file>` shows the full effective policy for one file, including every rule setting and its origin.
 
@@ -292,6 +298,120 @@ In a workspace monorepo (`pnpm-workspace.yaml` or `package.json` `workspaces`), 
 
 Dead-code findings are never fixed automatically: deleting code is a decision. The dead-code stage reads `package.json` in the architecture root; without one it warns and skips.
 
+## Adopting on an existing codebase
+
+Turning the rules on in an existing codebase reports every violation at once. Fixing them all first is rarely possible, so adoption happens in one setup step, then file by file:
+
+1. **Describe the codebase** in `architecture.config.ts`: layers by glob over the folders that exist, with the dependencies each layer *should* have. `architecture-check map` lists the layer of every file and the files no layer claims; repeat until it exits 0.
+2. **Tune in observe mode.** With `adoption: { mode: "observe" }` the check reports everything and always exits 0.
+3. **Record the baseline.** `architecture-check baseline` writes `architecture.baseline.json` (in the root, and in each workspace package with findings): every lint, compiler and dead-code error that exists today, as debt. Commit it.
+4. **Enforce.** From then on a check fails on any error the baseline does not record, and fails a change whose touched files still carry recorded debt. Fixed debt is removed from the baseline automatically.
+
+`architecture-check adopt --prompt` prints step-by-step instructions for an agent doing this adoption, including translating Nx tags, ESLint import rules or dependency-cruiser rules into the configuration, wiring the hooks below, and switching off overlapping lint rules only after showing the architecture rules cover them. `architecture-check doctor` exits 0 once adoption is complete.
+
+### The baseline
+
+Each entry records a file, a rule, a message and how many times it occurs:
+
+```json
+{
+  "version": 1,
+  "entries": [
+    {"file":"src/domain/order.ts","rule":"no-let","count":2,"message":"Declare this with const and compute a new value instead of reassigning. …"}
+  ]
+}
+```
+
+- **Positions are not recorded**, so moving code within a file or reordering imports leaves the baseline unchanged. Numbers in messages are masked (`File has # lines`), so a file growing by a line is the same violation. An import violation's message names the file it reached, so each denied import between two files is its own entry.
+- **A count above the recorded one is new.** The occurrences cannot be told apart, so all of them are reported, with the recorded and current counts.
+- **Only errors are recorded.** Structural findings (classification, project membership, compiler settings, exception syntax) and configuration findings stop or fail the check outright and are never recorded; warnings never fail.
+- **It only shrinks.** Any check that finds fewer occurrences than recorded rewrites the file (outside `--ci`). Growth needs `architecture-check baseline --accept --reason "<why>"`, which records the reason on each entry that grew; a newly enabled rule's existing findings are recorded with `architecture-check baseline --rule <id>`. CI fails growth whose reason was not recorded in the change, so a hand edit of the file does not pass.
+- **One file per workspace package**, sorted, one entry per line, so branches touching different packages do not conflict. A three-way merge driver resolves conflicts that remain (see below).
+- **Renamed files keep their debt.** git's rename detection carries entries to the new path. A pure rename does not count as touching the file.
+
+Line exceptions (`// architecture-disable-next-line <rule> -- <reason>`) stay separate from the baseline: an exception is a decision someone made, debt is what is left to fix. `architecture-check status` counts both, per layer.
+
+### What a check judges
+
+Every check analyses the whole project; the change only decides what fails:
+
+| Finding | Meaning | Fails | Editor |
+| --- | --- | --- | --- |
+| new | Not in the baseline | always (exit 1) | error |
+| touched | Recorded, in a file the change touches, under a rule set to fix on touch | with `--staged`, `--worktree` or `--since` (exit 3) | warning |
+| baselined | Recorded debt, file untouched or the rule is no-new on touch | never | faded hint |
+
+The change comes from git: `--staged` (staged files, for pre-commit), `--worktree` (the working tree against HEAD, plus untracked files, for agents) or `--since <ref>` (everything since the merge base with `<ref>`, for CI). Because the analysis covers every file, a change that breaks an untouched file, such as an export left unused there, is still a new error.
+
+Which recorded debt a touched file must fix is set per rule:
+
+```ts
+adoption: {
+  onTouch: {
+    default: "fix",                        // the default: a changed file fixes its recorded debt
+    rules: { "allowed-imports": "no-new" }, // the default for imports: fixing one can mean a refactor
+  },
+},
+```
+
+Debt accepted with a reason in the same change is not failed as touched.
+
+### Wiring it in
+
+| Where | Command | Notes |
+| --- | --- | --- |
+| Agent, after each edit | `architecture-check --format agent --file <file>` | Exit 2 shows the output to the agent. |
+| Agent, before finishing | `architecture-check --format agent --worktree` | Blocks finishing while a touched file has debt. |
+| Pre-commit | `architecture-check --staged` | Stages the pruned baseline. Works from husky, lefthook, simple-git-hooks or `.git/hooks`. |
+| CI | `architecture-check --since origin/main --ci --summary summary.md` | Never writes. Also fails growth without a reason (exit 4) and a baseline that lists fixed debt (exit 5). The summary is Markdown for a pull-request comment, with a Mermaid graph of denied imports. |
+
+For Claude Code, in `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [{ "matcher": "Edit|Write|MultiEdit", "hooks": [{ "type": "command", "command": "f=$(jq -r '.tool_input.file_path // empty'); [ -z \"$f\" ] || pnpm exec architecture-check --format agent --file \"$f\"" }] }],
+    "Stop": [{ "hooks": [{ "type": "command", "command": "pnpm exec architecture-check --format agent --worktree" }] }]
+  }
+}
+```
+
+The merge driver, once per clone, with `architecture.baseline.json merge=architecture-baseline` in `.gitattributes`:
+
+```sh
+git config merge.architecture-baseline.driver "pnpm exec architecture-check baseline merge %O %A %B"
+```
+
+It applies each side's change in count to the common ancestor's, so one branch's fix and another's accepted growth both survive. A CODEOWNERS entry for `architecture.baseline.json` gets growth reviewed.
+
+### Seeing where it stands
+
+```sh
+architecture-check status                   # per layer: files, compliant files, new errors, recorded debt by rule, exceptions
+architecture-check status --since main      # and how recorded debt changed since main
+architecture-check check ui                 # only the findings files in layer ui own
+architecture-check check ui --incoming      # denied imports from other layers into ui
+architecture-check graph                    # each layer's used dependencies, ✗ denied imports with counts, ○ unused grants
+architecture-check graph --format mermaid   # or json, or dot for Graphviz; --layer ui expands one layer into its directories
+architecture-check --fixable-in 1           # only files one error away from compliant
+```
+
+### Clearing mechanical debt in one sweep
+
+Some fixes need no judgement, so waiting for each file to be touched only delays them:
+
+```sh
+architecture-check fix --rule file-naming               # renames files to the naming case; updates imports and the baseline
+architecture-check fix --rule no-deep-relative-imports  # rewrites ../../../ imports through the tsconfig's path aliases
+architecture-check --fix                                # the lint fixes that are safe
+```
+
+`fix` takes `--path <glob>` to sweep part of the codebase. A rename that needs a chosen name (a missing prefix or required suffix), or would move the file out of its layer, is listed for a person instead. `architecture-check rules --json` says which rules each kind of automatic fix covers.
+
+### Speed
+
+Lint and compiler results are cached per file in `node_modules/.cache/architecture-rules/`, keyed on the file, its policy and the content of every file it imports, directly or not, so a change to a type a file depends on checks that file again. Declaration files, lockfiles, package manifests, the configuration and the checker's own build are part of every key. Dead code depends on every file and is reused only while nothing changed. Opening the TypeScript projects is not cached and sets the floor: on a 960-file monorepo a check takes about 19 seconds cold, 4.5 warm, and 7 to 9 after editing one file.
+
 ## CLI
 
 ```sh
@@ -306,7 +426,18 @@ architecture-check --json                         # every finding, and what to w
 architecture-check report > architecture-report.md  # Markdown: findings by rule, exceptions, overrides and layers
 architecture-check --config ./architecture.config.ts
 architecture-check lsp                            # the language server editors start
+architecture-check --staged | --worktree | --since <ref> [--ci]   # also fail recorded debt in the files a change touches
+architecture-check --format agent                 # for agent hooks: only what must change, on stderr, exit 2 on failure
+architecture-check check <layer>... [--incoming]  # one layer's findings, or the imports into it
+architecture-check status | graph | map | doctor  # see Adopting on an existing codebase
+architecture-check baseline [--accept --reason <why>] [--rule <id>]
+architecture-check fix --rule <id> [--path <glob>]
+architecture-check explain no-let                 # what a rule checks, why, and what to write instead
+architecture-check rules --json                   # every rule, in plain terms
+architecture-check adopt --prompt | --agent-snippet
 ```
+
+Exit codes: 0 passes; 1 new errors (or any other failure); 2 agent format failed; 3 a touched file still has recorded debt; 4 the baseline grew without a reason (`--ci`); 5 the baseline lists fixed debt (`--ci`).
 
 A check runs in four stages: structure (inventory, classification, compiler settings, exceptions, configuration), then lint with each file's policy, then TypeScript's diagnostics, then dead code. Structural failures stop the run before any fix is applied. `--fix` never changes the configuration, tsconfigs, filenames or `package.json`, and never deletes code. `describe` reports import cycles between layers and lists layers so each comes after the layers it imports.
 
@@ -332,7 +463,7 @@ How to fix:
 
 ## In the editor
 
-`architecture-check lsp` is a language server: on every save, and when files change on disk, it runs exactly the check the command runs and publishes its findings, with the same rule ids, messages, severities and positions, each linked to its rule's page. A configuration that does not load is shown on `architecture.config.ts`.
+`architecture-check lsp` is a language server: on every save, and when files change on disk, it runs exactly the check the command runs and publishes its findings, with the same rule ids, messages and positions, each linked to its rule's page. A configuration that does not load is shown on `architecture.config.ts`. With a baseline, recorded debt shows as a faded hint, and as a warning once the file differs from HEAD, since the change must then fix it.
 
 For VS Code, `editors/vscode` is an extension that starts the workspace's own `architecture-check lsp`; see its README to install it. Other editors can start the server the same way.
 
@@ -359,7 +490,8 @@ The check never reads another tool's configuration: it runs its own pinned engin
 - Exception comments are now `// architecture-disable-next-line <rule-id> -- <reason>`. Run `architecture-check --fix` once to convert reasoned `oxlint-disable`/`eslint-disable` comments.
 - Mark entry layers (`entry`) and development layers (`development: true`); until you do, the dead-code rules report every file nothing reaches.
 - Expect findings for grants, patterns and packages that are no longer used; remove them.
-- `--format json` is now `--json`, and the text output is grouped by file with a summary.
+- `--json` replaced `--format json`; `--format` now takes `text`, `json` or `agent`. The text output is grouped by file with a summary.
+- `explain` also takes a rule id: `architecture-check explain no-let`.
 
 ## Development
 

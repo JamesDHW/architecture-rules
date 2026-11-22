@@ -7,10 +7,14 @@ import type { Finding } from "../runner/findings.js";
 /** The editor's diagnostic severities. */
 const errorSeverity = 1;
 const warningSeverity = 2;
+const hintSeverity = 4;
+/** The editor's tag for code to show faded. */
+const unnecessaryTag = 1;
 
 type Diagnostic = {
   readonly range: { readonly start: { readonly line: number; readonly character: number }; readonly end: { readonly line: number; readonly character: number } };
   readonly severity: number;
+  readonly tags?: readonly number[];
   readonly code: string;
   readonly codeDescription?: { readonly href: string };
   readonly source: string;
@@ -30,13 +34,28 @@ const documentation = (ruleId: string): { readonly codeDescription?: { readonly 
   return { codeDescription: { href: new URL(`${ruleId}.md`, docsDirectory).href } };
 };
 
-/** A finding exactly as the CLI reports it: same rule id, same message, same severity, at the same position. */
+/**
+ * Recorded debt in an untouched file is a faded hint; once the file is edited it becomes a warning, because the
+ * change must fix it. Everything else keeps its severity.
+ */
+const severityOf = (finding: Finding): { readonly severity: number; readonly tags?: readonly number[] } => {
+  switch (finding.status ?? "new") {
+    case "baselined":
+      return { severity: hintSeverity, tags: [unnecessaryTag] };
+    case "touched":
+      return { severity: warningSeverity };
+    case "new":
+      return { severity: finding.severity === "error" ? errorSeverity : warningSeverity };
+  }
+};
+
+/** A finding exactly as the CLI reports it: same rule id, same message, at the same position; severity by status. */
 const toDiagnostic = (finding: Finding): Diagnostic => {
   const line = Math.max(0, (finding.line ?? 1) - 1);
   const character = Math.max(0, (finding.column ?? 1) - 1);
   return {
     range: { start: { line, character }, end: { line, character } },
-    severity: finding.severity === "error" ? errorSeverity : warningSeverity,
+    ...severityOf(finding),
     code: finding.ruleId,
     ...documentation(finding.ruleId),
     source: "architecture",

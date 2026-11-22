@@ -1,0 +1,1 @@
+{"version":3,"file":"doctorCommand.d.ts","sourceRoot":"","sources":["../../src/cli/doctorCommand.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,iBAAiB,EAAE,MAAM,gCAAgC,CAAC;AAInE,KAAK,UAAU,GAAG;IAAE,QAAQ,CAAC,MAAM,EAAE,MAAM,CAAC;IAAC,QAAQ,CAAC,MAAM,CAAC,EAAE,MAAM,CAAA;CAAE,CAAC;AAgBxE;;;;GAIG;AACH,eAAO,MAAM,aAAa,SAAgB,UAAU,KAAG,OAAO,CAAC,MAAM,GAAG,iBAAiB,CA0BxF,CAAC"}

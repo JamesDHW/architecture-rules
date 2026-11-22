@@ -98,3 +98,35 @@ export const namingSchema = {
   },
   required: ["case"], additionalProperties: false,
 };
+
+const words = (stem: string): readonly string[] => stem.match(/[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+/g) ?? [];
+
+const capitalized = (word: string): string => `${word.slice(0, 1).toUpperCase()}${word.slice(1).toLowerCase()}`;
+
+const inCase = (parts: readonly string[], namingCase: NamingCase): string => {
+  switch (namingCase) {
+    case "camelCase":
+      return parts.map((word, index) => (index === 0 ? word.toLowerCase() : capitalized(word))).join("");
+    case "PascalCase":
+      return parts.map(capitalized).join("");
+    case "kebab-case":
+      return parts.map((word) => word.toLowerCase()).join("-");
+    case "snake_case":
+      return parts.map((word) => word.toLowerCase()).join("_");
+  }
+};
+
+/**
+ * The filename's stem rewritten in the policy's first case, keeping its suffixes and extension, or undefined when a
+ * case change cannot make it comply (a missing prefix or required suffix needs a person to choose the name).
+ */
+export const compliantName = (path: string, policy: NamingPolicy): string | undefined => {
+  const name = basename(path);
+  if (namingError(path, policy) === undefined) return undefined;
+  const extension = /(?:\.d)?\.[cm]?[jt]sx?$/i.exec(name)?.[0] ?? "";
+  const { stem, suffixes } = splitSuffixes(name.slice(0, name.length - extension.length), [...asList(policy.requiredSuffix), ...(policy.suffixes ?? [])]);
+  const [namingCase] = asList(policy.case);
+  if (namingCase === undefined) return undefined;
+  const renamed = `${inCase(words(stem), namingCase)}${suffixes.join("")}${extension}`;
+  return namingError(renamed, policy) === undefined ? renamed : undefined;
+};

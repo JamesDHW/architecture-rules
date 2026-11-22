@@ -8,6 +8,8 @@ export type Projects = {
     readonly projects: readonly Project[];
     readonly sources: ReadonlySet<string>;
     readonly issues: readonly Issue[];
+    /** Each project's resolved compiler options, by its tsconfig path. */
+    readonly compilerOptions: ReadonlyMap<string, Readonly<Record<string, unknown>>>;
     readonly close: () => void;
 };
 /** Opens every configured TypeScript project; the caller must close() the result. */

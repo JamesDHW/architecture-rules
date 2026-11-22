@@ -86,4 +86,9 @@ export declare const namingSchema: {
     required: string[];
     additionalProperties: boolean;
 };
+/**
+ * The filename's stem rewritten in the policy's first case, keeping its suffixes and extension, or undefined when a
+ * case change cannot make it comply (a missing prefix or required suffix needs a person to choose the name).
+ */
+export declare const compliantName: (path: string, policy: NamingPolicy) => string | undefined;
 //# sourceMappingURL=namingPolicy.d.ts.map

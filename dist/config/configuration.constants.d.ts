@@ -1,5 +1,11 @@
 /** Field names accepted at each level of architecture.config.ts. */
-export declare const ARCHITECTURE_FIELDS: readonly ["projects", "layers", "naming", "rules"];
+export declare const ARCHITECTURE_FIELDS: readonly ["projects", "layers", "naming", "rules", "adoption"];
+export declare const ADOPTION_FIELDS: readonly ["mode", "onTouch"];
+export declare const ON_TOUCH_FIELDS: readonly ["default", "rules"];
+export declare const ADOPTION_MODES: readonly ["enforce", "observe"];
+export declare const TOUCH_POLICIES: readonly ["fix", "no-new"];
+/** Rules whose existing findings stay allowed in a file someone changes: fixing one can mean a refactor. */
+export declare const NO_NEW_ON_TOUCH: readonly string[];
 export declare const PROJECTS_FIELDS: readonly ["tsconfigs", "references"];
 export declare const LAYER_FIELDS: readonly ["description", "files", "exclude", "naming", "dependencies", "rules", "generated", "entry", "development"];
 export declare const NAMING_FIELDS: readonly ["case", "prefix", "suffixes", "requiredSuffix", "allowedNames"];

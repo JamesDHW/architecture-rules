@@ -24,6 +24,14 @@ describe("editor protocol", () => {
 describe("editor diagnostics", () => {
   const finding: Finding = { source: "lint", severity: "warning", ruleId: "no-let", file: "src/app.ts", line: 3, column: 5, message: "Declare this with const." };
 
+  it("fades recorded debt in untouched files, and warns about it once the file is edited", () => {
+    const severities = (status: Finding["status"]): unknown => fileDiagnostics("/project", [{ ...finding, severity: "error", ...(status === undefined ? {} : { status }) }], new Set()).at(0)?.diagnostics.at(0);
+    expect(severities("baselined")).toMatchObject({ severity: 4, tags: [1] });
+    expect(severities("touched")).toMatchObject({ severity: 2 });
+    expect(severities("new")).toMatchObject({ severity: 1 });
+    expect(severities(undefined)).toMatchObject({ severity: 1 });
+  });
+
   it("carries the finding's rule, message and severity at its position, and clears files that became clean", () => {
     const [published, cleared] = fileDiagnostics("/project", [finding], new Set(["file:///project/src/old.ts"]));
     expect(published).toMatchObject({

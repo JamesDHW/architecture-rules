@@ -19,6 +19,8 @@ export type Projects = {
   readonly projects: readonly Project[];
   readonly sources: ReadonlySet<string>;
   readonly issues: readonly Issue[];
+  /** Each project's resolved compiler options, by its tsconfig path. */
+  readonly compilerOptions: ReadonlyMap<string, Readonly<Record<string, unknown>>>;
   readonly close: () => void;
 };
 
@@ -105,7 +107,8 @@ const loadProjects = (api: API, architecture: Architecture, configs: ReadonlyMap
     snapshot.dispose();
     api.close();
   };
-  return { api, snapshot, projects, sources: new Set(memberships.flatMap((entry) => entry.sources)), issues: memberships.flatMap((entry) => entry.issues), close };
+  const compilerOptions = new Map([...configs].map(([path, config]) => [path, config.compilerOptions]));
+  return { api, snapshot, projects, sources: new Set(memberships.flatMap((entry) => entry.sources)), issues: memberships.flatMap((entry) => entry.issues), compilerOptions, close };
 };
 
 const openSnapshot = (root: string, architecture: Architecture, configs: ReadonlyMap<string, ResolvedConfig>): Projects | ArchitectureError => {

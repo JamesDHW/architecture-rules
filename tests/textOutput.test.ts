@@ -34,6 +34,9 @@ const result = (findings: readonly Finding[]): CheckResult => ({
   exceptions: [],
   stages: [{ name: "structure", status: "passed" }, { name: "lint", status: findings.length === 0 ? "passed" : "failed" }, { name: "types", status: "passed" }],
   durationMs: 2400,
+  complete: true,
+  workspaces: [],
+  partial: false,
 });
 
 describe("renderText", () => {

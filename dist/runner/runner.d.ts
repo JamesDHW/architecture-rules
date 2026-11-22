@@ -8,6 +8,8 @@ export type InspectOptions = {
     readonly files?: readonly string[];
     /** The architecture configuration's path, for findings about it; architecture.config.ts in the root by default. */
     readonly configFile?: string;
+    /** Drop selected files that are not source of the checked programs instead of failing: an agent hook passes any edited file. */
+    readonly ignoreUnknownFiles?: boolean;
 };
 export type CheckOptions = InspectOptions & {
     readonly explain?: string;
