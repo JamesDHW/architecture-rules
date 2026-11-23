@@ -95,4 +95,18 @@ export declare const awaitThenableRule: {
         readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 };
+export declare const noAwaitInLoopRule: {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
+    readonly id: "no-await-in-loop";
+    readonly title: string;
+    readonly description: string;
+    readonly enforcement: {
+        readonly type: "oxlint";
+        readonly rule: "no-await-in-loop";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
+    };
+};
 //# sourceMappingURL=asyncFlow.rules.d.ts.map

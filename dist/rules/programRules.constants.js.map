@@ -1,0 +1,1 @@
+{"version":3,"file":"programRules.constants.js","sourceRoot":"","sources":["../../src/rules/programRules.constants.ts"],"names":[],"mappings":"AAAA,oDAAoD;AACpD,MAAM,CAAC,MAAM,aAAa,GAAG;IAC3B,eAAe,EAAE,qBAAqB;IACtC,YAAY,EAAE,0BAA0B;IACxC,cAAc,EAAE,qBAAqB;IACrC,aAAa,EAAE,0BAA0B;IACzC,aAAa,EAAE,oBAAoB;CAC3B,CAAC"}

@@ -1,5 +1,5 @@
 import { isBlocking } from "./findings.js";
-const stageNames = ["structure", "lint", "types", "dead-code"];
+const stageNames = ["structure", "lint", "types", "program", "dead-code"];
 const stageOf = (source) => {
     switch (source) {
         case "structure":
@@ -8,6 +8,8 @@ const stageOf = (source) => {
             return "lint";
         case "compiler":
             return "types";
+        case "program":
+            return "program";
         case "dead-code":
             return "dead-code";
     }

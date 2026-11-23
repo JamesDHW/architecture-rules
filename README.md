@@ -117,7 +117,7 @@ After the findings, the checker prints a **How to fix** section: for each rule t
 - `description`: what the rule asks for, with good and bad lines.
 - `instead`: one line saying what to write instead. The checker prints it next to findings.
 - `suppressWhen`: when a reasoned exception is acceptable, with a ready-made exception comment.
-- `evasions`: workarounds that satisfy the rule's wording but miss its point. Each names the rule that reports it, or says that review has to catch it. Tests check both claims.
+- `evasions`: workarounds that satisfy the rule's wording but miss its point, shown under "Workarounds to avoid". Each names the rule that reports it, or says that review has to catch it. Tests check both claims.
 - Examples: the `valid` and `invalid` cases from `src/rules/cases/*.cases.ts`, the same cases the rule tests run.
 
 Do not edit `docs/rules/` by hand; `pnpm run build` rewrites it.
@@ -265,7 +265,18 @@ const plugin = await import(moduleName);
 const data = response.data; // architecture-disable-line generic-name-denylist -- The API names this field data.
 ```
 
-File-wide exceptions, exceptions without a reason, unknown rule ids and other tools' disable or configuration comments are rejected before anything is linted. An exception that covers no finding is an error. Structural, configuration and compiler checks cannot be excepted. `--fix` never rewrites a line an exception covers, and converts reasoned disable comments from earlier versions (`// oxlint-disable-next-line architecture/no-let -- …`) into exceptions.
+File-wide exceptions, exceptions without a reason, unknown rule ids and other tools' disable or configuration comments are rejected before anything is linted. An exception that covers no finding is an error. Lint, program and dead-code findings can be excepted; structural, configuration and compiler checks cannot. `--fix` never rewrites a line an exception covers, and converts reasoned disable comments from earlier versions (`// oxlint-disable-next-line architecture/no-let -- …`) into exceptions.
+
+### Program checks
+
+These rules read the whole TypeScript program, with the compiler's types and the import graph, after the lint and compiler stages. Like lint rules they can be set per layer and excepted on a line:
+
+| Rule | Default | Fails when |
+| --- | --- | --- |
+| `no-discarded-errors` | error | A branch narrowed to an error, by `instanceof` a class whose instances are assignable to `Error` or by a type predicate, only returns or evaluates to an empty value (`null`, `undefined`, `[]`, `""`, `0`, `false`). |
+| `exhaustive-literal-lists` | error | A literal list written with `satisfies readonly T[]`, where `T` is a union of literals, leaves members of `T` out. A deliberate subset uses a type annotation. |
+| `max-directory-files-warn`, `max-directory-files` | warn above 15, error above 30 | A directory holds more production source files than its layer allows. Tests, scripts, tool configuration, generated and declaration files do not count. A line cannot cover a directory, so a flat folder that is the framework's contract sets its layer's limit with a reason. |
+| `min-file-substance` | warn | A production file of at most 3 top-level statements and 10 lines of code is imported by exactly one file, in the same folder. Entry files and `*.constants.ts` and `*.state.ts` files (which other rules ask for) are skipped. |
 
 ### Dead code and dead configuration
 
@@ -349,7 +360,7 @@ Which recorded debt a touched file must fix is set per rule:
 adoption: {
   onTouch: {
     default: "fix",                        // the default: a changed file fixes its recorded debt
-    rules: { "allowed-imports": "no-new" }, // the default for imports: fixing one can mean a refactor
+    rules: { "allowed-imports": "no-new", "max-params": "no-new" }, // the defaults: fixing either changes other files
   },
 },
 ```
@@ -439,7 +450,7 @@ architecture-check adopt --prompt | --agent-snippet
 
 Exit codes: 0 passes; 1 new errors (or any other failure); 2 agent format failed; 3 a touched file still has recorded debt; 4 the baseline grew without a reason (`--ci`); 5 the baseline lists fixed debt (`--ci`).
 
-A check runs in four stages: structure (inventory, classification, compiler settings, exceptions, configuration), then lint with each file's policy, then TypeScript's diagnostics, then dead code. Structural failures stop the run before any fix is applied. `--fix` never changes the configuration, tsconfigs, filenames or `package.json`, and never deletes code. `describe` reports import cycles between layers and lists layers so each comes after the layers it imports.
+A check runs in five stages: structure (inventory, classification, compiler settings, exceptions, configuration), then lint with each file's policy, then TypeScript's diagnostics, then the program checks, then dead code. Structural failures stop the run before any fix is applied. `--fix` never changes the configuration, tsconfigs, filenames or `package.json`, and never deletes code. `describe` reports import cycles between layers and lists layers so each comes after the layers it imports.
 
 The output groups findings by file and ends with a summary:
 
@@ -453,7 +464,7 @@ src/domain/order.ts
 ✗ 2 errors in 1 file
   by rule:   no-let 1 · unused-exports 1
   by layer:  domain 2
-  stages:    structure ✓ · lint ✗ · types ✓ · dead code ✗ · 2.4s
+  stages:    structure ✓ · lint ✗ · types ✓ · program ✓ · dead code ✗ · 2.4s
 
 How to fix:
   …

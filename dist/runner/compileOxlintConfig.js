@@ -11,6 +11,7 @@ const lintRuleName = (rule) => {
         case "typescript":
         case "advisory":
         case "dead-code":
+        case "program":
         case "configuration":
         case "architecture":
             return undefined;

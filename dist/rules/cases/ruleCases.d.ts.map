@@ -1,1 +1,1 @@
-{"version":3,"file":"ruleCases.d.ts","sourceRoot":"","sources":["../../../src/rules/cases/ruleCases.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,SAAS,EAAE,MAAM,yBAAyB,CAAC;AAkCzD,qHAAqH;AACrH,eAAO,MAAM,SAAS,EAAE,QAAQ,CAAC,MAAM,CAAC,MAAM,EAAE,SAAS,SAAS,EAAE,CAAC,CAiCpE,CAAC"}
+{"version":3,"file":"ruleCases.d.ts","sourceRoot":"","sources":["../../../src/rules/cases/ruleCases.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,SAAS,EAAE,MAAM,yBAAyB,CAAC;AAqCzD,qHAAqH;AACrH,eAAO,MAAM,SAAS,EAAE,QAAQ,CAAC,MAAM,CAAC,MAAM,EAAE,SAAS,SAAS,EAAE,CAAC,CAoCpE,CAAC"}

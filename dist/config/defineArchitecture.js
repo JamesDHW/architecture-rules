@@ -25,7 +25,7 @@ const typescriptProjects = (value) => {
 /** The project-wide policy every layer inherits: top-level naming and rules. Dependencies are always declared per layer. */
 const projectPolicy = (config) => {
     const policyNaming = optional(config.naming, (entry) => naming(entry, "naming"));
-    const policyRules = overrideRules(defaultRules(), config.rules, projectWide, true);
+    const policyRules = overrideRules({ inherited: defaultRules(), origin: projectWide, project: true }, config.rules);
     return checked({
         origins: { naming: config.naming === undefined ? "unconfigured" : projectWide, dependencies: "deny by default" },
         ...(policyNaming.value === undefined ? {} : { naming: policyNaming.value }),
@@ -43,7 +43,7 @@ const layer = (name, value, layerNames, defaults) => {
     const layerDescription = text(description, `${label}.description`);
     const layerNaming = optional(declared.value.naming, (entry) => naming(entry, `${label}.naming`));
     const layerDependencies = optional(declared.value.dependencies, (entry) => dependencies(entry, layerNames, `${label}.dependencies`));
-    const layerRules = overrideRules(defaults.rules, rules, label, false);
+    const layerRules = overrideRules({ inherited: defaults.rules, origin: label, project: false }, rules);
     const layerGenerated = optional(declared.value.generated, (setting) => generated(setting, `${label}.generated`));
     const layerEntry = optional(declared.value.entry, (setting) => entryPoint(setting, `${label}.entry`));
     const layerDevelopment = optional(declared.value.development, (setting) => developmentOnly(setting, `${label}.development`));

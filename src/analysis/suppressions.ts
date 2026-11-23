@@ -3,7 +3,7 @@ import type { Project } from "typescript/unstable/sync";
 
 import type { ArchitectureRule } from "../core/defineRule.js";
 import { isPresent } from "../core/guards.js";
-import { isExceptable, lintRuleName } from "../rules/lintNames.js";
+import { isExceptable, lintNameAliases, lintRuleName } from "../rules/lintNames.js";
 import { rules } from "../rules/index.js";
 import type { ClassifiedFile, Issue } from "./inventory.js";
 import { descendants } from "./syntaxTree.js";
@@ -36,9 +36,19 @@ const jsxExpressionComments = (source: SourceFile, node: Node): readonly Comment
   return [...spans(getLeadingCommentRanges(source.text, start)), ...spans(getTrailingCommentRanges(source.text, start))];
 };
 
+/**
+ * Comments on their own lines after a node: a block's last statement is followed by trivia that belongs to no node,
+ * up to the closing brace, and a directive there would otherwise go unread.
+ */
+const followingComments = (source: SourceFile, node: Node): readonly CommentSpan[] => {
+  const isInsideJsxText = node.kind === SyntaxKind.JsxText || isJsxChild(node);
+  return isInsideJsxText ? [] : spans(getLeadingCommentRanges(source.text, node.end));
+};
+
 const nodeComments = (source: SourceFile, node: Node): readonly CommentSpan[] => [
   ...(node.kind === SyntaxKind.JsxText ? [] : spans(getLeadingCommentRanges(source.text, node.pos))),
   ...(isJsxChild(node) ? [] : spans(getTrailingCommentRanges(source.text, node.end))),
+  ...followingComments(source, node),
   ...jsxExpressionComments(source, node),
 ];
 
@@ -87,7 +97,7 @@ export type LineException = {
 /** The architecture rule a legacy engine rule name refers to, such as architecture/no-let or eslint/id-denylist. */
 const rulesByLegacyName = new Map(rules.flatMap((rule): readonly (readonly [string, string])[] => {
   const name = lintRuleName(rule);
-  return name === undefined ? [] : [[name, rule.id]];
+  return name === undefined ? [] : lintNameAliases(name).map((alias) => [alias, rule.id] as const);
 }));
 
 const legacyRuleId = (name: string): string | undefined => rulesByLegacyName.get(name) ?? rulesByLegacyName.get(`eslint/${name}`);

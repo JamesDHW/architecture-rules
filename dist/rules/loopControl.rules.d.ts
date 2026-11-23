@@ -3,7 +3,7 @@ export declare const collectionLoopsRule: {
     readonly id: "collection-loops";
     readonly title: "Use for...of as the default loop form";
     readonly description: string;
-    readonly instead: "Use for...of, for await...of, or a collection method such as map, filter, find or some.";
+    readonly instead: "Use for...of, or a collection method such as map, filter, find or some; use Promise.all for asynchronous work per item.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";

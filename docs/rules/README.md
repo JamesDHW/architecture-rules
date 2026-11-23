@@ -15,6 +15,7 @@ Each page explains one rule: why it exists, what to write instead, when a suppre
 | [`compiler-checking`](compiler-checking.md) | Run the configured compiler without weakening its contract | Structural check; lint comments cannot suppress it |  |
 | [`constants-module`](constants-module.md) | Put semantic constants in a constants module | Lint rule | error by default |
 | [`control-flow-braces`](control-flow-braces.md) | Use braces except for single-line terminal guards | Lint rule | error by default |
+| [`css-module-ownership`](css-module-ownership.md) | Import a CSS module only from its own component | Lint rule | error by default |
 | [`destructured-props`](destructured-props.md) | Destructure component props in the parameter list | Lint rule | error by default |
 | [`direct-boolean-conditions`](direct-boolean-conditions.md) | Use strict booleans directly | Lint rule, built on `typescript/no-unnecessary-boolean-literal-compare` | error by default, with options `[{"allowComparingNullableBooleansToTrue":true,"allowComparingNullableBooleansToFalse":true}]` |
 | [`domain-owned-dispatch`](domain-owned-dispatch.md) | Dispatch domain actions through their owning reducer | Lint rule | error by default |
@@ -22,6 +23,7 @@ Each page explains one rule: why it exists, what to write instead, when a suppre
 | [`eqeqeq`](eqeqeq.md) | Use explicit equality | Lint rule, built on `eslint/eqeqeq` | error by default |
 | [`exact-optional-property-types`](exact-optional-property-types.md) | Distinguish omitted properties from explicit undefined | TypeScript compiler options `{"exactOptionalPropertyTypes":true}` |  |
 | [`exhaustive-deps`](exhaustive-deps.md) | Declare exhaustive effect dependencies | Lint rule, built on `react/exhaustive-deps` | error by default |
+| [`exhaustive-literal-lists`](exhaustive-literal-lists.md) | List every member when a literal list satisfies a union | Program check, with type information | error by default |
 | [`exhaustive-value-mappings`](exhaustive-value-mappings.md) | Use records for values and switches for behavior | Advisory; nothing checks it automatically |  |
 | [`explicit-conditional-effects`](explicit-conditional-effects.md) | Use statements for conditional effects | Lint rule, built on `eslint/no-unused-expressions` | error by default, with options `[{"allowShortCircuit":false,"allowTernary":false,"allowTaggedTemplates":true,"enforceForJSX":true,"ignoreDirectives":true}]` |
 | [`explicit-conditions`](explicit-conditions.md) | Use explicit conditions for non-boolean values | Lint rule, built on `typescript/strict-boolean-expressions` | error by default, with options `[{"allowString":false,"allowNumber":false,"allowNullableObject":false}]` |
@@ -35,8 +37,14 @@ Each page explains one rule: why it exists, what to write instead, when a suppre
 | [`grouped-logical-operators`](grouped-logical-operators.md) | Expose mixed logical operator precedence | Lint rule | error by default |
 | [`guard-clauses`](guard-clauses.md) | Use guard clauses for terminal cases | Lint rule, built on `eslint/no-else-return` | off by default, with options `[{"allowElseIf":false}]` |
 | [`jsx-key`](jsx-key.md) | Use stable list keys | Lint rule, built on `react/jsx-key` | error by default |
+| [`max-directory-files`](max-directory-files.md) | Limit directories to 30 source files | Program check, with type information | error by default, with options `[{"max":30}]` |
+| [`max-directory-files-warn`](max-directory-files-warn.md) | Warn when a directory holds more than 15 source files | Program check, with type information | warn by default, with options `[{"max":15}]` |
 | [`max-file-lines`](max-file-lines.md) | Limit source files to 200 lines | Lint rule, built on `eslint/max-lines` | error by default, with options `[{"max":200,"skipBlankLines":true,"skipComments":true}]` |
 | [`max-file-lines-warn`](max-file-lines-warn.md) | Warn when a source file exceeds 150 lines | Lint rule | warn by default, with options `[{"max":150,"skipBlankLines":true,"skipComments":true}]` |
+| [`max-function-lines`](max-function-lines.md) | Limit functions to 80 lines | Lint rule, built on `eslint/max-lines-per-function` | error by default, with options `[{"max":80,"skipBlankLines":true,"skipComments":true,"IIFEs":false}]` |
+| [`max-function-lines-warn`](max-function-lines-warn.md) | Warn when a function is longer than 40 lines | Lint rule | warn by default, with options `[{"max":40,"skipBlankLines":true,"skipComments":true}]` |
+| [`max-params`](max-params.md) | Take at most two positional parameters | Lint rule, built on `eslint/max-params` | error by default, with options `[{"max":2}]` |
+| [`min-file-substance`](min-file-substance.md) | Merge tiny files into their only importer | Program check, with type information | warn by default, with options `[{"maxStatements":3,"maxLines":10,"ignore":["**/*.constants.ts","**/*.state.ts"]}]` |
 | [`module-scope-components`](module-scope-components.md) | Declare components and hooks at module scope | Lint rule, built on `react/no-unstable-nested-components` | error by default |
 | [`named-divisibility`](named-divisibility.md) | Name divisibility checks | Lint rule | error by default |
 | [`named-exports`](named-exports.md) | Prefer named exports | Lint rule, built on `import/no-default-export` | error by default |
@@ -44,6 +52,7 @@ Each page explains one rule: why it exists, what to write instead, when a suppre
 | [`named-predicates`](named-predicates.md) | Name your predicates | Lint rule | error by default |
 | [`neutral-collection-results`](neutral-collection-results.md) | Use collection operations' neutral empty behavior | Lint rule, built on `unicorn/no-useless-length-check` | error by default |
 | [`no-array-mutation`](no-array-mutation.md) | Build new arrays instead of changing them in place | Lint rule | error by default |
+| [`no-await-in-loop`](no-await-in-loop.md) | Do not await inside a loop | Lint rule, built on `eslint/no-await-in-loop` | error by default |
 | [`no-binding-alias`](no-binding-alias.md) | Do not rename values through aliases | Lint rule | error by default |
 | [`no-boolean-cast`](no-boolean-cast.md) | Do not cast into a boolean | Lint rule, built on `eslint/no-implicit-coercion` | error by default, with options `[{"boolean":true,"number":false,"string":false}]` |
 | [`no-boolean-if-else`](no-boolean-if-else.md) | Pass booleans directly instead of branching | Lint rule | error by default |
@@ -51,8 +60,10 @@ Each page explains one rule: why it exists, what to write instead, when a suppre
 | [`no-collapsible-if`](no-collapsible-if.md) | Do not nest a sole if inside another if | Lint rule | error by default |
 | [`no-cycle`](no-cycle.md) | Forbid circular dependencies | Lint rule, built on `import/no-cycle` | error by default |
 | [`no-deep-relative-imports`](no-deep-relative-imports.md) | Warn on deeply ascending relative imports | Lint rule | warn by default |
+| [`no-discarded-errors`](no-discarded-errors.md) | Do not turn errors into empty values | Program check, with type information | error by default |
 | [`no-duplicate-switch-cases`](no-duplicate-switch-cases.md) | Do not repeat switch case values | Lint rule, built on `eslint/no-duplicate-case` | error by default |
 | [`no-else`](no-else.md) | Do not use else | Lint rule | error by default |
+| [`no-embedded-code`](no-embedded-code.md) | Keep code and markup out of strings | Lint rule | error by default |
 | [`no-empty-branches`](no-empty-branches.md) | Remove empty conditional branches | Lint rule | error by default |
 | [`no-enums`](no-enums.md) | Use literal unions instead of enums | Lint rule | error by default |
 | [`no-explicit-any`](no-explicit-any.md) | Isolate unchecked type escapes at boundaries | Lint rule, built on `typescript/no-explicit-any` | error by default |

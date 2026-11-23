@@ -6,7 +6,7 @@ classic for, for...in, while, or do...while by default. Require a documented
 scoped exception for an API or algorithm that genuinely needs another form.
 
 Good:
-  for (const project of projects) { await publishProject(project); }
+  for (const project of projects) { publishProject(project); }
   for (const [projectIndex, project] of projects.entries()) {
     publishProjectAtPosition(project, projectIndex);
   }
@@ -22,12 +22,14 @@ Bad:
 
 A single collection-loop syntax exposes the element directly, avoids index
 bookkeeping, and aligns with immutable bindings and checked collection access.
+Asynchronous work per item belongs in Promise.all over a mapped list, not an
+awaiting loop; see no-await-in-loop.
 `.trim();
 export const collectionLoopsRule = defineRule({
     id: "collection-loops",
     title: "Use for...of as the default loop form",
     description: collectionLoopsDescription,
-    instead: "Use for...of, for await...of, or a collection method such as map, filter, find or some.",
+    instead: "Use for...of, or a collection method such as map, filter, find or some; use Promise.all for asynchronous work per item.",
     enforcement: {
         type: "custom-oxlint",
         configuration: "error",
@@ -57,12 +59,12 @@ than break. Document a scoped exception when an alternative is genuinely worse.
 Good:
   const matchingProject = projects.find(matchesProject);
   const activeProjects = projects.filter(isProjectActive);
-  for (const project of activeProjects) { await publishProject(project); }
+  for (const project of activeProjects) { publishProject(project); }
 
 Bad:
   for (const project of projects) {
     if (project.isArchived) continue;
-    await publishProject(project);
+    publishProject(project);
   }
 
 Never replace an exit with a mutable control flag. Filtering eagerly evaluates

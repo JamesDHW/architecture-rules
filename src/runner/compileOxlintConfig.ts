@@ -18,6 +18,7 @@ const lintRuleName = (rule: RegisteredRule): string | undefined => {
     case "typescript":
     case "advisory":
     case "dead-code":
+    case "program":
     case "configuration":
     case "architecture":
       return undefined;

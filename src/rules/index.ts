@@ -1,6 +1,6 @@
 import { fileInventoryRule, fileClassificationRule, projectMembershipRule, compilerCheckingRule, reasonedSuppressionsRule } from "./architecture.rules.js";
 import { allowedImportsRule } from "./allowedImports.rule.js";
-import { asyncAwaitRule, awaitThenableRule, noFloatingPromisesRule, noMisusedPromisesRule } from "./asyncFlow.rules.js";
+import { asyncAwaitRule, awaitThenableRule, noAwaitInLoopRule, noFloatingPromisesRule, noMisusedPromisesRule } from "./asyncFlow.rules.js";
 import {
   directBooleanConditionsRule,
   explicitConditionalEffectsRule,
@@ -15,11 +15,13 @@ import { noForEachRule, preferAtRule, reduceSimpleFoldsRule } from "./collection
 import { eqeqeqRule, guardClausesRule, noBooleanCastRule, noUnneededTernaryRule, nullishDefaultsRule, preferLogicalOverTernaryRule } from "./conditions.rules.js";
 import { constantsModuleRule } from "./constantsModule.rule.js";
 import { controlFlowBracesRule } from "./controlFlowBraces.rule.js";
+import { cssModuleOwnershipRule } from "./cssModuleOwnership.rule.js";
 import { destructuredPropsRule } from "./destructuredProps.rule.js";
 import { domainOwnedDispatchRule } from "./domainOwnedDispatch.rule.js";
 import { emptyBranchesRule } from "./emptyBranches.rule.js";
 import { exactOptionalPropertyTypesRule } from "./exactOptionalPropertyTypes.rule.js";
 import { exhaustiveValueMappingsRule } from "./exhaustiveValueMappings.rule.js";
+import { exhaustiveLiteralListsRule } from "./exhaustiveLiteralLists.rule.js";
 import { explicitConditionsRule } from "./explicitConditions.rule.js";
 import { fileNamingRule } from "./fileNaming.rule.js";
 import { forceConsistentCasingInFileNamesRule } from "./forceConsistentCasingInFileNames.rule.js";
@@ -27,7 +29,11 @@ import { preferArrowCallbackRule, preferArrowFunctionsRule } from "./functionSty
 import { groupedLogicalOperatorsRule } from "./groupedLogicalOperators.rule.js";
 import { noParamReassignRule, noUselessAssignmentRule, noVarRule, preferConstRule } from "./immutability.rules.js";
 import { collectionLoopsRule, noLoopJumpsRule } from "./loopControl.rules.js";
+import { maxDirectoryFilesRule, maxDirectoryFilesWarnRule } from "./maxDirectoryFiles.rule.js";
 import { maxFileLinesRule, maxFileLinesWarnRule } from "./maxFileLines.rule.js";
+import { maxFunctionLinesRule, maxFunctionLinesWarnRule } from "./maxFunctionLines.rule.js";
+import { maxParamsRule } from "./maxParams.rule.js";
+import { minFileSubstanceRule } from "./minFileSubstance.rule.js";
 import { namedExportsRule, noCycleRule } from "./modules.rules.js";
 import { namedDivisibilityRule } from "./namedDivisibility.rule.js";
 import { namedJsxHandlersRule } from "./namedJsxHandlers.rule.js";
@@ -39,7 +45,9 @@ import { noBooleanIfElseRule } from "./noBooleanIfElse.rule.js";
 import { noCapturedMutationRule } from "./noCapturedMutation.rule.js";
 import { noCollapsibleIfRule } from "./noCollapsibleIf.rule.js";
 import { noDeepRelativeImportsRule } from "./noDeepRelativeImports.rule.js";
+import { noDiscardedErrorsRule } from "./noDiscardedErrors.rule.js";
 import { noElseRule } from "./noElse.rule.js";
+import { noEmbeddedCodeRule } from "./noEmbeddedCode.rule.js";
 import { noEnumsRule } from "./noEnums.rule.js";
 import { noFallthroughCasesInSwitchRule } from "./noFallthroughCasesInSwitch.rule.js";
 import { noFinallyRule } from "./noFinally.rule.js";
@@ -114,6 +122,8 @@ export const rules = [
   noCycleRule,
   explicitJsxPropsRule, moduleScopeComponentsRule,
   maxFileLinesWarnRule, maxFileLinesRule,
+  maxFunctionLinesWarnRule, maxFunctionLinesRule, maxParamsRule,
+  noEmbeddedCodeRule, cssModuleOwnershipRule, noAwaitInLoopRule,
   guardClausesRule,
   genericNameDenylistRule,
   noExplicitAnyRule, noNonNullAssertionRule, noTsCommentsRule, noUnsafeAssignmentRule, noUnsafeCallRule,
@@ -131,6 +141,7 @@ export const rules = [
   constantsModuleRule,
   namedJsxHandlersRule,
   noLetRule, noCapturedMutationRule, destructuredPropsRule, noArrayMutationRule,
+  noDiscardedErrorsRule, exhaustiveLiteralListsRule, maxDirectoryFilesWarnRule, maxDirectoryFilesRule, minFileSubstanceRule,
   unusedFilesRule, unusedExportsRule, unusedTypesRule, duplicateExportsRule, productionReachabilityRule,
   unusedDependenciesRule, unlistedDependenciesRule, unlistedBinariesRule, unresolvedImportsRule,
   unusedPermissionsRule, unmatchedPatternsRule, competingConfigurationRule, typescriptVersionRule,

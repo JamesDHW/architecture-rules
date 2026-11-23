@@ -1,6 +1,6 @@
 import type { Issue } from "../analysis/inventory.js";
 /** Which stage of the check reported a finding. */
-export type FindingSource = "structure" | "lint" | "compiler" | "dead-code";
+export type FindingSource = "structure" | "lint" | "compiler" | "program" | "dead-code";
 /**
  * Where a finding stands against the baseline: new (not recorded there), touched (recorded, but in a file the change
  * touches, under a rule that must then be fixed) or baselined (recorded debt, which passes).

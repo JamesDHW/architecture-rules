@@ -1,1 +1,1 @@
-{"version":3,"file":"ruleCases.js","sourceRoot":"","sources":["../../src/core/ruleCases.ts"],"names":[],"mappings":""}
+{"version":3,"file":"ruleCases.js","sourceRoot":"","sources":["../../src/core/ruleCases.ts"],"names":[],"mappings":"AAuCA,uFAAuF;AACvF,MAAM,CAAC,MAAM,eAAe,GAAG,CAAC,SAAiB,EAAE,YAA8C,EAAmB,EAAE;IACpH,8HAA8H;IAC9H,OAAO,EAAE,SAAS,EAAE,IAAI,EAAE,YAAY,EAAE,CAAC;AAC3C,CAAC,CAAC"}

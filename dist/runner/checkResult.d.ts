@@ -4,7 +4,7 @@ import type { LineException } from "../analysis/suppressions.js";
 import type { Architecture } from "../config/types.js";
 import { type Finding } from "./findings.js";
 /** The stages of a check, in the order they run. */
-type StageName = "structure" | "lint" | "types" | "dead-code";
+type StageName = "structure" | "lint" | "types" | "program" | "dead-code";
 export type StageStatus = "passed" | "failed" | "skipped";
 export type Stage = {
     readonly name: StageName;

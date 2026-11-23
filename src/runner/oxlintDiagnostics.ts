@@ -4,14 +4,14 @@ import { relativePath } from "../analysis/paths.js";
 import { isRecord, isString, isUnknownArray } from "../core/guards.js";
 import { ArchitectureError } from "../errors/architectureError.js";
 import { tryCatch } from "../errors/tryCatch.js";
-import { diagnosticCode, lintRuleName } from "../rules/lintNames.js";
+import { diagnosticCode, lintNameAliases, lintRuleName } from "../rules/lintNames.js";
 import { rules } from "../rules/index.js";
 import type { Finding } from "./findings.js";
 
 /** Architecture rule ids by the code Oxlint prints for them, such as typescript(no-misused-promises). */
 const ruleIdsByCode = new Map(rules.flatMap((rule): readonly (readonly [string, string])[] => {
   const name = lintRuleName(rule);
-  return name === undefined ? [] : [[diagnosticCode(name), rule.id]];
+  return name === undefined ? [] : lintNameAliases(name).map((alias) => [diagnosticCode(alias), rule.id] as const);
 }));
 
 const firstSpan = (labels: unknown): Readonly<Record<string, unknown>> | undefined => {

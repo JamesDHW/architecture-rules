@@ -22,10 +22,12 @@ const oxlint = join(dirname(requireFromPackage.resolve("oxlint/package.json")), 
  */
 const typeAwareEngine = () => {
     const fromEngine = tryCatch(() => createRequire(requireFromPackage.resolve("oxlint-tsgolint/package.json")));
+    // architecture-disable-next-line no-discarded-errors -- Not finding the engine here is expected; the lint engine then looks for it itself.
     if (fromEngine instanceof ArchitectureError)
         return undefined;
     const executable = `@oxlint-tsgolint/${process.platform}-${process.arch}/tsgolint${process.platform === "win32" ? ".exe" : ""}`;
     const resolved = tryCatch(() => fromEngine.resolve(executable));
+    // architecture-disable-next-line no-discarded-errors -- A platform without a prebuilt engine falls back to the lint engine's own lookup.
     return resolved instanceof ArchitectureError ? undefined : resolved;
 };
 const engineEnvironment = () => {
@@ -82,8 +84,10 @@ const runInTurn = async (root, invocations, done) => {
 };
 /** Lints each project's files with every file's policy: one run per project unless its paths exceed the command-line budget. */
 const runOxlint = async (root, configPath, files, projects, fix) => {
+    // A package imported by several projects is in each of their programs; lint it once, in the first that holds it.
+    const ownerOf = (file) => projects.find((project) => project.program.getSourceFile(file.path) !== undefined);
     const invocations = projects.flatMap((project) => {
-        const projectFiles = files.filter((file) => project.program.getSourceFile(file.path) !== undefined);
+        const projectFiles = files.filter((file) => ownerOf(file) === project);
         return batches(projectFiles).map((batch) => oxlintArguments(configPath, project, batch, fix));
     });
     return runInTurn(root, invocations, []);

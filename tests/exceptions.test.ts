@@ -47,6 +47,15 @@ export const b = 2;`);
     ]);
   });
 
+  it("reads a directive on its own line before a closing brace", () => {
+    const { issues } = read(`export const run = (start: () => void): void => {
+  start();
+  // oxlint-disable-next-line react-hooks/exhaustive-deps -- Not read by the engine either.
+};`);
+    expect(issues).toEqual([expect.objectContaining({ ruleId: "reasoned-suppressions", line: 3 })]);
+    expect(issues.at(0)?.message).toContain("--fix converts this one");
+  });
+
   it("names no engine in its messages", () => {
     const { issues } = read("/* oxlint-disable */\nexport const a = 1;");
     expect(issues.map((issue) => issue.message.toLowerCase()).join(" ")).not.toMatch(/oxlint|eslint/);

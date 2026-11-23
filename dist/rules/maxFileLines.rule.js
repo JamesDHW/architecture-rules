@@ -1,6 +1,7 @@
-import { isRecord, isPresent } from "../core/guards.js";
+import { isRecord } from "../core/guards.js";
 import { defineRule, defineRuleOptions } from "../core/defineRule.js";
 import { defineNativeOxlintRule } from "./defineNativeOxlintRule.js";
+import { countLines } from "./lineCounting.js";
 import { ERROR_OPTIONS, WARN_OPTIONS } from "./maxFileLines.constants.js";
 import { withPlaceholders } from "./messagePlaceholders.js";
 const DESCRIPTION = `
@@ -20,37 +21,6 @@ const getMaxFileLinesOptions = (value, defaults) => {
         skipBlankLines: typeof value.skipBlankLines === "boolean" ? value.skipBlankLines : defaults.skipBlankLines,
         skipComments: typeof value.skipComments === "boolean" ? value.skipComments : defaults.skipComments,
     };
-};
-const dropTrailingEmptyLine = (lines) => {
-    const hasTrailingEmptyLine = lines.length > 1 && lines.at(-1) === "";
-    return hasTrailingEmptyLine ? lines.slice(0, -1) : lines;
-};
-const isBlank = (text) => text.trim() === "";
-/** Lines a comment occupies with nothing but whitespace beside it. */
-const commentOnlyLines = (lines, loc) => {
-    const startLine = loc.start.line;
-    const endLine = loc.end.line;
-    const startText = lines[startLine - 1] ?? "";
-    const endText = lines[endLine - 1] ?? "";
-    if (startLine === endLine) {
-        const standsAlone = isBlank(startText.slice(0, loc.start.column)) && isBlank(startText.slice(loc.end.column));
-        return standsAlone ? [startLine] : [];
-    }
-    const innerLines = Array.from({ length: endLine - startLine - 1 }, (_unused, offset) => startLine + 1 + offset);
-    const firstLines = isBlank(startText.slice(0, loc.start.column)) ? [startLine] : [];
-    const lastLines = isBlank(endText.slice(loc.end.column)) ? [endLine] : [];
-    return [...firstLines, ...innerLines, ...lastLines];
-};
-const getCommentOnlyLineNumbers = (sourceCode) => {
-    return new Set(sourceCode.getAllComments().flatMap((comment) => isPresent(comment.loc) ? commentOnlyLines(sourceCode.lines, comment.loc) : []));
-};
-const countFileLines = (sourceCode, options) => {
-    const lines = dropTrailingEmptyLine(sourceCode.lines).map((text, index) => ({ lineNumber: index + 1, text }));
-    const withoutBlanks = options.skipBlankLines ? lines.filter((line) => !isBlank(line.text)) : lines;
-    if (!options.skipComments)
-        return withoutBlanks.length;
-    const commentOnlyLineNumbers = getCommentOnlyLineNumbers(sourceCode);
-    return withoutBlanks.filter((line) => !commentOnlyLineNumbers.has(line.lineNumber)).length;
 };
 const warnImplementation = {
     meta: {
@@ -75,7 +45,7 @@ const warnImplementation = {
         return {
             Program(node) {
                 const options = getMaxFileLinesOptions(context.options[0], WARN_OPTIONS);
-                const actual = countFileLines(context.sourceCode, options);
+                const actual = countLines(context.sourceCode, options);
                 if (actual <= options.max)
                     return;
                 context.report(withPlaceholders({ node, messageId: "tooManyLines" }, { actual: String(actual), max: String(options.max) }));

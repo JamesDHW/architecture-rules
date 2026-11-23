@@ -14,13 +14,13 @@ const nativeRuleSchema = (root, ruleName) => {
     const properties = isRecord(ruleMap) ? ruleMap.properties : undefined;
     return isRecord(properties) ? properties[ruleName] : undefined;
 };
-const nativeOptionIssues = (id, ruleName, options) => {
+const nativeOptionIssues = ({ id, ruleName }, options) => {
     const root = nativeSchema();
     if (root instanceof ArchitectureError)
         return root.issues;
     return matchesSchema(["error", ...options], nativeRuleSchema(root, ruleName), root) ? [] : [invalidOptions(id, options)];
 };
-const customOptionIssues = (rule, implementation, options) => {
+const customOptionIssues = ({ rule, implementation }, options) => {
     const schema = "options" in rule ? rule.options.schema : implementation.meta?.schema ?? [];
     const tupleSchema = isUnknownArray(schema) ? { type: "array", items: schema, maxItems: schema.length, additionalItems: false } : schema;
     if (!matchesSchema(options, tupleSchema))
@@ -46,10 +46,11 @@ export const validateOptions = (id, options) => {
     const { enforcement } = rule;
     switch (enforcement.type) {
         case "oxlint":
-            return nativeOptionIssues(id, enforcement.rule, options);
+            return nativeOptionIssues({ id, ruleName: enforcement.rule }, options);
         case "custom-oxlint":
-            return customOptionIssues(rule, enforcement.implementation, options);
+            return customOptionIssues({ rule, implementation: enforcement.implementation }, options);
         case "dead-code":
+        case "program":
         case "configuration":
             return checkerOptionIssues(rule, options);
         case "typescript":
@@ -70,6 +71,7 @@ const defaultRule = (rule) => {
         case "oxlint":
         case "custom-oxlint":
         case "dead-code":
+        case "program":
         case "configuration":
             return fromConfiguration(enforcement.configuration);
         case "typescript":
@@ -84,7 +86,7 @@ const settingOptions = (setting, previous) => {
         return previous.options;
     return isUnknownArray(setting.options) ? setting.options : [setting.options];
 };
-const parseDetailedSetting = (id, setting, previous) => {
+const parseDetailedSetting = ({ id, previous }, setting) => {
     const unknownFields = Object.keys(setting).filter((key) => !RULE_SETTING_FIELDS.some((field) => field === key));
     const { reason } = setting;
     const hasReason = isString(reason) && reason.trim().length > 0;
@@ -95,13 +97,14 @@ const parseDetailedSetting = (id, setting, previous) => {
     const parsed = { severity: setting.severity ?? previous.severity, options: settingOptions(setting, previous) };
     return checked(hasReason ? { ...parsed, reason } : parsed, issues);
 };
-const parseSetting = (id, setting, previous) => {
+const parseSetting = (target, setting) => {
+    const { id, previous } = target;
     if (isString(setting))
         return checked({ severity: setting, options: previous.options });
     if (isUnknownArray(setting))
         return checked({ severity: setting.at(0), options: setting.slice(1) });
     if (isRecord(setting))
-        return parseDetailedSetting(id, setting, previous);
+        return parseDetailedSetting(target, setting);
     return checked({ severity: previous.severity, options: previous.options }, [`Invalid setting for ${id}`]);
 };
 /** Overrides that this rule's kind never accepts, whatever the setting. */
@@ -125,32 +128,33 @@ const severityIssues = (rule, severity) => {
     const isCompilerWarning = rule.enforcement.type === "typescript" && severity === "warn";
     return isCompilerWarning ? [`${rule.id} supports error/off only`] : [];
 };
-const overrideRule = (rule, setting, previous, origin, project) => {
+const overrideRule = ({ rule, previous, origin, project }, setting) => {
     const unsupported = scopeIssue(rule, project);
     if (unsupported !== undefined)
         return checked(undefined, [unsupported]);
-    const parsed = parseSetting(rule.id, setting, previous);
+    const parsed = parseSetting({ id: rule.id, previous }, setting);
     const { severity, options, reason } = parsed.value;
     const issues = [...parsed.issues, ...severityIssues(rule, severity), ...validateOptions(rule.id, options)];
     if (!isSeverity(severity))
         return checked(undefined, issues);
     return checked({ severity, options, origin, ...(reason === undefined ? {} : { reason }) }, issues);
 };
-const overrideEntry = (id, setting, inherited, origin, project) => {
+const overrideEntry = ({ inherited, origin, project }, [id, setting]) => {
     const rule = rules.find((candidate) => candidate.id === id);
     const previous = inherited[id];
     const isKnownRule = rule !== undefined && previous !== undefined;
     if (!isKnownRule)
         return checked(undefined, [`Unknown rule: ${id}`]);
-    return overrideRule(rule, setting, previous, origin, project);
+    return overrideRule({ rule, previous, origin, project }, setting);
 };
 /** Applies one rules map on top of inherited settings: severity-only changes keep options, explicit options replace them. */
-export const overrideRules = (inherited, input, origin, project) => {
+export const overrideRules = (scope, input) => {
+    const { inherited, origin } = scope;
     if (input === undefined)
         return checked(inherited);
     if (!isRecord(input))
         return checked(inherited, [`${origin}.rules must be an object`]);
-    const overrides = Object.entries(input).map(([id, setting]) => ({ id, result: overrideEntry(id, setting, inherited, origin, project) }));
+    const overrides = Object.entries(input).map((entry) => ({ id: entry[0], result: overrideEntry(scope, entry) }));
     const effective = overrides.flatMap(({ id, result }) => result.value === undefined ? [] : [[id, result.value]]);
     return checked({ ...inherited, ...Object.fromEntries(effective) }, overrides.flatMap(({ result }) => result.issues));
 };

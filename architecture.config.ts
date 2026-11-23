@@ -27,6 +27,9 @@ export default defineArchitecture({
       files: ["src/rules/**/*.ts"],
       naming: { case: "camelCase", suffixes: [".rule", ".rules", ".constants", ".cases"] },
       dependencies: { internal: ["rules", "core"], external: ["eslint", "oxlint", "node:path"] },
+      rules: {
+        "no-embedded-code": { severity: "off", reason: "Rule descriptions, guidance and test cases are code samples, written as strings on purpose." },
+      },
     },
     config: {
       description: "Validates and normalizes a project's architecture.config.ts.",
@@ -94,6 +97,11 @@ export default defineArchitecture({
       entry: { reason: "Vitest runs every test file." },
       development: true,
       naming: { case: "camelCase", requiredSuffix: ".test", suffixes: [".rule"] },
+      rules: {
+        "no-embedded-code": { severity: "off", reason: "Tests write fixture projects, so their source code is in strings on purpose." },
+        "max-function-lines": { severity: "off", reason: "A describe() callback groups one subject's cases; each it() stays short." },
+        "max-function-lines-warn": { severity: "off", reason: "A describe() callback groups one subject's cases; each it() stays short." },
+      },
       dependencies: {
         internal: ["testSupport", "api", "cli", "editor", "runner", "analysis", "config", "rules", "core", "errors"],
         external: ["eslint", "vitest", "node:child_process", "node:fs", "node:module", "node:path", "node:url"],
@@ -103,6 +111,9 @@ export default defineArchitecture({
       description: "Fixtures and helpers shared by tests.",
       files: ["tests/utils/**/*.ts"],
       development: true,
+      rules: {
+        "no-embedded-code": { severity: "off", reason: "Fixture helpers write source files, so their code is in strings on purpose." },
+      },
       dependencies: {
         internal: ["testSupport", "analysis", "config", "core", "errors"],
         external: ["oxlint/plugins-dev", "vitest", "node:child_process", "node:fs", "node:os", "node:path", "node:url"],

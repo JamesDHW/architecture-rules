@@ -37,6 +37,15 @@ type DeadCodeEnforcement = {
   readonly configuration: Severity;
 };
 
+/**
+ * Checked over the TypeScript program by the checker itself, with type information and the import graph.
+ * File-scoped: set per layer, and excepted on a line like a lint rule.
+ */
+type ProgramEnforcement = {
+  readonly type: "program";
+  readonly configuration: OxlintRuleConfiguration;
+};
+
 /** Checked by the checker against architecture.config.ts and the project's setup; set only project-wide. */
 type ConfigurationEnforcement = {
   readonly type: "configuration";
@@ -49,6 +58,7 @@ type Enforcement =
   | TypeScriptEnforcement
   | AdvisoryEnforcement
   | DeadCodeEnforcement
+  | ProgramEnforcement
   | ConfigurationEnforcement
   | { readonly type: "architecture" };
 

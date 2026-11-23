@@ -12,6 +12,7 @@ import { explainFile } from "./explain.js";
 import { sortFindings, structuralFinding } from "./findings.js";
 import { migrateExceptions } from "./migrateExceptions.js";
 import { lint } from "./oxlint.js";
+import { programFindings } from "./programFindings.js";
 import { cacheKeys } from "./cacheKeys.js";
 import { compilerStage, deadCodeStage } from "./cachedStages.js";
 import { entriesFor, readCache, splitByCache, writeCache } from "./checkCache.js";
@@ -73,7 +74,8 @@ const collectFindings = async (root, opened, scoped, options) => {
         });
     }
     const compilerErrors = compiled.findings;
-    const found = [...generatedIssues.map(structuralFinding), ...lintFindings, ...compilerErrors, ...unused, ...configurationFindings(root, opened, scoped, imports.uses)];
+    const program = programFindings({ architecture, files, selected: linted, projects: opened.projects, imports });
+    const found = [...generatedIssues.map(structuralFinding), ...lintFindings, ...compilerErrors, ...program, ...unused, ...configurationFindings(root, opened, scoped, imports.uses)];
     return { findings: applyExceptions(found.filter(inScope(selected, options)), exceptions), imports };
 };
 /** Structural issues, and the line exceptions of the linted files, before anything is linted. */

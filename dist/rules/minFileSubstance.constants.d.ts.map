@@ -1,0 +1,1 @@
+{"version":3,"file":"minFileSubstance.constants.d.ts","sourceRoot":"","sources":["../../src/rules/minFileSubstance.constants.ts"],"names":[],"mappings":"AAAA,MAAM,MAAM,uBAAuB,GAAG;IACpC,QAAQ,CAAC,aAAa,EAAE,MAAM,CAAC;IAC/B,QAAQ,CAAC,QAAQ,EAAE,MAAM,CAAC;IAC1B,QAAQ,CAAC,MAAM,EAAE,SAAS,MAAM,EAAE,CAAC;CACpC,CAAC;AAEF,eAAO,MAAM,sBAAsB;4BAClB,CAAC;uBACN,EAAE;;CAE8B,CAAC"}

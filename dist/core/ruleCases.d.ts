@@ -33,5 +33,7 @@ export type RuleCases = {
     readonly valid: readonly ValidCase[];
     readonly invalid: readonly InvalidCase[];
 };
+/** An expected finding by message id, with the values of its {{name}} placeholders. */
+export declare const expectedFinding: (messageId: string, placeholders: Readonly<Record<string, string>>) => ExpectedFinding;
 export {};
 //# sourceMappingURL=ruleCases.d.ts.map

@@ -20,6 +20,8 @@ const kindOf = (rule: ArchitectureRule): string => {
       return "compiler";
     case "dead-code":
       return "dead code";
+    case "program":
+      return "program";
     case "configuration":
       return "configuration";
     case "advisory":

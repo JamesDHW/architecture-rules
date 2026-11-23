@@ -9,22 +9,31 @@ export const lintRuleName = (rule) => {
         case "typescript":
         case "advisory":
         case "dead-code":
+        case "program":
         case "configuration":
         case "architecture":
             return undefined;
     }
+};
+/**
+ * Every name the engine may use for a lint rule: its configured name, and for React's hook rules the react-hooks
+ * name the engine reports them and their disable comments under.
+ */
+export const lintNameAliases = (lintName) => {
+    return lintName.startsWith("react/") ? [lintName, lintName.replace(/^react\//, "react-hooks/")] : [lintName];
 };
 /** How Oxlint labels a lint rule's findings: architecture/no-let becomes architecture(no-let). */
 export const diagnosticCode = (lintName) => {
     const [plugin, ...name] = lintName.split("/");
     return `${plugin ?? ""}(${name.join("/")})`;
 };
-/** Lint and dead-code rules can be excepted on a line; structural, configuration and compiler checks always apply. */
+/** Lint, dead-code and program rules can be excepted on a line; structural, configuration and compiler checks always apply. */
 export const isExceptable = (rule) => {
     switch (rule.enforcement.type) {
         case "oxlint":
         case "custom-oxlint":
         case "dead-code":
+        case "program":
             return true;
         case "typescript":
         case "advisory":

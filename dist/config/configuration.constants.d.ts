@@ -4,7 +4,10 @@ export declare const ADOPTION_FIELDS: readonly ["mode", "onTouch"];
 export declare const ON_TOUCH_FIELDS: readonly ["default", "rules"];
 export declare const ADOPTION_MODES: readonly ["enforce", "observe"];
 export declare const TOUCH_POLICIES: readonly ["fix", "no-new"];
-/** Rules whose existing findings stay allowed in a file someone changes: fixing one can mean a refactor. */
+/**
+ * Rules whose fix reaches beyond the touched file: an import's fix can move code between layers, and a function's
+ * parameters change at every call site. A touched file must not add findings under them, but may keep recorded ones.
+ */
 export declare const NO_NEW_ON_TOUCH: readonly string[];
 export declare const PROJECTS_FIELDS: readonly ["tsconfigs", "references"];
 export declare const LAYER_FIELDS: readonly ["description", "files", "exclude", "naming", "dependencies", "rules", "generated", "entry", "development"];

@@ -253,7 +253,7 @@ export declare const rules: readonly [{
     readonly id: "collection-loops";
     readonly title: "Use for...of as the default loop form";
     readonly description: string;
-    readonly instead: "Use for...of, for await...of, or a collection method such as map, filter, find or some.";
+    readonly instead: "Use for...of, or a collection method such as map, filter, find or some; use Promise.all for asynchronous work per item.";
     readonly enforcement: {
         readonly type: "custom-oxlint";
         readonly configuration: "error";
@@ -732,6 +732,91 @@ export declare const rules: readonly [{
             readonly skipBlankLines?: boolean;
             readonly skipComments?: boolean;
         }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
+    };
+}, {
+    readonly id: "max-function-lines-warn";
+    readonly options: import("../core/defineRule.js").RuleOptions<[Partial<import("./maxFunctionLines.constants.js").MaxFunctionLinesOptions>?]>;
+    readonly title: "Warn when a function is longer than 40 lines";
+    readonly description: string;
+    readonly instead: "Extract named steps into their own functions, so this one either coordinates them or carries out one.";
+    readonly enforcement: {
+        readonly type: "custom-oxlint";
+        readonly configuration: readonly ["warn", {
+            readonly max: 40;
+            readonly skipBlankLines: true;
+            readonly skipComments: true;
+        }];
+        readonly implementation: import("eslint").Rule.RuleModule;
+    };
+}, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
+    readonly id: "max-function-lines";
+    readonly title: string;
+    readonly description: string;
+    readonly enforcement: {
+        readonly type: "oxlint";
+        readonly rule: "max-lines-per-function";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, number | {
+            readonly IIFEs?: boolean;
+            readonly max?: number;
+            readonly skipBlankLines?: boolean;
+            readonly skipComments?: boolean;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
+    };
+}, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
+    readonly id: "max-params";
+    readonly title: string;
+    readonly description: string;
+    readonly enforcement: {
+        readonly type: "oxlint";
+        readonly rule: "max-params";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | readonly [import("../core/defineRule.js").Severity, number | {
+            readonly countThis?: "always" | "except-void" | "never";
+            readonly countVoidThis?: boolean;
+            readonly max?: number;
+        }] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
+    };
+}, {
+    readonly id: "no-embedded-code";
+    readonly title: "Keep code and markup out of strings";
+    readonly description: string;
+    readonly instead: "Move the script, markup or style into a file of its own language, or use a tagged template that names the language.";
+    readonly suppressWhen: "Prose or test data only looks like code, or a platform API takes code as a string and no file can be loaded instead.";
+    readonly enforcement: {
+        readonly type: "custom-oxlint";
+        readonly configuration: "error";
+        readonly implementation: import("eslint").Rule.RuleModule;
+    };
+}, {
+    readonly id: "css-module-ownership";
+    readonly title: "Import a CSS module only from its own component";
+    readonly description: string;
+    readonly instead: "Import X.module.css only from X.tsx; share styles by rendering a component, or give this file its own module.";
+    readonly suppressWhen: "A stylesheet is shared on purpose, such as one layout module used by every page of a route group.";
+    readonly enforcement: {
+        readonly type: "custom-oxlint";
+        readonly configuration: "error";
+        readonly implementation: import("eslint").Rule.RuleModule;
+    };
+}, {
+    readonly instead?: string;
+    readonly suppressWhen?: string;
+    readonly evasions?: readonly import("../core/defineRule.js").RuleEvasion[];
+} & {
+    readonly id: "no-await-in-loop";
+    readonly title: string;
+    readonly description: string;
+    readonly enforcement: {
+        readonly type: "oxlint";
+        readonly rule: "no-await-in-loop";
+        readonly configuration: (readonly [import("../core/defineRule.js").Severity] | import("../core/defineRule.js").Severity) & import("../core/defineRule.js").OxlintRuleConfiguration;
     };
 }, {
     readonly instead?: string;
@@ -1338,6 +1423,66 @@ export declare const rules: readonly [{
         readonly type: "custom-oxlint";
         readonly configuration: "error";
         readonly implementation: import("eslint").Rule.RuleModule;
+    };
+}, {
+    readonly id: "no-discarded-errors";
+    readonly title: "Do not turn errors into empty values";
+    readonly description: string;
+    readonly instead: "Return or pass on the error, or log it before returning the empty value.";
+    readonly suppressWhen: "The empty value is the documented meaning of this failure, for example an optional enrichment that may be missing.";
+    readonly enforcement: {
+        readonly type: "program";
+        readonly configuration: "error";
+    };
+}, {
+    readonly id: "exhaustive-literal-lists";
+    readonly title: "List every member when a literal list satisfies a union";
+    readonly description: string;
+    readonly instead: "Add the missing members, or declare a deliberate subset with a type annotation instead of satisfies.";
+    readonly enforcement: {
+        readonly type: "program";
+        readonly configuration: "error";
+    };
+}, {
+    readonly id: "max-directory-files-warn";
+    readonly options: import("../core/defineRule.js").RuleOptions<[Partial<import("./maxDirectoryFiles.constants.js").MaxDirectoryFilesOptions>?]>;
+    readonly title: "Warn when a directory holds more than 15 source files";
+    readonly description: string;
+    readonly instead: "Move files that share a concept into a subfolder named after it.";
+    readonly suppressWhen: "A line comment cannot cover a directory. When a flat folder is the framework's contract, set the layer's limit with a reason.";
+    readonly enforcement: {
+        readonly type: "program";
+        readonly configuration: readonly ["warn", {
+            readonly max: 15;
+        }];
+    };
+}, {
+    readonly id: "max-directory-files";
+    readonly options: import("../core/defineRule.js").RuleOptions<[Partial<import("./maxDirectoryFiles.constants.js").MaxDirectoryFilesOptions>?]>;
+    readonly title: "Limit directories to 30 source files";
+    readonly description: string;
+    readonly instead: "Move files that share a concept into a subfolder named after it.";
+    readonly suppressWhen: "A line comment cannot cover a directory. When a flat folder is the framework's contract, set the layer's limit with a reason.";
+    readonly enforcement: {
+        readonly type: "program";
+        readonly configuration: readonly ["error", {
+            readonly max: 30;
+        }];
+    };
+}, {
+    readonly id: "min-file-substance";
+    readonly options: import("../core/defineRule.js").RuleOptions<[Partial<import("./minFileSubstance.constants.js").MinFileSubstanceOptions>?]>;
+    readonly title: "Merge tiny files into their only importer";
+    readonly description: string;
+    readonly instead: "Move the file's contents into the one file that imports it, and delete the file.";
+    readonly suppressWhen: "The file is a deliberate seam, such as a port type another package will implement.";
+    readonly enforcement: {
+        readonly type: "program";
+        readonly configuration: readonly ["warn", {
+            readonly maxStatements: 3;
+            readonly maxLines: 10;
+            readonly ignore: readonly ["**/*.constants.ts", "**/*.state.ts"];
+        }];
     };
 }, {
     readonly id: "unused-files";

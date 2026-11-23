@@ -29,6 +29,11 @@ describe("parseOxlintOutput", () => {
     ]);
   });
 
+  it("maps React's hook rules from the react-hooks label the engine reports them under", () => {
+    const findings = parseOxlintOutput("/project", output(diagnostic("react-hooks(exhaustive-deps)", "Missing dependency.")));
+    expect(findings).toEqual([expect.objectContaining({ ruleId: "exhaustive-deps" })]);
+  });
+
   it("keeps the code of a rule it does not know", () => {
     expect(parseOxlintOutput("/project", output(diagnostic("eslint(no-debugger)", "Unexpected debugger")))).toEqual([expect.objectContaining({ ruleId: "eslint(no-debugger)" })]);
   });

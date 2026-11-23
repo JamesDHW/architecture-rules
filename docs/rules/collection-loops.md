@@ -8,7 +8,7 @@ Use for...of or for await...of for intentional iteration. Prefer dedicated colle
 
 ```
 Good:
-  for (const project of projects) { await publishProject(project); }
+  for (const project of projects) { publishProject(project); }
   for (const [projectIndex, project] of projects.entries()) {
     publishProjectAtPosition(project, projectIndex);
   }
@@ -25,11 +25,11 @@ Bad:
   while (hasPendingJobs()) { processNextJob(); }
 ```
 
-A single collection-loop syntax exposes the element directly, avoids index bookkeeping, and aligns with immutable bindings and checked collection access.
+A single collection-loop syntax exposes the element directly, avoids index bookkeeping, and aligns with immutable bindings and checked collection access. Asynchronous work per item belongs in Promise.all over a mapped list, not an awaiting loop; see no-await-in-loop.
 
 ## What to write instead
 
-Use for...of, for await...of, or a collection method such as map, filter, find or some.
+Use for...of, or a collection method such as map, filter, find or some; use Promise.all for asynchronous work per item.
 
 ## When to make an exception
 

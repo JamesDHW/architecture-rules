@@ -3,12 +3,12 @@ import { relativePath } from "../analysis/paths.js";
 import { isRecord, isString, isUnknownArray } from "../core/guards.js";
 import { ArchitectureError } from "../errors/architectureError.js";
 import { tryCatch } from "../errors/tryCatch.js";
-import { diagnosticCode, lintRuleName } from "../rules/lintNames.js";
+import { diagnosticCode, lintNameAliases, lintRuleName } from "../rules/lintNames.js";
 import { rules } from "../rules/index.js";
 /** Architecture rule ids by the code Oxlint prints for them, such as typescript(no-misused-promises). */
 const ruleIdsByCode = new Map(rules.flatMap((rule) => {
     const name = lintRuleName(rule);
-    return name === undefined ? [] : [[diagnosticCode(name), rule.id]];
+    return name === undefined ? [] : lintNameAliases(name).map((alias) => [diagnosticCode(alias), rule.id]);
 }));
 const firstSpan = (labels) => {
     if (!isUnknownArray(labels))

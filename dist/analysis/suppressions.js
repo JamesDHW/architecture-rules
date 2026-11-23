@@ -1,6 +1,6 @@
 import { getLeadingCommentRanges, getTrailingCommentRanges, isJsxExpression, SyntaxKind } from "typescript/unstable/ast";
 import { isPresent } from "../core/guards.js";
-import { isExceptable, lintRuleName } from "../rules/lintNames.js";
+import { isExceptable, lintNameAliases, lintRuleName } from "../rules/lintNames.js";
 import { rules } from "../rules/index.js";
 import { descendants } from "./syntaxTree.js";
 /** The only exception syntax: named architecture rule ids and a reason, for one line. */
@@ -26,9 +26,18 @@ const jsxExpressionComments = (source, node) => {
     const start = node.getStart(source) + 1;
     return [...spans(getLeadingCommentRanges(source.text, start)), ...spans(getTrailingCommentRanges(source.text, start))];
 };
+/**
+ * Comments on their own lines after a node: a block's last statement is followed by trivia that belongs to no node,
+ * up to the closing brace, and a directive there would otherwise go unread.
+ */
+const followingComments = (source, node) => {
+    const isInsideJsxText = node.kind === SyntaxKind.JsxText || isJsxChild(node);
+    return isInsideJsxText ? [] : spans(getLeadingCommentRanges(source.text, node.end));
+};
 const nodeComments = (source, node) => [
     ...(node.kind === SyntaxKind.JsxText ? [] : spans(getLeadingCommentRanges(source.text, node.pos))),
     ...(isJsxChild(node) ? [] : spans(getTrailingCommentRanges(source.text, node.end))),
+    ...followingComments(source, node),
     ...jsxExpressionComments(source, node),
 ];
 const commentText = (source, [start, end]) => {
@@ -52,7 +61,7 @@ const directiveComments = (file, projects) => {
 /** The architecture rule a legacy engine rule name refers to, such as architecture/no-let or eslint/id-denylist. */
 const rulesByLegacyName = new Map(rules.flatMap((rule) => {
     const name = lintRuleName(rule);
-    return name === undefined ? [] : [[name, rule.id]];
+    return name === undefined ? [] : lintNameAliases(name).map((alias) => [alias, rule.id]);
 }));
 const legacyRuleId = (name) => rulesByLegacyName.get(name) ?? rulesByLegacyName.get(`eslint/${name}`);
 const rulesById = new Map(rules.map((rule) => [rule.id, rule]));

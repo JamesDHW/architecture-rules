@@ -10,14 +10,14 @@ Do not use break, continue, or labelled statements by default. Use find/some for
 Good:
   const matchingProject = projects.find(matchesProject);
   const activeProjects = projects.filter(isProjectActive);
-  for (const project of activeProjects) { await publishProject(project); }
+  for (const project of activeProjects) { publishProject(project); }
 ```
 
 ```
 Bad:
   for (const project of projects) {
     if (project.isArchived) continue;
-    await publishProject(project);
+    publishProject(project);
   }
 ```
 

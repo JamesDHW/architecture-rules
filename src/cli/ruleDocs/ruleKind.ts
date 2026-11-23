@@ -14,6 +14,8 @@ export const enforcementLabel = (rule: ArchitectureRule): string => {
       return `TypeScript compiler options ${inlineCode(JSON.stringify(enforcement.compilerOptions))}`;
     case "dead-code":
       return enforcement.scope === "file" ? "Dead-code check" : "Dead-code check, set project-wide";
+    case "program":
+      return "Program check, with type information";
     case "configuration":
       return "Configuration check, set project-wide";
     case "architecture":
@@ -36,6 +38,7 @@ export const defaultSetting = (rule: ArchitectureRule): string | undefined => {
     case "custom-oxlint":
     case "oxlint":
     case "dead-code":
+    case "program":
     case "configuration":
       return settingLabel(enforcement.configuration);
     case "typescript":
