@@ -22,6 +22,7 @@ const describeLayer = (architecture, name) => {
         ...(policy.generated === undefined ? {} : { generated: policy.generated.reason }),
         ...(policy.entry === undefined ? {} : { entry: policy.entry }),
         development: policy.development,
+        glossaries: policy.glossaries,
         ruleOverrides: overridesFrom(policy, origin),
     };
 };
@@ -31,6 +32,18 @@ const externalIndex = (layers) => {
     return specifiers.map((specifier) => ({
         specifier,
         layers: layers.filter((layer) => layer.dependencies.external.includes(specifier)).map((layer) => layer.name),
+    }));
+};
+const describeTerm = (term) => ({
+    name: term.name, definition: term.definition, avoid: term.avoid.map((alias) => alias.text),
+    ...(term.type === undefined ? {} : { type: term.type }),
+});
+const describeGlossaries = (architecture, layers) => {
+    return Object.entries(architecture.glossaries).map(([name, glossary]) => ({
+        name,
+        ...(glossary.description === undefined ? {} : { description: glossary.description }),
+        layers: layers.filter((layer) => layer.glossaries.includes(name)).map((layer) => layer.name),
+        terms: glossary.terms.map(describeTerm),
     }));
 };
 export const describeArchitecture = (architecture, config) => {
@@ -44,6 +57,7 @@ export const describeArchitecture = (architecture, config) => {
         layers,
         external: externalIndex(layers),
         cycles: graph.cycles,
+        glossaries: describeGlossaries(architecture, layers),
         ...(architecture.defaults.naming === undefined ? {} : { naming: architecture.defaults.naming }),
         rules: { on: settings.length - off, off, overrides: overridesFrom(architecture.defaults, "architecture") },
     };

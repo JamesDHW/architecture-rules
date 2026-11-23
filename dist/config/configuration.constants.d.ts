@@ -1,5 +1,5 @@
 /** Field names accepted at each level of architecture.config.ts. */
-export declare const ARCHITECTURE_FIELDS: readonly ["projects", "layers", "naming", "rules", "adoption"];
+export declare const ARCHITECTURE_FIELDS: readonly ["projects", "glossaries", "layers", "naming", "rules", "adoption"];
 export declare const ADOPTION_FIELDS: readonly ["mode", "onTouch"];
 export declare const ON_TOUCH_FIELDS: readonly ["default", "rules"];
 export declare const ADOPTION_MODES: readonly ["enforce", "observe"];
@@ -10,7 +10,9 @@ export declare const TOUCH_POLICIES: readonly ["fix", "no-new"];
  */
 export declare const NO_NEW_ON_TOUCH: readonly string[];
 export declare const PROJECTS_FIELDS: readonly ["tsconfigs", "references"];
-export declare const LAYER_FIELDS: readonly ["description", "files", "exclude", "naming", "dependencies", "rules", "generated", "entry", "development"];
+export declare const LAYER_FIELDS: readonly ["description", "files", "exclude", "naming", "dependencies", "rules", "generated", "entry", "development", "glossary"];
+export declare const GLOSSARY_FIELDS: readonly ["description", "terms"];
+export declare const TERM_FIELDS: readonly ["definition", "avoid", "type"];
 export declare const NAMING_FIELDS: readonly ["case", "prefix", "suffixes", "requiredSuffix", "allowedNames"];
 export declare const DEPENDENCY_FIELDS: readonly ["internal", "external", "assets"];
 export declare const GENERATED_FIELDS: readonly ["reason"];

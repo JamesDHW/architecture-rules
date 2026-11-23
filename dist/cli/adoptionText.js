@@ -35,6 +35,8 @@ Translate what the team already enforces, so no rule is lost:
 - ESLint \`no-restricted-imports\`, eslint-plugin-boundaries and dependency-cruiser \`forbidden\` rules become
   \`dependencies\` on the layers they constrain.
 - Knip \`entry\` and \`project\` settings become layer \`entry\` settings.
+- A glossary the team keeps (a CONTEXT.md, a ubiquitous-language page) becomes \`glossaries\`, each followed by
+  the layers it applies to. Translate only terms it defines; do not invent terms or avoided words.
 - List anything you cannot translate in the report as a gap. Never drop a rule silently.
 
 ## 4. Classify every file

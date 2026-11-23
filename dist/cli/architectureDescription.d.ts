@@ -20,7 +20,21 @@ export type LayerDescription = {
     readonly generated?: string;
     readonly entry?: EntrySetting;
     readonly development: boolean;
+    /** The glossaries the layer's names follow. */
+    readonly glossaries: readonly string[];
     readonly ruleOverrides: readonly RuleOverride[];
+};
+/** One glossary: its terms as configured, and the layers that follow it. */
+export type GlossaryDescription = {
+    readonly name: string;
+    readonly description?: string;
+    readonly layers: readonly string[];
+    readonly terms: readonly {
+        readonly name: string;
+        readonly definition: string;
+        readonly avoid: readonly string[];
+        readonly type?: string;
+    }[];
 };
 /** Everything describe prints, in the order the decisions are made. */
 export type ArchitectureDescription = {
@@ -29,6 +43,7 @@ export type ArchitectureDescription = {
     readonly layers: readonly LayerDescription[];
     readonly external: readonly ExternalDependency[];
     readonly cycles: readonly (readonly string[])[];
+    readonly glossaries: readonly GlossaryDescription[];
     readonly naming?: NamingPolicy;
     readonly rules: {
         readonly on: number;

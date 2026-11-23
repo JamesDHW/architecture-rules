@@ -14,6 +14,8 @@ export const enforcementLabel = (rule) => {
             return enforcement.scope === "file" ? "Dead-code check" : "Dead-code check, set project-wide";
         case "program":
             return "Program check, with type information";
+        case "glossary":
+            return "Glossary check, in layers that follow a glossary";
         case "configuration":
             return "Configuration check, set project-wide";
         case "architecture":
@@ -36,6 +38,7 @@ export const defaultSetting = (rule) => {
         case "oxlint":
         case "dead-code":
         case "program":
+        case "glossary":
         case "configuration":
             return settingLabel(enforcement.configuration);
         case "typescript":

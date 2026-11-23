@@ -85,16 +85,21 @@ export type EntrySetting = {
     /** Exports something outside the program uses: their names, or "all" for a public API. None by default. */
     readonly exports?: readonly string[] | "all";
 };
-type LayerRole = {
+type LayerRole<GlossaryName extends string = string> = {
+    /**
+     * The glossaries whose terms this layer's names must use. A layer with none is not checked, so technical layers
+     * keep their own vocabulary.
+     */
+    readonly glossary?: GlossaryName | readonly GlossaryName[];
     readonly entry?: EntrySetting;
     /** Tests, tooling and other code that never ships: it may use devDependencies and keeps no production code alive. */
     readonly development?: boolean;
 };
-export type LayerDefinition<Layer extends string = string> = {
+export type LayerDefinition<Layer extends string = string, GlossaryName extends string = string> = {
     readonly description: string;
     readonly files: readonly string[];
     readonly exclude?: readonly string[];
-} & LayerRole & ((Policy<Layer> & {
+} & LayerRole<GlossaryName> & ((Policy<Layer> & {
     readonly generated?: never;
 }) | (Omit<Policy<Layer>, "rules"> & {
     readonly generated: GeneratedSetting;
@@ -124,13 +129,40 @@ type AdoptionSettings = {
     };
 };
 /**
+ * One word or concept, as the code must name it. The key is the term as a type would be named, such as Customer
+ * or LineItem; names match it in any case and in the plural.
+ */
+export type TermDefinition = {
+    /** What the term means here, in a sentence. Shown with every finding about the term. */
+    readonly definition: string;
+    /** Other words for the same thing, which names must not use: "client", "buyer", "line entry". */
+    readonly avoid?: readonly string[];
+    /**
+     * The type that carries the term: a type, interface, class or enum declared once, at the top level of a file, in the
+     * layers that follow this glossary. Then a value named after the term must have this type, and a value of this type must not be named
+     * after another term or an avoided alias.
+     */
+    readonly type?: string;
+};
+/** The vocabulary of one part of the domain. Layers opt in by name. */
+export type GlossaryDefinition = {
+    readonly description?: string;
+    readonly terms: {
+        readonly [term: string]: TermDefinition;
+    };
+};
+/**
  * Read top to bottom, the configuration follows the order decisions are made:
  * the TypeScript projects, then layers with their dependencies, then rules.
  */
-export type ArchitectureInput<Layer extends string> = {
+export type ArchitectureInput<Layer extends string, GlossaryName extends string = never> = {
     readonly projects: TypeScriptProjects;
+    /** Named vocabularies; a layer's glossary setting picks the ones its names must follow. */
+    readonly glossaries?: {
+        readonly [K in GlossaryName]: GlossaryDefinition;
+    };
     readonly layers: {
-        readonly [K in Layer]: LayerDefinition<NoInfer<Layer>>;
+        readonly [K in Layer]: LayerDefinition<NoInfer<Layer>, NoInfer<GlossaryName>>;
     };
     /** Naming policy for every layer that does not set its own. */
     readonly naming?: NamingPolicy;
@@ -156,6 +188,8 @@ export type EffectivePolicy = {
     readonly generated?: GeneratedSetting;
     readonly entry?: EntrySetting;
     readonly development: boolean;
+    /** The glossaries the layer's names follow, by name; none when the layer does not opt in. */
+    readonly glossaries: readonly string[];
 };
 export type NormalizedLayer = LayerDefinition & {
     readonly policy: EffectivePolicy;
@@ -167,8 +201,26 @@ export type Adoption = {
         readonly rules: Readonly<Record<string, TouchPolicy>>;
     };
 };
+/** A phrase as names spell it: its text as written, and its words. */
+export type TermPhrase = {
+    readonly text: string;
+    readonly words: readonly string[];
+};
+export type GlossaryTerm = {
+    readonly name: string;
+    readonly words: readonly string[];
+    readonly definition: string;
+    readonly avoid: readonly TermPhrase[];
+    readonly type?: string;
+};
+export type Glossary = {
+    readonly description?: string;
+    readonly terms: readonly GlossaryTerm[];
+};
 export type Architecture = {
     readonly projects: Required<TypeScriptProjects>;
+    /** Every glossary, by name. */
+    readonly glossaries: Readonly<Record<string, Glossary>>;
     readonly adoption: Adoption;
     /** The policy a layer inherits when it sets nothing itself. */
     readonly defaults: EffectivePolicy;

@@ -4,6 +4,7 @@ import { orThrow } from "../errors/tryCatch.js";
 import { adoption } from "./adoption.js";
 import { isRegisteredArchitecture, registerArchitecture } from "./architectureRegistry.state.js";
 import { ARCHITECTURE_FIELDS, LAYER_FIELDS, PROJECTS_FIELDS, REFERENCE_MODES, RESERVED_LAYER_NAMES } from "./configuration.constants.js";
+import { glossaries, layerGlossaries } from "./glossaries.js";
 import { defaultRules, overrideRules } from "./normalizeRules.js";
 import { dependencies, developmentOnly, entryPoint, generated, naming } from "./policies.js";
 import { checked, fields, freeze, optional, patterns, text } from "./validation.js";
@@ -32,9 +33,19 @@ const projectPolicy = (config) => {
         dependencies: { internal: [], external: [], assets: [] },
         rules: policyRules.value,
         development: false,
+        glossaries: [],
     }, [...policyNaming.issues, ...policyRules.issues]);
 };
-const layer = (name, value, layerNames, defaults) => {
+/** The glossaries a layer follows. A generated layer takes none: its generator chooses its names. */
+const glossariesOf = (setting, { known, label }) => {
+    const followed = optional(setting.glossary, (entry) => layerGlossaries(entry, { known: known.glossaries, label: `${label}.glossary` }));
+    const isGenerated = setting.generated !== undefined && setting.glossary !== undefined;
+    return checked(followed.value ?? [], [
+        ...followed.issues, ...(isGenerated ? [`${label}: a generated layer's names come from its generator, so it takes no glossary`] : []),
+    ]);
+};
+const layer = (name, value, known, defaults) => {
+    const { layerNames } = known;
     const label = `layers.${name}`;
     const declared = fields(value, LAYER_FIELDS, label);
     const { description, files, exclude, rules } = declared.value;
@@ -47,6 +58,7 @@ const layer = (name, value, layerNames, defaults) => {
     const layerGenerated = optional(declared.value.generated, (setting) => generated(setting, `${label}.generated`));
     const layerEntry = optional(declared.value.entry, (setting) => entryPoint(setting, `${label}.entry`));
     const layerDevelopment = optional(declared.value.development, (setting) => developmentOnly(setting, `${label}.development`));
+    const layerGlossary = glossariesOf(declared.value, { known, label });
     const isGeneratedWithRules = declared.value.generated !== undefined && rules !== undefined;
     const hasNoFiles = layerFiles.issues.length === 0 && layerFiles.value.length === 0;
     const policy = {
@@ -61,11 +73,12 @@ const layer = (name, value, layerNames, defaults) => {
         ...(layerGenerated.value === undefined ? {} : { generated: layerGenerated.value }),
         ...(layerEntry.value === undefined ? {} : { entry: layerEntry.value }),
         development: layerDevelopment.value ?? false,
+        glossaries: layerGlossary.value,
     };
     return checked({ description: layerDescription.value, files: layerFiles.value, exclude: layerExclude.value, policy }, [
         ...declared.issues, ...layerDescription.issues, ...layerFiles.issues, ...layerExclude.issues,
         ...layerNaming.issues, ...layerDependencies.issues, ...layerRules.issues, ...layerGenerated.issues,
-        ...layerEntry.issues, ...layerDevelopment.issues,
+        ...layerEntry.issues, ...layerDevelopment.issues, ...layerGlossary.issues,
         ...(isGeneratedWithRules ? [`${label}: a generated layer is never linted, so it takes no rules`] : []),
         ...(hasNoFiles ? [`${label}.files must not be empty`] : []),
     ]);
@@ -86,9 +99,11 @@ export const normalizeArchitecture = (value) => {
     const layerNames = Object.keys(inputs.value);
     const defaults = projectPolicy(config.value);
     const adoptionSettings = adoption(config.value.adoption);
-    const layers = Object.entries(inputs.value).map(([name, entry]) => ({ name, result: layer(name, entry, layerNames, defaults.value) }));
+    const vocabularies = glossaries(config.value.glossaries);
+    const known = { layerNames, glossaries: vocabularies.value };
+    const layers = Object.entries(inputs.value).map(([name, entry]) => ({ name, result: layer(name, entry, known, defaults.value) }));
     const issues = [
-        ...config.issues, ...projects.issues, ...inputs.issues, ...defaults.issues, ...adoptionSettings.issues,
+        ...config.issues, ...projects.issues, ...inputs.issues, ...defaults.issues, ...adoptionSettings.issues, ...vocabularies.issues,
         ...layers.flatMap(({ result }) => result.issues),
     ];
     if (issues.length > 0)
@@ -96,6 +111,7 @@ export const normalizeArchitecture = (value) => {
     const architecture = freeze({
         projects: projects.value,
         adoption: adoptionSettings.value,
+        glossaries: vocabularies.value,
         defaults: defaults.value,
         layers: Object.fromEntries(layers.map(({ name, result }) => [name, result.value])),
     });

@@ -26,6 +26,7 @@ import { explicitConditionsRule } from "./explicitConditions.rule.js";
 import { fileNamingRule } from "./fileNaming.rule.js";
 import { forceConsistentCasingInFileNamesRule } from "./forceConsistentCasingInFileNames.rule.js";
 import { preferArrowCallbackRule, preferArrowFunctionsRule } from "./functionStyle.rules.js";
+import { glossaryAliasesRule, glossaryTypesRule, unusedTermsRule } from "./glossary.rules.js";
 import { groupedLogicalOperatorsRule } from "./groupedLogicalOperators.rule.js";
 import { noParamReassignRule, noUselessAssignmentRule, noVarRule, preferConstRule } from "./immutability.rules.js";
 import { collectionLoopsRule, noLoopJumpsRule } from "./loopControl.rules.js";
@@ -145,6 +146,7 @@ export const rules = [
   unusedFilesRule, unusedExportsRule, unusedTypesRule, duplicateExportsRule, productionReachabilityRule,
   unusedDependenciesRule, unlistedDependenciesRule, unlistedBinariesRule, unresolvedImportsRule,
   unusedPermissionsRule, unmatchedPatternsRule, competingConfigurationRule, typescriptVersionRule,
+  glossaryAliasesRule, glossaryTypesRule, unusedTermsRule,
 ] as const;
 
 export type ArchitectureRuleId = (typeof rules)[number]["id"];

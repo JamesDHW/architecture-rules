@@ -5,6 +5,7 @@ const stageOf = (source) => {
         case "structure":
             return "structure";
         case "lint":
+        case "glossary":
             return "lint";
         case "compiler":
             return "types";

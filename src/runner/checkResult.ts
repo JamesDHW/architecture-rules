@@ -49,6 +49,7 @@ const stageOf = (source: FindingSource): StageName => {
     case "structure":
       return "structure";
     case "lint":
+    case "glossary":
       return "lint";
     case "compiler":
       return "types";

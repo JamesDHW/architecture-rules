@@ -69,6 +69,16 @@ describe("describe", () => {
     expect(text).toContain("No import cycles between layers.");
     expect(renderText(describeArchitecture(cyclic, "architecture.config.ts"))).toContain("Import cycles: first ↔ second");
   });
+  it("lists each glossary with the layers that follow it and its terms", () => {
+    const withGlossary = defineArchitecture({
+      projects: { tsconfigs: ["tsconfig.json"] },
+      glossaries: { sales: { terms: { Customer: { definition: "Has placed an order.", avoid: ["client"], type: "Customer" } } } },
+      layers: { domain: { description: "Domain.", files: ["src/**"], glossary: "sales" } },
+    });
+    const text = renderText(describeArchitecture(withGlossary, "architecture.config.ts"));
+    expect(text).toContain("glossary  sales\n");
+    expect(text).toContain("Glossaries, and the layers whose names follow them\n  sales  domain\n    Customer  Has placed an order. Avoid client. Type Customer.\n");
+  });
   it("renders the layer graph as Mermaid", () => {
     expect(renderMermaid(describeArchitecture(layered, "architecture.config.ts"))).toBe([
       "flowchart TD", "  domain", "  adapter", "  entry", "  adapter --> domain", "  entry --> adapter", "  entry --> domain", "",

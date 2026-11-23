@@ -10,6 +10,7 @@ export const lintRuleName = (rule) => {
         case "advisory":
         case "dead-code":
         case "program":
+        case "glossary":
         case "configuration":
         case "architecture":
             return undefined;
@@ -27,13 +28,14 @@ export const diagnosticCode = (lintName) => {
     const [plugin, ...name] = lintName.split("/");
     return `${plugin ?? ""}(${name.join("/")})`;
 };
-/** Lint, dead-code and program rules can be excepted on a line; structural, configuration and compiler checks always apply. */
+/** Lint, dead-code, program and glossary rules can be excepted on a line; structural, configuration and compiler checks always apply. */
 export const isExceptable = (rule) => {
     switch (rule.enforcement.type) {
         case "oxlint":
         case "custom-oxlint":
         case "dead-code":
         case "program":
+        case "glossary":
             return true;
         case "typescript":
         case "advisory":

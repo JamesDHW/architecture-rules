@@ -1,5 +1,5 @@
 /** Field names accepted at each level of architecture.config.ts. */
-export const ARCHITECTURE_FIELDS = ["projects", "layers", "naming", "rules", "adoption"];
+export const ARCHITECTURE_FIELDS = ["projects", "glossaries", "layers", "naming", "rules", "adoption"];
 export const ADOPTION_FIELDS = ["mode", "onTouch"];
 export const ON_TOUCH_FIELDS = ["default", "rules"];
 export const ADOPTION_MODES = ["enforce", "observe"];
@@ -10,7 +10,9 @@ export const TOUCH_POLICIES = ["fix", "no-new"];
  */
 export const NO_NEW_ON_TOUCH = ["allowed-imports", "max-params"];
 export const PROJECTS_FIELDS = ["tsconfigs", "references"];
-export const LAYER_FIELDS = ["description", "files", "exclude", "naming", "dependencies", "rules", "generated", "entry", "development"];
+export const LAYER_FIELDS = ["description", "files", "exclude", "naming", "dependencies", "rules", "generated", "entry", "development", "glossary"];
+export const GLOSSARY_FIELDS = ["description", "terms"];
+export const TERM_FIELDS = ["definition", "avoid", "type"];
 export const NAMING_FIELDS = ["case", "prefix", "suffixes", "requiredSuffix", "allowedNames"];
 export const DEPENDENCY_FIELDS = ["internal", "external", "assets"];
 export const GENERATED_FIELDS = ["reason"];

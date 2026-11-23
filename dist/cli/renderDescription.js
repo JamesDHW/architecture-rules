@@ -37,6 +37,7 @@ const layerLines = (layer, width) => {
         ...(layer.generated === undefined ? [] : [detail("generated", layer.generated)]),
         ...(layer.entry === undefined ? [] : [detail("entry", describeEntry(layer.entry))]),
         ...(layer.development ? [detail("role", "development only")] : []),
+        ...(layer.glossaries.length > 0 ? [detail("glossary", layer.glossaries.join(", "))] : []),
         ...layer.ruleOverrides.map((override) => detail("rule", describeOverride(override))),
     ];
 };
@@ -44,6 +45,27 @@ const cycleLine = (cycles) => {
     if (cycles.length === 0)
         return `${indent}No import cycles between layers.`;
     return `${indent}Import cycles: ${cycles.map((cycle) => cycle.join(" ↔ ")).join("; ")}`;
+};
+const termLine = (term, width) => {
+    const notes = [
+        ...(term.avoid.length > 0 ? [`Avoid ${term.avoid.join(", ")}.`] : []),
+        ...(term.type === undefined ? [] : [`Type ${term.type}.`]),
+    ];
+    return `${indent}${indent}${column(term.name, width)}  ${[term.definition, ...notes].join(" ")}`;
+};
+/** Each glossary with the layers that follow it, then its terms: the words to use, and the words not to. */
+const glossaryLines = (glossaries) => {
+    if (glossaries.length === 0)
+        return [];
+    const width = Math.max(...glossaries.flatMap((glossary) => glossary.terms.map((term) => term.name.length)));
+    return [
+        "Glossaries, and the layers whose names follow them",
+        ...glossaries.flatMap((glossary) => [
+            `${indent}${glossary.name}  ${glossary.layers.length > 0 ? glossary.layers.join(", ") : "no layer"}${glossary.description === undefined ? "" : `: ${glossary.description}`}`,
+            ...glossary.terms.map((term) => termLine(term, width)),
+        ]),
+        "",
+    ];
 };
 /** A compact, plain-text summary an agent can read before changing code. */
 export const renderText = (description) => {
@@ -65,6 +87,7 @@ export const renderText = (description) => {
             ? [`${indent}none`]
             : description.external.map(({ specifier, layers }) => `${indent}${column(specifier, externalWidth)}  ${layers.join(", ")}`)),
         "",
+        ...glossaryLines(description.glossaries),
         "Project-wide",
         `${indent}naming   ${description.naming === undefined ? "none" : describeNaming(description.naming)}`,
         `${indent}rules    ${rules.on} on, ${rules.off} off`,

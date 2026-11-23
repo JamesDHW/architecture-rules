@@ -4,5 +4,5 @@ import type { Architecture, ArchitectureInput } from "./types.js";
 export declare const normalizeArchitecture: (value: unknown) => Architecture | ArchitectureError;
 export declare const isArchitecture: (value: unknown) => value is Architecture;
 /** The configuration boundary: invalid configuration fails while architecture.config.ts loads. */
-export declare const defineArchitecture: <const Layer extends string>(config: ArchitectureInput<Layer>) => Architecture;
+export declare const defineArchitecture: <const Layer extends string, const GlossaryName extends string = never>(config: ArchitectureInput<Layer, GlossaryName>) => Architecture;
 //# sourceMappingURL=defineArchitecture.d.ts.map

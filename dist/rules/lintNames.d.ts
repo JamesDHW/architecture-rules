@@ -8,6 +8,6 @@ export declare const lintRuleName: (rule: ArchitectureRule) => string | undefine
 export declare const lintNameAliases: (lintName: string) => readonly string[];
 /** How Oxlint labels a lint rule's findings: architecture/no-let becomes architecture(no-let). */
 export declare const diagnosticCode: (lintName: string) => string;
-/** Lint, dead-code and program rules can be excepted on a line; structural, configuration and compiler checks always apply. */
+/** Lint, dead-code, program and glossary rules can be excepted on a line; structural, configuration and compiler checks always apply. */
 export declare const isExceptable: (rule: ArchitectureRule) => boolean;
 //# sourceMappingURL=lintNames.d.ts.map

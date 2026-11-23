@@ -122,7 +122,7 @@ export default defineArchitecture({
     typeTests: {
       description: "Compile-only assertions on the public configuration types.",
       files: ["tests/types/**/*.ts"],
-      entry: { reason: "The typecheck compiles these assertions; nothing imports them.", exports: ["valid", "invalid"] },
+      entry: { reason: "The typecheck compiles these assertions; nothing imports them.", exports: ["valid", "validGlossary", "invalid", "invalidGlossary"] },
       development: true,
       dependencies: { internal: ["api"] },
       rules: {

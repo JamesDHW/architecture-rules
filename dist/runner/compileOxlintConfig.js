@@ -12,6 +12,7 @@ const lintRuleName = (rule) => {
         case "advisory":
         case "dead-code":
         case "program":
+        case "glossary":
         case "configuration":
         case "architecture":
             return undefined;
