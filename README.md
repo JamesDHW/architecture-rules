@@ -21,7 +21,7 @@ The per-file rules take their cue from Go: where TypeScript offers several ways 
 
 Nothing is left over either: every file must be reachable from an entry, every export imported, every package used, and every line of the configuration itself (each dependency grant, each pattern, each allowance) must still be needed.
 
-## Quick start
+## Quick Start
 
 Install the package. It is not on npm yet; install it from Git and pin a commit or tag so checks are reproducible:
 
